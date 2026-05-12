@@ -63,6 +63,13 @@
             <i class="fas fa-user-plus"></i> Add New Resident
         </button>
 
+        <div class="table-zoom-controls" id="tableZoomControls">
+            <button type="button" class="zoom-btn" id="zoomOutBtn">-</button>
+            <span class="zoom-value" id="tableZoomValue">100%</span>
+            <button type="button" class="zoom-btn" id="zoomInBtn">+</button>
+            <button type="button" class="zoom-btn" id="zoomResetBtn">Reset</button>
+        </div>
+
         <div class="search-container">
             <i class="fas fa-search"></i>
             <input type="text" id="residentSearch" placeholder="Search by name or address...">
@@ -282,6 +289,12 @@
         </div>
     </div>
 
-    <script src="../js/admin-dashboard.js"></script>
+    <script src="../js/admin-dashboard/utils.js"></script>
+    <script src="../js/admin-dashboard/sidebar.js"></script>
+    <script src="../js/admin-dashboard/announcements.js"></script>
+    <script src="../js/admin-dashboard/residents.js"></script>
+    <script src="../js/admin-dashboard/documents.js"></script>
+    <script src="../js/admin-dashboard/officers.js"></script>
+    <script src="../js/admin-dashboard/dashboard.js"></script>
 </body>
 </html>

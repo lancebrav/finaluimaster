@@ -93,6 +93,13 @@
             <i class="fas fa-file-excel"></i> Export to Excel
         </button>
 
+        <div class="table-zoom-controls" id="tableZoomControls">
+            <button type="button" class="zoom-btn" id="zoomOutBtn">-</button>
+            <span class="zoom-value" id="tableZoomValue">100%</span>
+            <button type="button" class="zoom-btn" id="zoomInBtn">+</button>
+            <button type="button" class="zoom-btn" id="zoomResetBtn">Reset</button>
+        </div>
+
         <div class="search-container">
             <i class="fas fa-search"></i>
             <input type="text" id="residentSearch" placeholder="Search by name or address...">
@@ -103,12 +110,9 @@
         <table class="resident-table" id="residentTable">
             <thead>
                 <tr>
-                    <th>Last Name</th>
-                    <th>First Name</th>
-                    <th>Middle Name</th>
+                    <th>Full Name</th>
                     <th>House No.</th>
                     <th>Street Name</th>
-                    <th>Name of Subd.(if applicable)</th>
                     <th>Place of Birth</th>
                     <th>Date of Birth</th>
                     <th>Sex</th>
@@ -116,7 +120,6 @@
                     <th>Citizenship</th>
                     <th>Occupation</th>
                     <th>House Head Relationship</th>
-                    <th>Name</th>
                     <th>Age</th>
                     <th>Status</th>
                     <th>Voter Status</th>
@@ -253,7 +256,13 @@
         </div>
     </div>
 
-    <script src="../js/admin-dashboard.js"></script>
+    <script src="../js/admin-dashboard/utils.js"></script>
+    <script src="../js/admin-dashboard/sidebar.js"></script>
+    <script src="../js/admin-dashboard/announcements.js"></script>
+    <script src="../js/admin-dashboard/residents.js"></script>
+    <script src="../js/admin-dashboard/documents.js"></script>
+    <script src="../js/admin-dashboard/officers.js"></script>
+    <script src="../js/admin-dashboard/dashboard.js"></script>
     <script>
         document.getElementById('exportExcelBtn').addEventListener('click', function () {
             window.exportResidentsToExcel();

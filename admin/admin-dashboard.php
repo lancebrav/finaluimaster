@@ -143,7 +143,13 @@ if (!isset($_SESSION['admin'])) {
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="../js/admin-dashboard.js"></script>
+<script src="../js/admin-dashboard/utils.js"></script>
+<script src="../js/admin-dashboard/sidebar.js"></script>
+<script src="../js/admin-dashboard/announcements.js"></script>
+<script src="../js/admin-dashboard/residents.js"></script>
+<script src="../js/admin-dashboard/documents.js"></script>
+<script src="../js/admin-dashboard/officers.js"></script>
+<script src="../js/admin-dashboard/dashboard.js"></script>
 
 </body>
 </html>

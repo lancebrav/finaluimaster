@@ -1,0 +1,547 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const resPhotoInput = document.getElementById('resPhoto');
+    const imagePreview = document.getElementById('imagePreview');
+
+    if (resPhotoInput && imagePreview) {
+        resPhotoInput.addEventListener('change', async function() {
+            if (this.files && this.files[0]) {
+                const base64 = await window.getBase64(this.files[0]);
+                imagePreview.innerHTML = `<img src="${base64}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+            }
+        });
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const residentForm = document.getElementById('addResidentForm');
+
+    if (residentForm) {
+        residentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            try {
+                const photoInput = document.getElementById('resPhoto');
+                const editId = document.getElementById('editResidentId').value;
+                let photoBase64 = "";
+
+                if (photoInput && photoInput.files[0]) {
+                    photoBase64 = await window.getBase64(photoInput.files[0]);
+                } else if (editId) {
+                    photoBase64 = "";
+                }
+                const fName = document.getElementById('resFirstName')?.value || '';
+                const mName = document.getElementById('resMiddleName')?.value || '';
+                const lName = document.getElementById('resLastName')?.value || '';
+                const suffix = document.getElementById('resSuffix')?.value || '';
+                const middleInitial = mName ? `${mName.charAt(0).toUpperCase()}. ` : '';
+                const displaySuffix = suffix ? ` ${suffix}` : '';
+                const fullName = `${fName} ${middleInitial}${lName}${displaySuffix}`.trim();
+                const birthday = document.getElementById('resBirthday')?.value || '';
+                const computedAge = window.calculateAge(birthday);
+                const gender = document.getElementById('resGender')?.value || '';
+                const house = document.getElementById('resHouse')?.value || '';
+                const status = document.getElementById('resStatus')?.value || '';
+                const vStatus = document.getElementById('resVoterStatus')?.value || '';
+                const addr = document.getElementById('resAddress')?.value || '';
+
+                const residentData = {
+                    resident_id: editId || null,
+                    firstName: fName,
+                    middleName: mName,
+                    lastName: lName,
+                    suffix: suffix,
+                    fullName: fullName,
+                    birthday: birthday,
+                    age: computedAge,
+                    gender: gender,
+                    houseNum: house,
+                    civilStatus: status,
+                    voterStatus: vStatus,
+                    address: addr,
+                    photo: photoBase64,
+                    initials: (fName.charAt(0) + lName.charAt(0)).toUpperCase(),
+                    placeOfBirth: document.getElementById('resPlaceOfBirth')?.value || '',
+                    citizenship: document.getElementById('resCitizenship')?.value || 'Filipino',
+                    occupation: document.getElementById('resOccupation')?.value || '',
+                    houseHeadRelationship: document.getElementById('resHouseHeadRelationship')?.value || '',
+                    streetName: document.getElementById('resStreetName')?.value || ''
+                };
+
+                const endpoint = editId ? '../php/edit_resident.php' : '../php/add_resident.php';
+
+                fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(residentData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        residentForm.reset();
+                        document.getElementById('imagePreview').innerHTML = "?";
+                        document.getElementById('editResidentId').value = "";
+                        document.getElementById('modalTitle').innerText = "Register Resident";
+                        document.getElementById('residentModal').classList.remove('active');
+                        window.loadAndRenderResidents();
+                    } else {
+                        alert('Error saving resident: ' + data.message);
+                    }
+                })
+                .catch(fetchErr => {
+                    console.error("FETCH ERROR:", fetchErr);
+                    alert('Network error: Could not reach the server. Check your connection or PHP path.\n\n' + fetchErr.message);
+                });
+
+            } catch (err) {
+                console.error("FORM ERROR:", err);
+                alert("Form error: " + err.message + "\n\nCheck F12 Console for details.");
+            }
+        });
+    }
+
+    const setupModal = (btnId, modalId, closeId) => {
+        const btn = document.getElementById(btnId);
+        const modal = document.getElementById(modalId);
+        const close = document.getElementById(closeId);
+        if (btn && modal) btn.onclick = () => modal.classList.add('active');
+        if (close && modal) close.onclick = () => {
+            modal.classList.remove('active');
+            if (modalId === 'residentModal') {
+                document.getElementById('addResidentForm').reset();
+                document.getElementById('editResidentId').value = "";
+                document.getElementById('modalTitle').innerText = "Register Resident";
+            }
+        };
+    };
+
+    setupModal('addResidentBtn', 'residentModal', 'closeResidentModal');
+    setupModal('addEventBtn', 'eventModal', 'closeEventModal');
+    setupModal('addOfficerBtn', 'officerModal', 'closeOfficerModal');
+
+    document.getElementById('prevPage')?.addEventListener('click', () => {
+        if (window.currentPage > 1) { window.currentPage--; window.loadAndRenderResidents(); }
+    });
+
+    document.getElementById('nextPage')?.addEventListener('click', () => {
+        const residents = JSON.parse(localStorage.getItem('brgyResidents')) || [];
+        if (window.currentPage * window.rowsPerPage < residents.length) { window.currentPage++; window.loadAndRenderResidents(); }
+    });
+
+    const searchInput = document.getElementById('residentSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            window.currentPage = 1;
+            window.loadAndRenderResidents();
+        });
+    }
+
+    const archiveSearchInput = document.getElementById('archiveSearch');
+    if (archiveSearchInput) {
+        archiveSearchInput.addEventListener('keyup', () => {
+            const query = archiveSearchInput.value.toLowerCase();
+            const rows = document.querySelectorAll('#archiveTable tbody tr');
+            rows.forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(query) ? "" : "none";
+            });
+        });
+    }
+
+    window.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal-overlay')) {
+            e.target.classList.remove('active');
+        }
+    });
+
+    if (document.querySelector('#residentTable tbody')) {
+        window.loadAndRenderResidents();
+    }
+
+    if (document.querySelector('#officerTable tbody') && typeof window.loadAndRenderOfficers === 'function') {
+        window.loadAndRenderOfficers();
+    }
+
+    if (document.querySelector('#archiveTable tbody')) {
+        window.loadAndRenderArchives();
+    }
+
+    if (document.getElementById('ongoingRequestsBody') && typeof window.loadAndRenderDocumentRequests === 'function') {
+        window.loadAndRenderDocumentRequests();
+    }
+
+    const zoomControls = document.getElementById('tableZoomControls');
+    const residentTable = document.getElementById('residentTable');
+    const zoomValue = document.getElementById('tableZoomValue');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomResetBtn = document.getElementById('zoomResetBtn');
+
+    if (zoomControls && residentTable && zoomValue && zoomOutBtn && zoomInBtn && zoomResetBtn) {
+        let zoom = 1;
+        const minZoom = 0.7;
+        const maxZoom = 1.3;
+        const step = 0.1;
+
+        const applyZoom = () => {
+            residentTable.style.transformOrigin = 'top left';
+            residentTable.style.transform = `scale(${zoom})`;
+            residentTable.style.width = `${100 / zoom}%`;
+            zoomValue.textContent = `${Math.round(zoom * 100)}%`;
+        };
+
+        zoomOutBtn.addEventListener('click', () => {
+            zoom = Math.max(minZoom, parseFloat((zoom - step).toFixed(2)));
+            applyZoom();
+        });
+
+        zoomInBtn.addEventListener('click', () => {
+            zoom = Math.min(maxZoom, parseFloat((zoom + step).toFixed(2)));
+            applyZoom();
+        });
+
+        zoomResetBtn.addEventListener('click', () => {
+            zoom = 1;
+            applyZoom();
+        });
+
+        applyZoom();
+    }
+});
+
+window.currentPage = 1;
+window.rowsPerPage = 8;
+
+window.loadAndRenderResidents = function() {
+    fetch('../php/get_residents.php')
+    .then(response => response.json())
+    .then(data => {
+        let residents = data.residents || [];
+        const tbody = document.querySelector('#residentTable tbody');
+        if (!tbody) return;
+
+        const headerCells = Array.from(document.querySelectorAll('#residentTable thead th'));
+        const headerText = headerCells.map(th => th.textContent.trim().toLowerCase());
+        const isAdminLayout = headerText.includes('full name') && headerText.includes('house head relationship');
+
+        const searchInput = document.getElementById('residentSearch');
+        if (searchInput && searchInput.value.trim() !== '') {
+            const query = searchInput.value.toLowerCase();
+            residents = residents.filter(res => {
+                const searchableText = `${res.fullName} ${res.address} ${res.voterStatus} ${res.gender} ${res.houseNum}`.toLowerCase();
+                return searchableText.includes(query);
+            });
+        }
+
+        tbody.innerHTML = '';
+        const start = (window.currentPage - 1) * window.rowsPerPage;
+        const end = start + window.rowsPerPage;
+        const paginatedItems = residents.slice(start, end);
+
+        paginatedItems.forEach(res => {
+            const row = document.createElement('tr');
+            const displayAge = res.birthday ? window.calculateAge(res.birthday) : 'N/A';
+
+            if (isAdminLayout) {
+                row.innerHTML = `
+                <td>${res.fullName || 'Unnamed'}</td>
+                <td>${res.houseNum || 'N/A'}</td>
+                <td>${res.streetName || 'N/A'}</td>
+                <td>${res.placeOfBirth || 'N/A'}</td>
+                <td>${res.birthday || 'N/A'}</td>
+                <td>${res.gender || 'N/A'}</td>
+                <td>${res.civilStatus || 'N/A'}</td>
+                <td>${res.citizenship || 'Filipino'}</td>
+                <td>${res.occupation || 'N/A'}</td>
+                <td>${res.houseHeadRelationship || 'N/A'}</td>
+                <td>${displayAge}</td>
+                <td>${res.is_archived == 1 ? 'Archived' : 'Active'}</td>
+                <td style="font-weight:600; color:${res.voterStatus === 'Registered' ? '#27ae60' : '#e74c3c'}">${res.voterStatus || 'N/A'}</td>
+                <td>${res.address || 'N/A'}</td>
+                <td class="action-icons">
+                    <i class="fas fa-pencil-alt edit-icon" onclick="editResident(${res.resident_id})" title="Edit"></i>
+                    <i class="fas fa-archive archive-icon" onclick="archiveResident(${res.resident_id})" title="Archive"></i>
+                    <i class="fas fa-trash-alt delete-icon" onclick="deleteResident(${res.resident_id})" title="Delete"></i>
+                </td>`;
+            } else {
+                const profileDisplay = res.photo
+                    ? `<img src="${res.photo}" style="width:35px; height:35px; border-radius:50%; object-fit:cover;">`
+                    : `<div class="profile-pic pic-blue">${res.firstName?.charAt(0)}${res.lastName?.charAt(0)}</div>`;
+                row.innerHTML = `
+                <td>${res.resident_id || 'N/A'}</td>
+                <td class="name-cell">
+                    ${profileDisplay}
+                    <span>${res.fullName || 'Unnamed'}</span>
+                </td>
+                <td>${res.birthday || 'N/A'}</td>
+                <td>${res.gender || 'N/A'}</td>
+                <td>${res.houseNum || 'N/A'}</td>
+                <td>${res.streetName || 'N/A'}</td>
+                <td>${res.address || 'N/A'}</td>
+                <td>${res.placeOfBirth || 'N/A'}</td>
+                <td>${res.civilStatus || 'N/A'}</td>
+                <td style="font-weight:600; color:${res.voterStatus === 'Registered' ? '#27ae60' : '#e74c3c'}">${res.voterStatus || 'N/A'}</td>
+                <td>${res.citizenship || 'Filipino'}</td>
+                <td>${res.occupation || 'N/A'}</td>
+                <td>${res.houseHeadRelationship || 'N/A'}</td>
+                <td>${res.is_archived == 1 ? 'Yes' : 'No'}</td>
+                <td>${res.archived_date ? new Date(res.archived_date).toLocaleDateString() : 'N/A'}</td>
+                <td>${res.created_at ? new Date(res.created_at).toLocaleDateString() : 'N/A'}</td>
+                <td>${res.updated_at ? new Date(res.updated_at).toLocaleDateString() : 'N/A'}</td>
+                <td class="action-icons">
+                    <i class="fas fa-pencil-alt edit-icon" onclick="editResident(${res.resident_id})" title="Edit"></i>
+                    <i class="fas fa-archive archive-icon" onclick="archiveResident(${res.resident_id})" title="Archive"></i>
+                    <i class="fas fa-trash-alt delete-icon" onclick="deleteResident(${res.resident_id})" title="Delete"></i>
+                </td>`;
+            }
+
+            tbody.appendChild(row);
+        });
+    });
+};
+
+window.exportResidentsToExcel = function() {
+    fetch('../php/get_residents.php')
+    .then(response => response.json())
+    .then(data => {
+        const residents = data.residents || [];
+
+        if (residents.length === 0) {
+            alert('No residents found to export.');
+            return;
+        }
+
+        const headers = [
+            'Last Name', 'First Name', 'Middle Name', 'Suffix',
+            'House No.', 'Street Name', 'Address',
+            'Place of Birth', 'Date of Birth', 'Age',
+            'Sex', 'Civil Status', 'Citizenship',
+            'Occupation', 'House Head Relationship',
+            'Voter Status'
+        ];
+
+        const rows = residents.map(res => [
+            res.lastName || '',
+            res.firstName || '',
+            res.middleName || '',
+            res.suffix || '',
+            res.houseNum || '',
+            res.streetName || '',
+            res.address || '',
+            res.placeOfBirth || '',
+            res.birthday || '',
+            res.birthday ? window.calculateAge(res.birthday) : (res.age || ''),
+            res.gender || '',
+            res.civilStatus || '',
+            res.citizenship || 'Filipino',
+            res.occupation || '',
+            res.houseHeadRelationship || '',
+            res.voterStatus || ''
+        ]);
+
+        const wsData = [headers, ...rows];
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+        const headerRange = XLSX.utils.decode_range(ws['!ref']);
+        for (let C = headerRange.s.c; C <= headerRange.e.c; C++) {
+            const cellAddr = XLSX.utils.encode_cell({ r: 0, c: C });
+            if (ws[cellAddr]) {
+                ws[cellAddr].s = { font: { bold: true } };
+            }
+        }
+
+        ws['!cols'] = headers.map((h, i) => {
+            const maxLen = Math.max(
+                h.length,
+                ...rows.map(r => String(r[i] || '').length)
+            );
+            return { wch: Math.min(maxLen + 4, 40) };
+        });
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Residents');
+
+        const today = new Date().toISOString().slice(0, 10);
+        XLSX.writeFile(wb, `Barangay663_Residents_${today}.xlsx`);
+    })
+    .catch(err => {
+        console.error('Export error:', err);
+        alert('Failed to export residents. Please try again.');
+    });
+};
+
+window.editResident = (id) => {
+    fetch('../php/get_resident.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resident_id: id })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.resident) {
+            const res = data.resident;
+            document.getElementById('modalTitle').innerText = "Edit Resident Details";
+            document.getElementById('editResidentId').value = res.resident_id;
+
+            document.getElementById('resFirstName').value = res.firstName || '';
+            document.getElementById('resMiddleName').value = res.middleName || '';
+            document.getElementById('resLastName').value = res.lastName || '';
+            document.getElementById('resSuffix').value = res.suffix || '';
+            document.getElementById('resBirthday').value = res.birthday || '';
+            document.getElementById('resGender').value = res.gender || '';
+            document.getElementById('resHouse').value = res.houseNum || '';
+            document.getElementById('resStatus').value = res.civilStatus || '';
+            document.getElementById('resVoterStatus').value = res.voterStatus || '';
+            document.getElementById('resAddress').value = res.address || '';
+            document.getElementById('resPlaceOfBirth').value = res.placeOfBirth || '';
+            document.getElementById('resCitizenship').value = res.citizenship || '';
+            document.getElementById('resOccupation').value = res.occupation || '';
+            document.getElementById('resHouseHeadRelationship').value = res.houseHeadRelationship || '';
+            document.getElementById('resStreetName').value = res.streetName || '';
+
+            if (res.photo) {
+                document.getElementById('imagePreview').innerHTML = `<img src="${res.photo}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+            }
+
+            document.getElementById('residentModal').classList.add('active');
+        } else {
+            alert('Error loading resident: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('Failed to load resident data');
+    });
+};
+
+window.archiveResident = (id) => {
+    if (confirm("Are you sure you want to archive this resident? They will be moved out of the active list.")) {
+        fetch('../php/archive_resident.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ resident_id: id })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Resident archived successfully');
+                window.loadAndRenderResidents();
+            } else {
+                alert('Error archiving resident: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            alert('Failed to archive resident');
+        });
+    }
+};
+
+window.deleteResident = (id) => {
+    if (confirm("Are you sure you want to permanently delete this resident? This action cannot be undone.")) {
+        fetch('../php/delete_resident.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ resident_id: id })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Resident deleted successfully');
+                window.loadAndRenderResidents();
+            } else {
+                alert('Error deleting resident: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            alert('Failed to delete resident');
+        });
+    }
+};
+
+window.loadAndRenderArchives = function() {
+    fetch('../php/get_archived_residents.php')
+    .then(response => response.json())
+    .then(data => {
+        const archivedResidentsVault = data.residents || [];
+        const tableBody = document.querySelector('#archiveTable tbody');
+
+        if (!tableBody) return;
+        tableBody.innerHTML = '';
+
+        archivedResidentsVault.forEach(archivedPerson => {
+            const tableRow = document.createElement('tr');
+
+            const profileDisplay = archivedPerson.photo
+                ? `<img src="${archivedPerson.photo}" style="width:35px; height:35px; border-radius:50%; object-fit:cover;">`
+                : `<div class="profile-pic pic-blue">${archivedPerson.firstName?.charAt(0)}${archivedPerson.lastName?.charAt(0)}</div>`;
+
+            const displayAge = archivedPerson.birthday ? window.calculateAge(archivedPerson.birthday) : 'N/A';
+
+            tableRow.innerHTML = `
+                <td class="name-cell">
+                    ${profileDisplay}
+                    <span>${archivedPerson.fullName}</span>
+                </td>
+                <td>${displayAge}</td>
+                <td>${archivedPerson.gender}</td>
+                <td>${archivedPerson.civilStatus}</td>
+                <td>${archivedPerson.houseNum} ${archivedPerson.address}</td>
+                <td style="font-weight: 600; color: #800000;">${archivedPerson.archived_date ? new Date(archivedPerson.archived_date).toLocaleDateString() : 'Unknown'}</td>
+                <td class="action-icons">
+                    <i class="fas fa-undo-alt edit-icon" onclick="restoreResident(${archivedPerson.resident_id})" title="Restore to Active"></i>
+                    <i class="fas fa-trash-alt delete-icon" onclick="permanentlyDeleteArchive(${archivedPerson.resident_id})" title="Delete Permanently"></i>
+                </td>
+            `;
+            tableBody.appendChild(tableRow);
+        });
+    })
+    .catch(err => {
+        console.error('Error fetching archived residents:', err);
+    });
+};
+
+window.restoreResident = function(targetId) {
+    if (confirm("Restore this resident back to the active list?")) {
+        fetch('../php/restore_resident.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ resident_id: targetId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Resident restored successfully');
+                window.loadAndRenderArchives();
+            } else {
+                alert('Error restoring resident: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            alert('Failed to restore resident');
+        });
+    }
+};
+
+window.permanentlyDeleteArchive = function(targetId) {
+    if (confirm("WARNING: This will permanently delete the resident's record. This action cannot be undone.")) {
+        fetch('../php/delete_resident.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ resident_id: targetId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Resident permanently deleted');
+                window.loadAndRenderArchives();
+            } else {
+                alert('Error deleting resident: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            alert('Failed to delete resident');
+        });
+    }
+};

@@ -123,8 +123,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('nextPage')?.addEventListener('click', () => {
-        const residents = JSON.parse(localStorage.getItem('brgyResidents')) || [];
-        if (window.currentPage * window.rowsPerPage < residents.length) { window.currentPage++; window.loadAndRenderResidents(); }
+        const totalResidents = typeof window.filteredResidentsTotal === 'number'
+            ? window.filteredResidentsTotal
+            : (window.cachedResidents || []).length;
+        if (window.currentPage * window.rowsPerPage < totalResidents) {
+            window.currentPage++;
+            window.loadAndRenderResidents();
+        }
     });
 
     const searchInput = document.getElementById('residentSearch');
@@ -151,6 +156,65 @@ document.addEventListener('DOMContentLoaded', () => {
             e.target.classList.remove('active');
         }
     });
+
+    const filterFieldSelect = document.getElementById('filterField');
+    const filterValueDropdown = document.getElementById('filterValueDropdown');
+    const filterValueToggle = document.getElementById('filterValueToggle');
+    const filterValueMenu = document.getElementById('filterValueMenu');
+    const ageMinInput = document.getElementById('ageMin');
+    const ageMaxInput = document.getElementById('ageMax');
+    const applyFiltersBtn = document.getElementById('applyResidentFilters');
+    const clearFiltersBtn = document.getElementById('clearResidentFilters');
+
+    if (filterFieldSelect && filterValueDropdown && filterValueToggle && filterValueMenu) {
+        filterFieldSelect.addEventListener('change', () => {
+            window.residentFilters.field = filterFieldSelect.value;
+            window.residentFilters.values = [];
+            window.updateFilterToggleLabel();
+            window.updateResidentFilterValues(window.cachedResidents || []);
+        });
+
+        filterValueToggle.addEventListener('click', () => {
+            filterValueDropdown.classList.toggle('open');
+        });
+
+        filterValueMenu.addEventListener('change', () => {
+            const selectedValues = Array.from(filterValueMenu.querySelectorAll('input[type="checkbox"]:checked'))
+                .map(input => input.value);
+            window.residentFilters.values = selectedValues;
+            window.updateFilterToggleLabel();
+        });
+
+        window.addEventListener('click', (e) => {
+            if (!filterValueDropdown.contains(e.target)) {
+                filterValueDropdown.classList.remove('open');
+            }
+        });
+    }
+
+    if (applyFiltersBtn && ageMinInput && ageMaxInput) {
+        applyFiltersBtn.addEventListener('click', () => {
+            window.residentFilters.ageMin = ageMinInput.value.trim();
+            window.residentFilters.ageMax = ageMaxInput.value.trim();
+            window.currentPage = 1;
+            window.loadAndRenderResidents();
+        });
+    }
+
+    if (clearFiltersBtn && filterFieldSelect && ageMinInput && ageMaxInput) {
+        clearFiltersBtn.addEventListener('click', () => {
+            window.residentFilters = { field: '', values: [], ageMin: '', ageMax: '' };
+            filterFieldSelect.value = '';
+            ageMinInput.value = '';
+            ageMaxInput.value = '';
+            if (filterValueMenu) {
+                filterValueMenu.innerHTML = '';
+            }
+            window.updateFilterToggleLabel();
+            window.currentPage = 1;
+            window.loadAndRenderResidents();
+        });
+    }
 
     if (document.querySelector('#residentTable tbody')) {
         window.loadAndRenderResidents();
@@ -209,12 +273,109 @@ document.addEventListener('DOMContentLoaded', () => {
 
 window.currentPage = 1;
 window.rowsPerPage = 8;
+window.cachedResidents = [];
+window.filteredResidentsTotal = 0;
+window.residentFilters = { field: '', values: [], ageMin: '', ageMax: '' };
+
+window.getResidentFieldValue = function(res, field) {
+    switch (field) {
+        case 'fullName':
+            return res.fullName || '';
+        case 'houseNum':
+            return res.houseNum || '';
+        case 'streetName':
+            return res.streetName || '';
+        case 'placeOfBirth':
+            return res.placeOfBirth || '';
+        case 'gender':
+            return res.gender || '';
+        case 'civilStatus':
+            return res.civilStatus || '';
+        case 'citizenship':
+            return res.citizenship || '';
+        case 'occupation':
+            return res.occupation || '';
+        case 'houseHeadRelationship':
+            return res.houseHeadRelationship || '';
+        case 'voterStatus':
+            return res.voterStatus || '';
+        case 'status':
+            return res.is_archived == 1 ? 'Archived' : 'Active';
+        case 'address':
+            return res.address || '';
+        default:
+            return res[field] || '';
+    }
+};
+
+window.updateFilterToggleLabel = function() {
+    const toggle = document.getElementById('filterValueToggle');
+    if (!toggle) return;
+    const count = (window.residentFilters.values || []).length;
+    toggle.textContent = count ? `${count} selected` : 'Select values';
+};
+
+window.updateResidentFilterValues = function(residents) {
+    const menu = document.getElementById('filterValueMenu');
+    const toggle = document.getElementById('filterValueToggle');
+    if (!menu || !toggle) return;
+
+    const field = window.residentFilters.field;
+    menu.innerHTML = '';
+
+    if (!field) {
+        toggle.textContent = 'Select values';
+        return;
+    }
+
+    const uniqueValues = new Map();
+    residents.forEach(res => {
+        const rawValue = window.getResidentFieldValue(res, field);
+        const trimmed = String(rawValue || '').trim();
+        const entry = trimmed ? { key: trimmed, label: trimmed } : { key: '__EMPTY__', label: 'N/A' };
+        if (!uniqueValues.has(entry.key)) {
+            uniqueValues.set(entry.key, entry.label);
+        }
+    });
+
+    const items = Array.from(uniqueValues.entries()).map(([key, label]) => ({ key, label }));
+    items.sort((a, b) => {
+        if (a.key === '__EMPTY__') return 1;
+        if (b.key === '__EMPTY__') return -1;
+        return a.label.localeCompare(b.label);
+    });
+
+    if (items.length === 0) {
+        menu.innerHTML = '<div class="checkbox-item">No values</div>';
+        toggle.textContent = 'Select values';
+        return;
+    }
+
+    menu.innerHTML = items.map(item => {
+        return `
+        <label class="checkbox-item">
+            <input type="checkbox" value="${item.key}">
+            <span>${item.label}</span>
+        </label>`;
+    }).join('');
+
+    const selected = new Set(window.residentFilters.values || []);
+    menu.querySelectorAll('input[type="checkbox"]').forEach(input => {
+        if (selected.has(input.value)) {
+            input.checked = true;
+        }
+    });
+
+    window.updateFilterToggleLabel();
+};
 
 window.loadAndRenderResidents = function() {
     fetch('../php/get_residents.php')
     .then(response => response.json())
     .then(data => {
         let residents = data.residents || [];
+        window.cachedResidents = residents;
+        window.updateResidentFilterValues(residents);
         const tbody = document.querySelector('#residentTable tbody');
         if (!tbody) return;
 
@@ -230,6 +391,31 @@ window.loadAndRenderResidents = function() {
                 return searchableText.includes(query);
             });
         }
+
+        if (window.residentFilters.field && window.residentFilters.values.length > 0) {
+            const field = window.residentFilters.field;
+            const selected = new Set(window.residentFilters.values);
+            residents = residents.filter(res => {
+                const rawValue = window.getResidentFieldValue(res, field);
+                const trimmed = String(rawValue || '').trim();
+                const key = trimmed ? trimmed : '__EMPTY__';
+                return selected.has(key);
+            });
+        }
+
+        if (window.residentFilters.ageMin || window.residentFilters.ageMax) {
+            const minAge = window.residentFilters.ageMin ? parseInt(window.residentFilters.ageMin, 10) : null;
+            const maxAge = window.residentFilters.ageMax ? parseInt(window.residentFilters.ageMax, 10) : null;
+            residents = residents.filter(res => {
+                const age = res.birthday ? window.calculateAge(res.birthday) : NaN;
+                if (Number.isNaN(age)) return false;
+                if (minAge !== null && age < minAge) return false;
+                if (maxAge !== null && age > maxAge) return false;
+                return true;
+            });
+        }
+
+        window.filteredResidentsTotal = residents.length;
 
         tbody.innerHTML = '';
         const start = (window.currentPage - 1) * window.rowsPerPage;

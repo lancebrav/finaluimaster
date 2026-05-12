@@ -19,6 +19,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 
+function getResidentId(resident) {
+    if (!resident) return '';
+    if (resident.resident_id !== undefined && resident.resident_id !== null) return String(resident.resident_id);
+    if (resident.id !== undefined && resident.id !== null) return String(resident.id);
+    return '';
+}
+
 function exportResidentsToExcel() {
 
     // Show loading state on button
@@ -35,8 +42,21 @@ function exportResidentsToExcel() {
         })
         .then(function (data) {
             const residents = data.residents || [];
+            const selectedIds = window.selectedResidentIds instanceof Set ? window.selectedResidentIds : new Set();
+            let exportResidents = residents;
 
-            if (residents.length === 0) {
+            if (selectedIds.size > 0) {
+                exportResidents = residents.filter(function (res) {
+                    return selectedIds.has(getResidentId(res));
+                });
+
+                if (exportResidents.length === 0) {
+                    alert('No selected residents found to export.');
+                    return;
+                }
+            }
+
+            if (exportResidents.length === 0) {
                 alert('No residents found to export.');
                 return;
             }
@@ -63,7 +83,7 @@ function exportResidentsToExcel() {
             ];
 
             // Map each resident to a row
-            const rows = residents.map(function (res) {
+            const rows = exportResidents.map(function (res) {
                 return [
                     res.lastName               || '',
                     res.firstName              || '',

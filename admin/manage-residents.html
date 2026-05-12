@@ -106,6 +106,49 @@
         </div>
     </div>
 
+    <div class="filter-bar" id="residentFilterBar">
+        <div class="filter-group">
+            <label for="filterField">Filter Field</label>
+            <select id="filterField">
+                <option value="">Select field</option>
+                <option value="fullName">Full Name</option>
+                <option value="houseNum">House No.</option>
+                <option value="streetName">Street Name</option>
+                <option value="placeOfBirth">Place of Birth</option>
+                <option value="gender">Sex</option>
+                <option value="civilStatus">Civil Status</option>
+                <option value="citizenship">Citizenship</option>
+                <option value="occupation">Occupation</option>
+                <option value="houseHeadRelationship">House Head Relationship</option>
+                <option value="voterStatus">Voter Status</option>
+                <option value="status">Status</option>
+                <option value="address">Address</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Values</label>
+            <div class="checkbox-dropdown" id="filterValueDropdown">
+                <button type="button" class="checkbox-toggle" id="filterValueToggle">Select values</button>
+                <div class="checkbox-menu" id="filterValueMenu"></div>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <label>Age Range</label>
+            <div class="age-range">
+                <input type="number" id="ageMin" placeholder="Min" min="0">
+                <span class="age-sep">-</span>
+                <input type="number" id="ageMax" placeholder="Max" min="0">
+            </div>
+        </div>
+
+        <div class="filter-group filter-actions">
+            <button type="button" class="filter-btn" id="applyResidentFilters">Apply</button>
+            <button type="button" class="filter-btn secondary" id="clearResidentFilters">Clear</button>
+        </div>
+    </div>
+
     <div class="table-card">
         <table class="resident-table" id="residentTable">
             <thead>

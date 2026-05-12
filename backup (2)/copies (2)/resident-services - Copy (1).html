@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Services | Barangay 663</title>
+    <link rel="stylesheet" href="home.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+<header>
+    <div class="logo-container">
+        <img src="logo.png" alt="Barangay 663 Logo" class="header-logo">
+        <div class="logo-text">BARANGAY 663</div>
+    </div>
+    <nav>
+        <ul>
+            <li><a href="home.html">HOME</a></li>
+            <li><a href="about.html">ABOUT</a></li>
+            <li><a href="resident-announcements.html">ANNOUNCEMENTS</a></li>
+            <li><a href="resident-services.html" class="active-link">SERVICES</a></li>
+            <li><a href="resident-gallery.html">GALLERY</a></li>
+            <li><a href="resident-officials.html">OFFICIALS</a></li>
+            <li><a href="login.html" class="admin-btn">ADMIN LOGIN</a></li>
+        </ul>
+    </nav>
+</header>
+
+<main style="margin-top: 90px;">
+    <div class="banner-overlay">
+        <h1>Online Document Requests</h1>
+    </div>
+
+    <section class="services-container">
+        <div class="service-box">
+            <i class="fas fa-file-signature"></i>
+            <h3>Barangay Clearance</h3>
+            <button class="btn-request" onclick="openModal('Barangay Clearance')">Request Document</button>
+        </div>
+        <div class="service-box">
+            <i class="fas fa-certificate"></i>
+            <h3>Certificate of Residency</h3>
+            <button class="btn-request" onclick="openModal('Certificate of Residency')">Request Document</button>
+        </div>
+    </section>
+</main>
+
+<div id="requestModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <h2 id="modalHeader">Application Form</h2>
+        <p class="form-instruction">All fields marked with * are required for processing.</p>
+        
+        <form id="residentForm">
+            <div class="form-section-title">Personal Information</div>
+            <div class="form-grid">
+                <div class="input-group">
+                    <label>First Name *</label>
+                    <input type="text" placeholder="Juan" required>
+                </div>
+                <div class="input-group">
+                    <label>Middle Name *</label>
+                    <input type="text" placeholder="Romualdez" required>
+                </div>
+                <div class="input-group">
+                    <label>Last Name *</label>
+                    <input type="text" placeholder="Santos" required>
+                </div>
+                <div class="input-group">
+                    <label>Suffix</label>
+                    <input type="text" placeholder="e.g. Jr., III">
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div class="input-group">
+                    <label>Gender *</label>
+                    <select required>
+                        <option value="">-- Select --</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Nationality *</label>
+                    <input type="text" placeholder="e.g. Filipino" required>
+                </div>
+                <div class="input-group">
+                    <label>Civil Status *</label>
+                    <select required>
+                        <option value="">-- Select --</option>
+                        <option value="Single">Single</option>
+                        <option value="Married">Married</option>
+                        <option value="Widowed">Widowed</option>
+                        <option value="Separated">Separated</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Birth Date *</label>
+                    <input type="date" required>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div class="input-group" style="grid-column: span 2;">
+                    <label>Place of Birth *</label>
+                    <input type="text" placeholder="City/Municipality, Province" required>
+                </div>
+                <div class="input-group" style="grid-column: span 2;">
+                    <label>Email Address *</label>
+                    <input type="email" placeholder="example@email.com" required>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div class="input-group" style="grid-column: span 2;">
+                    <label>Contact Number *</label>
+                    <input type="tel" placeholder="09XX-XXX-XXXX" pattern="09[0-9]{2}-[0-9]{3}-[0-9]{4}" required>
+                </div>
+                <div class="input-group">
+                    <label>Voter Status *</label>
+                    <select required>
+                        <option value="">-- Select --</option>
+                        <option value="Registered">Registered Voter</option>
+                        <option value="Not Registered">Not Registered</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Precinct Number</label>
+                    <input type="text" placeholder="e.g. 0542B">
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div class="input-group" style="grid-column: span 1;">
+                    <label>House/Unit No. *</label>
+                    <input type="text" placeholder="e.g. 123" required>
+                </div>
+                <div class="input-group" style="grid-column: span 3;">
+                    <label>Street *</label>
+                    <select required>
+                        <option value="">-- Select Your Street --</option>
+                        <option value="Paco">Paco</option>
+                        <option value="Ermita">Ermita</option>
+                        <option value="Ayala Blvd">Ayala Blvd</option>
+                        <option value="Trinidad">Trinidad</option>
+                        <option value="Mercedes">Mercedes</option>
+                        <option value="Romualdez">Romualdez</option>
+                        <option value="Isla de Provacion">Isla de Provacion</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="input-group" style="width: 100%;">
+                <label>Purpose of Request *</label>
+                <textarea rows="2" placeholder="e.g., Employment, Scholarship, ID application" required></textarea>
+            </div>
+
+            <div class="form-section-title">Supporting Documents</div>
+            <div class="form-grid">
+                <div class="input-group">
+                    <label>Recent 2x2 Photo *</label>
+                    <div class="upload-area">
+                        <i class="fas fa-camera"></i>
+                        <p>Upload Photo</p>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Two (2) Valid IDs *</label>
+                    <div class="upload-area">
+                        <i class="fas fa-id-card"></i>
+                        <p>Upload IDs</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="privacy-box">
+                <h4>Data Privacy Consent</h4>
+                <p>"By checking the boxes below, I agree to the collection and processing of my personal data as outlined in our Privacy Policy, in compliance with the Data Privacy Act of 2012. We will use your information solely to fulfull the documents being requested."</p>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="certifyData" required>
+                <label for="certifyData">I certify that the information provided is true and correct. *</label>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="privacyAgreeData" required>
+                <label for="privacyAgreeData">I have read and agree to the Data Privacy Consent. *</label>
+            </div>
+
+            <div class="submit-container">
+                <button type="submit" class="btn-request submit-full">SUBMIT APPLICATION</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<footer>
+    <div class="footer-cols">
+        <div class="footer-brand">
+            <div class="footer-logo-container">
+                <img src="logo.png" alt="Barangay 663 Logo" class="footer-logo">
+                <h4 style="color:white; margin-left: 10px; display: inline-block; vertical-align: middle;">Barangay 663</h4>
+            </div>
+        </div>
+        <div class="footer-info">
+            <h4>Emergency</h4>
+            <p><i class="fas fa-phone"></i> 911 | 123-4567</p>
+        </div>
+        <div class="footer-info">
+            <h4>Address</h4>
+            <p><i class="fas fa-map-marker-alt"></i> 663, Zone 71 - District 5, Ermita, Manila</p>
+        </div>
+    </div>
+    <div class="footer-bottom">&copy; 2026 Barangay 663. All Rights Reserved.</div>
+</footer>
+
+<script src="home.js"></script>
+</body>
+</html>

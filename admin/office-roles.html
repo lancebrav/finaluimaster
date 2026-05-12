@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Office Roles | Barangay 663</title>
+    <link rel="stylesheet" href="../css/home.css">
+    <link rel="stylesheet" href="../css/admin-dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="admin-body">
+
+<aside class="sidebar" id="sidebar"> <div class="menu-toggle" id="menuBtn">
+        <i class="fas fa-bars"></i>
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="sidebar-logo-container">
+            <img src="../logo.png" alt="Barangay Seal" class="sidebar-logo">
+        </div>
+
+        <div class="nav-links-top">
+            <a href="admin-dashboard.html" class="nav-item">
+                <i class="fas fa-chart-line"></i> <span>Dashboard</span>
+            </a>
+            <a href="edit-announcements.html" class="nav-item">
+                <i class="fas fa-bullhorn"></i> <span>Announcements</span>
+            </a>
+            <a href="document-requests.html" class="nav-item">
+                <i class="fas fa-file-invoice"></i> <span>Documents</span>
+            </a>
+            <a href="manage-residents.html" class="nav-item">
+                <i class="fas fa-users-cog"></i> <span>Residents List</span>
+            </a>
+            <a href="office-roles.html" class="nav-item active">
+                <i class="fas fa-laptop-house"></i> <span>Office Roles</span>
+            </a>
+            <a href="archives.html" class="nav-item">
+                <i class="fas fa-archive"></i> <span>Archives</span>
+            </a>
+        </div>
+
+        <a href="../pages/home.html" class="nav-item logout-item">
+            <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+        </a>
+    </nav>
+</aside>
+
+    <main class="main-dashboard">
+        <header class="admin-header">
+            <div class="header-left">
+                <h2>Barangay 663 - Zone 71</h2>
+            </div>
+            <div class="header-right">
+                <span class="admin-label">Admin</span>
+                <i class="fas fa-user-circle profile-icon"></i>
+            </div>
+        </header>
+
+        <div class="residents-page-container">
+            <div class="page-actions">
+                <button class="add-resident-btn" id="addOfficerBtn">
+                    <i class="fas fa-user-plus"></i> Add New Officer
+                </button>
+            </div>
+
+            <div class="table-card">
+                <table class="resident-table" id="officerTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Age</th>
+                            <th>Role</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="name-cell">
+                                <div class="profile-pic pic-blue">Y</div> ynnah
+                            </td>
+                            <td>67</td>
+                            <td>kagawad</td>
+                            <td class="action-icons">
+                                <i class="fas fa-pencil-alt edit-icon"></i>
+                                <i class="fas fa-trash-alt delete-icon"></i>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="name-cell">
+                                <div class="profile-pic pic-red">D</div> dennise
+                            </td>
+                            <td>50</td>
+                            <td>treasurer</td>
+                            <td class="action-icons">
+                                <i class="fas fa-pencil-alt edit-icon"></i>
+                                <i class="fas fa-trash-alt delete-icon"></i>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal-overlay" id="officerModal">
+    <div class="event-form-modal">
+        <div class="modal-header">
+            <h3 id="officerModalTitle">Add New Officer</h3>
+            <i class="fas fa-times close-modal" id="closeOfficerModal"></i>
+        </div>
+
+        <form id="addOfficerForm">
+            <input type="hidden" id="editOfficerId" value="">
+
+            <div class="profile-upload-section" style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                <div class="profile-pic pic-red" id="offImagePreview" style="width: 60px; height: 60px; font-size: 24px;">?</div>
+                <div class="upload-controls">
+                    <label style="font-size: 11px; font-weight: bold; display: block; margin-bottom: 5px;">OFFICER PHOTO</label>
+                    <input type="file" id="offPhoto" accept="image/*" style="font-size: 12px;">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>FULL NAME</label>
+                <input type="text" id="offName" placeholder="Enter name..." required>
+            </div>
+
+            <div class="form-group">
+                <label>BIRTHDAY</label>
+                <input type="date" id="offBirthday" required>
+            </div>
+
+            <div class="form-group">
+                <label>POSITION</label>
+                <select id="offPosition" required>
+                    <option value="" disabled selected>Select Position...</option>
+                    <option value="Punong Barangay">Punong Barangay</option>
+                    <option value="Barangay Kagawad">Barangay Kagawad</option>
+                    <option value="SK Chairman">SK Chairman</option>
+                    <option value="Barangay Secretary">Barangay Secretary</option>
+                    <option value="Barangay Treasurer">Barangay Treasurer</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>TERM IN POSITION</label>
+                <input type="text" id="offTerm" placeholder="e.g. 1st term" required>
+            </div>
+
+            <button type="submit" class="submit-event-btn">Save Officer</button>
+        </form>
+    </div>
+</div>
+
+    <script src="../js/admin-dashboard.js"></script>
+</body>
+</html>

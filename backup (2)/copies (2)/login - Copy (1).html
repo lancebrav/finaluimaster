@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | Barangay 663</title>
+    <link rel="stylesheet" href="login.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="login-body">
+
+    <div class="login-split-container">
+        <div class="login-logo-section">
+            <img src="logo.png" alt="Barangay 663 Official Seal" class="big-side-logo">
+            <h1 class="logo-text">BARANGAY 663</h1>
+            <p class="logo-subtext">Ermita, Manila</p>
+        </div>
+
+        <div class="login-card">
+            <div class="login-header">
+                <h2>Admin Portal</h2>
+                <p>Please enter your credentials to continue.</p>
+            </div>
+            <form id="loginForm">
+                <div class="login-group">
+                    <label><i class="fas fa-user"></i> Username</label>
+                    <input type="text"  id="username" placeholder="Username" required>
+                </div>
+
+                <div class="login-group">
+                    <label><i class="fas fa-lock"></i> Password</label>
+                    <input type="password" id="password" placeholder="Password" required>
+                </div>
+
+                <button type="button" onclick="login()" class="login-page-btn">SIGN IN</button>
+            </form>
+
+            <div class="login-footer">
+                <a href="home.html" class="back-home"><i class="fas fa-arrow-left"></i> Back to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/login.js">
+    </script>
+</body>
+</html>

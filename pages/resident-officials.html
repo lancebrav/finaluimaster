@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Officials | Barangay 663</title>
+    <link rel="stylesheet" href="../css/home.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+<header>
+    <div class="logo-container">
+        <img src="../logo.png" alt="Barangay 663 Logo" class="header-logo">
+        <div class="logo-text">BARANGAY 663</div>
+    </div>
+    <nav>
+        <ul>
+            <li><a href="home.html">HOME</a></li>
+            <li><a href="about.html">ABOUT</a></li>
+            <li><a href="resident-announcements.html">ANNOUNCEMENTS</a></li>
+            <li><a href="resident-services.html">SERVICES</a></li>
+            <li><a href="resident-gallery.html">GALLERY</a></li>
+            <li><a href="resident-officials.html" class="active-link">OFFICIALS</a></li>
+            <li><a href="login.html" class="admin-btn">ADMIN LOGIN</a></li>
+        </ul>
+    </nav>
+</header>
+
+<main class="officials-main">
+    <div class="banner-overlay">
+        <h1>BARANGAY OFFICIALS</h1>
+        <p style="color: var(--prussian-blue); font-weight: 600;">Dedicated leaders serving Barangay 663.</p>
+    </div>
+
+    <section id="officials" class="bg-white">
+        <div id="liveOfficialsGrid"></div>
+    </section>
+</main>
+<script src="../js/home.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const officialsContainer = document.getElementById('liveOfficialsGrid');
+        if (!officialsContainer) return;
+
+        const rawOfficers = JSON.parse(localStorage.getItem('brgyOfficers')) || [];
+        officialsContainer.innerHTML = ''; 
+
+        if (rawOfficers.length === 0) {
+            officialsContainer.innerHTML = '<p style="text-align:center; color:#777; width:100%; padding: 40px;">No Barangay Officials listed at this time.</p>';
+            return;
+        }
+
+        // 1. CREATE ARRAYS FOR EACH TIER
+        const topTier = [];
+        const middleTier = [];
+        const bottomTier = [];
+
+        // 2. SORT EVERYONE INTO THEIR CORRECT TIER
+        rawOfficers.forEach(off => {
+            const pos = off.position || "";
+            if (pos === "Punong Barangay") {
+                topTier.push(off);
+            } else if (pos === "Barangay Kagawad") {
+                middleTier.push(off);
+            } else {
+                // Secretary, Treasurer, SK Chairperson fall to the bottom
+                bottomTier.push(off);
+            }
+        });
+
+        // 3. HELPER FUNCTION TO DRAW A CARD
+        const createCardHTML = (off) => {
+            const initials = off.name.substring(0,2).toUpperCase();
+            
+            // If they have a photo, use it. If not, make a colored circle with their initials.
+            const profileDisplay = off.photo 
+                ? `<img src="${off.photo}" alt="${off.name}" class="official-photo">`
+                : `<div class="official-photo" style="background: var(--apple-red); color: white; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; margin: 0 auto 15px auto;">${initials}</div>`;
+
+            return `
+                <div class="official-card">
+                    ${profileDisplay}
+                    <h4>${off.name}</h4>
+                    <p>${off.position}</p>
+                    <span style="color: #777; font-size: 0.8rem; margin-top: 5px; display: block; font-weight: normal; text-transform: none; letter-spacing: normal;">Term: ${off.term || 'Active'}</span>
+                </div>
+            `;
+        };
+
+        // 4. BUILD THE FINAL HTML STRUCTURE
+        let finalHTML = `<div class="org-chart-container">`;
+
+        // Add Top Tier (Chairman)
+        if (topTier.length > 0) {
+            finalHTML += `<div class="tier top-tier">`;
+            topTier.forEach(off => finalHTML += createCardHTML(off));
+            finalHTML += `</div>`;
+        }
+
+        // Add Middle Tier (Kagawads - Sorted Alphabetically)
+        if (middleTier.length > 0) {
+            middleTier.sort((a, b) => a.name.localeCompare(b.name));
+            finalHTML += `<div class="tier middle-tier">`;
+            middleTier.forEach(off => finalHTML += createCardHTML(off));
+            finalHTML += `</div>`;
+        }
+
+        // Add Bottom Tier (Secretary, Treasurer, SK)
+        if (bottomTier.length > 0) {
+            finalHTML += `<div class="tier bottom-tier">`;
+            bottomTier.forEach(off => finalHTML += createCardHTML(off));
+            finalHTML += `</div>`;
+        }
+
+        finalHTML += `</div>`;
+        
+        // Inject the completed chart into the page!
+        officialsContainer.innerHTML = finalHTML;
+    });
+</script>
+
+<footer>
+    <div class="footer-cols">
+        <div class="footer-brand">
+            <div class="footer-logo-container">
+                <img src="../logo.png" alt="Barangay 663 Logo" class="footer-logo">
+                <h4>Barangay 663</h4>
+            </div>
+        </div>
+        <div class="footer-info">
+            <h4>Emergency</h4>
+            <p><i class="fas fa-phone"></i> 911 | 123-4567</p>
+        </div>
+        <div class="footer-info">
+            <h4>Address</h4>
+            <p><i class="fas fa-map-marker-alt"></i> 663, Zone 71 - District 5, Ermita, Manila</p>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Requests | Barangay 663</title>
+    <link rel="stylesheet" href="../css/home.css">
+    <link rel="stylesheet" href="../css/admin-dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="admin-body">
+
+    <aside class="sidebar" id="sidebar"> 
+        <div class="menu-toggle" id="menuBtn">
+            <i class="fas fa-bars"></i>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="sidebar-logo-container">
+                <img src="../logo.png" alt="Barangay Seal" class="sidebar-logo">
+            </div>
+
+            <div class="nav-links-top">
+                <a href="admin-dashboard.php" class="nav-item">
+                    <i class="fas fa-chart-line"></i> <span>Dashboard</span>
+                </a>
+                <a href="edit-announcements.html" class="nav-item">
+                    <i class="fas fa-bullhorn"></i> <span>Announcements</span>
+                </a>
+                <a href="document-requests.html" class="nav-item active" style="background: rgba(255,255,255,0.1); color: white;">
+                    <i class="fas fa-file-invoice"></i> <span>Documents</span>
+                </a>
+                <a href="manage-residents.html" class="nav-item">
+                    <i class="fas fa-users-cog"></i> <span>Residents List</span>
+                </a>
+                <a href="office-roles.html" class="nav-item">
+                    <i class="fas fa-laptop-house"></i> <span>Office Roles</span>
+                </a>
+                <a href="archives.html" class="nav-item">
+                    <i class="fas fa-archive"></i> <span>Archives</span>
+                </a>
+            </div>
+
+            <a href="../php/logout.php" class="nav-item logout-item">
+                <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+            </a>
+        </nav>
+    </aside>
+
+    <main class="main-dashboard">
+        <header class="admin-header">
+            <div class="header-left">
+                <h2>Barangay 663 - Zone 71</h2>
+            </div>
+            <div class="header-right">
+                <span class="admin-label">Admin</span>
+                <i class="fas fa-user-circle profile-icon"></i>
+            </div>
+        </header>
+
+        <div class="requests-container">
+            
+            <div class="request-section">
+                <div class="section-badge ongoing">Ongoing Requests</div>
+                <div class="table-card">
+                    <table class="request-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Document Type</th>
+                                <th>Date Requested</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ongoingRequestsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="request-section">
+                <div class="section-badge approved">Approved Requests</div>
+                <div class="table-card">
+                    <table class="request-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Document Type</th>
+                                <th>Release Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="approvedRequestsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="request-section">
+                <div class="section-badge rejected">Rejected Requests</div>
+                <div class="table-card">
+                    <table class="request-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Document Type</th>
+                                <th>Date Rejected</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rejectedRequestsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    <div class="modal-overlay" id="docDetailsModal">
+        <div class="event-form-modal doc-modal-wide">
+            <div class="modal-header">
+                <h3>Resident Information & Request</h3>
+                <i class="fas fa-times close-modal" id="closeDocModal"></i>
+            </div>
+            
+            <div class="doc-details-content">
+                <div class="doc-info-grid">
+                    <div class="info-group">
+                        <label>First Name</label>
+                        <p id="residentFirstName">Juan</p>
+                    </div>
+                    <div class="info-group">
+                        <label>Middle Name</label>
+                        <p id="residentMiddleName">Romualdez</p>
+                    </div>
+                    <div class="info-group">
+                        <label>Last Name</label>
+                        <p id="residentLastName">Santos</p>
+                    </div>
+                    <div class="info-group">
+                        <label>Suffix</label>
+                        <p id="residentSuffix">N/A</p>
+                    </div>
+                    <div class="info-group">
+                        <label>Gender</label>
+                        <p id="residentGender">Male</p>
+                    </div>
+                    <div class="info-group">
+                        <label>Nationality</label>
+                        <p id="residentNationality">Filipino</p>
+                    </div>
+                    <div class="info-group">
+                        <label>Civil Status</label>
+                        <p id="residentCivilStatus">Single</p>
+                    </div>
+                    <div class="info-group">
+                        <label>Birth Date</label>
+                        <p id="residentBirthDate">1990-01-01</p>
+                    </div>
+                    <div class="info-group" style="grid-column: span 2;">
+                        <label>Place of Birth</label>
+                        <p id="residentPlaceOfBirth">City, Province</p>
+                    </div>
+                    <div class="info-group" style="grid-column: span 2;">
+                        <label>Email Address</label>
+                        <p id="residentEmailAddress">juan.santos@email.com</p>
+                    </div>
+                    <div class="info-group">
+                        <label>Contact Number</label>
+                        <p id="residentContactNumber">0912-345-6789</p>
+                    </div>
+                    <div class="info-group">
+                        <label>Voter Status</label>
+                        <p id="residentVoterStatus">Registered</p>
+                    </div>
+                    <div class="info-group">
+                        <label>Precinct Number</label>
+                        <p id="residentPrecinctNumber">0542B</p>
+                    </div>
+                    <div class="info-group" style="grid-column: span 2;">
+                        <label>Full Address</label>
+                        <p id="residentFullAddress">123 Ermita, Barangay 663, Manila</p>
+                    </div>
+                    <div class="info-group" style="grid-column: span 2;">
+                        <label>Purpose of Request</label>
+                        <p id="residentPurposeOfRequest">Employment</p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 25px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="doc-id-section">
+                        <label>2x2 Photo</label>
+                        <div class="id-photo-container">
+                            <img src="placeholder-photo.jpg" id="residentSubmittedPhoto" alt="Resident 2x2 Photo">
+                        </div>
+                    </div>
+                    <div class="doc-id-section">
+                        <label>Submitted Valid IDs</label>
+                        <div class="id-photo-container">
+                            <img src="placeholder-id.jpg" id="residentSubmittedId" alt="Resident ID">
+                        </div>
+                        <p class="id-hint">Click image to enlarge</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/admin-dashboard.js"></script>
+</body>
+</html>

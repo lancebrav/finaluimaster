@@ -1,0 +1,708 @@
+/* ==========================================================================
+   1. VARIABLES & RESET
+   ========================================================================== */
+:root {
+    --prussian-blue: #070e50;
+    --orange: #F77F00;
+    --white: #ffffff;
+    --apple-red: #ff4d4d;
+
+    /* New variable for the dark blue overlay tint */
+    --prussian-blue-90: rgba(7, 14, 80, 0.90);
+    
+    --shadow: 0 4px 15px rgba(0,0,0,0.1);
+    --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+* { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+    font-family: 'Inter', sans-serif; 
+    scroll-behavior: smooth; 
+}
+
+body { 
+    margin: 0 !important;
+    padding: 0 !important; 
+    background-color: var(--white); 
+    color: var(--prussian-blue); 
+    overflow-x: hidden; 
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; 
+}
+
+main {
+    flex-grow: 1;
+}
+
+/* SCROLLBARS */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.1); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.3); }
+
+/* ==========================================================================
+   2. NAVBAR
+   ========================================================================== */
+header { 
+    background: var(--prussian-blue); 
+    padding: 10px 8%; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    position: fixed; 
+    width: 100%; 
+    height: 90px; 
+    top: 0 !important;
+    left: 0 !important; 
+    z-index: 1000; 
+    transition: var(--transition);
+    box-shadow: var(--shadow);
+}
+
+.logo-container { display: flex; align-items: center; gap: 15px; }
+
+.header-logo {
+    width: 60px !important;    
+    height: 60px !important;
+    background-color: white;   
+    border-radius: 50%;       
+    padding: 5px;             
+    object-fit: contain;      
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: transform 0.5s ease;
+}
+header:hover .header-logo { transform: rotate(5deg); }
+
+.logo-text { font-weight: 800; color: var(--white); font-size: 1.2rem; white-space: nowrap; }
+
+nav ul { display: flex; list-style: none; gap: 20px; align-items: center; }
+nav ul li a { 
+    text-decoration: none; color: var(--white); font-size: 0.85rem; font-weight: 600; 
+    transition: var(--transition);
+}
+nav ul li a:hover { color: var(--orange); }
+
+.admin-btn { 
+    border: 2px solid var(--apple-red); padding: 6px 15px; border-radius: 4px; 
+    color: var(--apple-red) !important; transition: var(--transition); 
+}
+.admin-btn:hover { background: var(--apple-red); color: white !important; transform: scale(1.05); }
+
+/* ==========================================================================
+   3. PORTAL HERO LAYOUT (HOME)
+   ========================================================================== */
+.home-page { overflow: hidden; }
+
+.portal-hero {
+    position: relative;
+    height: 100vh;
+    width: 100%;
+    background: url('../brgy-hall.png') no-repeat center center/cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hero-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(7, 14, 80, 0.511); 
+    z-index: 1;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    width: 85%;
+    max-width: 1200px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 50px;
+}
+
+.hero-text-side { flex: 1; color: white; }
+.system-tag { display: block; font-size: 1rem; font-weight: 600; margin-bottom: 10px; color: var(--orange); text-transform: uppercase; letter-spacing: 2px; }
+.hero-text-side h1 { font-size: 4rem; font-weight: 900; margin-bottom: 20px; line-height: 1.1; }
+.hero-text-side p { font-size: 1.2rem; max-width: 500px; margin-bottom: 30px; line-height: 1.6; opacity: 0.9; }
+
+.hero-btn {
+    display: inline-block; padding: 12px 35px; background: rgba(255, 255, 255, 0.15);
+    border: 1px solid white; color: white; text-decoration: none; border-radius: 50px;
+    font-weight: 600; transition: var(--transition);
+}
+.hero-btn:hover { background: white; color: var(--prussian-blue); }
+
+.main-portal-seal {
+    width: 100%; max-width: 450px; height: 450px; 
+    object-fit: cover; border-radius: 50%; border: 6px solid white; 
+    background-color: white; filter: drop-shadow(0 0 30px rgba(0,0,0,0.5));
+    animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0) scale(1); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+    50% { transform: translateY(-20px) scale(1.02); box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+}
+
+/* ==========================================================================
+   4. UPDATED ANNOUNCEMENTS PAGE STYLES
+   ========================================================================== */
+.page-banner {
+    background: linear-gradient(rgba(253, 226, 94, 0.683), rgba(217, 224, 77, 0.696)), url('../brgy-hall.png');
+    background-size: cover; background-position: center;
+    color: white; padding: 140px 10% 60px; text-align: center;
+}
+
+.banner-content h1 { font-size: 2.8rem; font-weight: 900; text-transform: uppercase; margin-bottom: 10px; }
+.banner-content p { font-size: 1.1rem; opacity: 0.8; }
+
+.announcement-section { 
+    padding: 60px 20px; 
+    max-width: 1200px; 
+    margin: 0 auto; 
+}.announcement-grid { 
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); /* This strictly forces 3 equal columns */
+    gap: 30px; 
+}
+.news-card { 
+    background: var(--white); border-radius: 12px; overflow: hidden; 
+    box-shadow: var(--shadow); transition: var(--transition); 
+    display: flex; flex-direction: column; border: 1px solid rgba(0,0,0,0.05);
+}
+
+.news-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
+
+.news-image { 
+    width: 100%; 
+    aspect-ratio: 4 / 3;
+    height: auto;    
+    position: relative; 
+    overflow: hidden; 
+}
+.news-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+.news-card:hover .news-image img { transform: scale(1.1); }
+
+.news-tag { 
+    position: absolute; top: 15px; right: 15px; background: var(--orange); 
+    color: white; padding: 6px 14px; border-radius: 50px; font-size: 0.75rem; 
+    font-weight: 800; z-index: 2; text-transform: uppercase;
+}
+.news-tag.alert { background: var(--apple-red); }
+
+.news-body { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
+.news-date { font-size: 0.8rem; color: #888; font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+.news-body h3 { color: var(--prussian-blue); font-size: 1.4rem; margin-bottom: 15px; line-height: 1.3; }
+.news-body p { color: #555; font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px; }
+
+.read-more {
+    margin-top: auto; text-decoration: none; color: var(--orange);
+    font-weight: 800; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; transition: 0.3s;
+}
+.read-more:hover { gap: 15px; color: var(--prussian-blue); }
+
+/* ==========================================================================
+   5. SERVICES & OTHER SECTIONS
+   ========================================================================== */
+section { padding: 80px 10%; }
+.bg-white { background: var(--white); }
+.section-title { text-align: center; margin-bottom: 50px; font-size: 2.2rem; font-weight: 800; }
+
+.services-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+
+.service-box { 
+    background: var(--white); padding: 40px; border-radius: 12px; text-align: center; 
+    transition: var(--transition); border: 1px solid rgba(0,0,0,0.05); 
+    display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+}
+
+.service-box:hover { transform: translateY(-12px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+.service-box i { font-size: 3rem; color: var(--prussian-blue); margin-bottom: 20px; display: block; }
+.service-box h3 { margin-bottom: 15px; color: var(--prussian-blue); }
+.service-box p { font-size: 0.9rem; color: #666; margin-bottom: 20px; line-height: 1.5; }
+
+.btn-request { 
+    background: var(--prussian-blue); color: white; width: 100%; padding: 15px; 
+    border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: var(--transition);
+}
+.btn-request:hover { background: var(--orange); transform: scale(1.02); }
+
+/* ==========================================================================
+   6. ABOUT / FOUNDATIONS
+   ========================================================================== */
+.about-hero {
+    background: linear-gradient(rgba(253, 226, 94, 0.683), rgba(217, 224, 77, 0.696)), url('../brgy-hall.png');
+    background-size: cover; background-position: center; color: var(--white);
+    padding: 150px 10% 100px; text-align: center;
+}
+.about-hero h1 { font-size: 3.5rem; font-weight: 900; margin-bottom: 15px; text-transform: uppercase; }
+.mission-vision-container {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px;
+    max-width: 1100px; margin: -60px auto 60px; padding: 0 20px; position: relative; z-index: 10;
+}
+.info-card {
+    background: var(--white); padding: 50px 40px; border-radius: 15px; box-shadow: var(--shadow);
+    text-align: center; border-top: 6px solid var(--orange); transition: var(--transition);
+}
+
+/* ==========================================================================
+   7. FOOTER
+   ========================================================================== */
+footer { background: var(--prussian-blue); color: white; padding: 30px 10% 15px; }
+.footer-cols { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px; margin-bottom: 15px; }
+.footer-logo { width: 60px; height: 60px; background-color: white; border-radius: 50%; padding: 5px; object-fit: contain; }
+.footer-info h4 { margin-bottom: 10px; font-size: 0.9rem; color: var(--orange); text-transform: uppercase; }
+.footer-info p { font-size: 0.85rem; margin: 0; }
+.footer-bottom { text-align: center; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.75rem; opacity: 0.6; }
+.footer-logo-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* ==========================================================================
+   8. RESPONSIVENESS (Mobile Updates Included)
+   ========================================================================== */
+
+/* Mobile Menu Toggle Style */
+.menu-toggle {
+    display: none;
+    font-size: 1.8rem;
+    color: var(--white);
+    cursor: pointer;
+    z-index: 1001;
+    transition: var(--transition);
+}
+
+.menu-toggle:hover {
+    color: var(--orange);
+}
+
+/* Tablet & Smaller Laptops */
+@media (max-width: 992px) {
+    header { padding: 10px 5%; }
+    
+    .menu-toggle { display: block; }
+    
+    /* Sliding Mobile Navigation */
+    nav {
+        position: absolute;
+        top: 90px;
+        left: -100%;
+        width: 100%;
+        background: var(--prussian-blue-90);
+        backdrop-filter: blur(8px);
+        transition: var(--transition);
+        box-shadow: 0 10px 15px rgba(0,0,0,0.2);
+    }
+
+    nav.active {
+        left: 0;
+    }
+
+    nav ul {
+        flex-direction: column;
+        padding: 40px 0;
+        gap: 25px;
+    }
+
+    nav ul li a { font-size: 1.1rem; }
+
+    /* Hero Layout Adjustments */
+    .hero-content { flex-direction: column; text-align: center; padding-top: 120px; }
+    .main-portal-seal { max-width: 280px; height: 280px; border-width: 5px; }
+    .hero-text-side h1 { font-size: 2.8rem; }
+}
+
+/* Mobile Phones */
+@media (max-width: 768px) {
+    section { padding: 60px 5%; }
+    .mission-vision-container, .announcement-grid { grid-template-columns: 1fr; }
+    .about-hero h1 { font-size: 2.2rem; }
+    .hero-text-side h1 { font-size: 2.2rem; }
+    .hero-text-side p { font-size: 1rem; margin: 0 auto 30px; }
+    
+    /* Adjust Footer for Mobile */
+    .footer-cols { flex-direction: column; text-align: center; align-items: center; }
+    .footer-logo-container { justify-content: center; }
+    
+    /* Adjust Official Cards */
+    .official-card { width: 160px; }
+    .official-photo { width: 100px; height: 100px; }
+    .top-tier .official-card { width: 100%; max-width: 260px; }
+
+    /* MODAL MOBILE FALLBACK FOR THE 4-COLUMN GRID */
+    .form-grid {
+        grid-template-columns: 1fr !important; /* Stack vertically on small screens */
+        gap: 15px !important;
+    }
+    .form-grid .input-group[style] {
+        grid-column: span 1 !important; /* Overrides any inline spans so they don't break the mobile screen */
+    }
+    .modal-content {
+        padding: 25px 20px; /* Reduce modal padding on mobile */
+    }
+}
+
+/* Small Mobile Phones */
+@media (max-width: 480px) {
+    .logo-text { font-size: 1rem; }
+    .header-logo { width: 45px !important; height: 45px !important; }
+    .hero-text-side h1 { font-size: 1.8rem; }
+    .main-portal-seal { max-width: 200px; height: 200px; }
+    .banner-overlay h1 { font-size: 2rem; }
+    .service-box { padding: 30px 20px; }
+}
+
+/* ==========================================================================
+   9. MODAL & DOCUMENT REQUEST FORM (4-COLUMN UPDATE)
+   ========================================================================== */
+.modal {
+    display: none; position: fixed; z-index: 2000; left: 0; top: 0; 
+    width: 100%; height: 100%; background-color: rgba(7, 14, 80, 0.8); 
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background-color: #ffffff; /* Set to pure white */
+    margin: 5vh auto; 
+    padding: 40px 50px; /* Thicker padding */
+    border-radius: 12px;
+    width: 90%; 
+    max-width: 900px; /* Increased to fit 4 columns */
+    max-height: 85vh; 
+    overflow-y: auto; 
+    position: relative; 
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+}
+
+.close-btn {
+    position: sticky; top: 0; float: right; font-size: 28px;
+    font-weight: bold; cursor: pointer; color: var(--prussian-blue); z-index: 10;
+}
+
+#modalHeader { color: #2d5a27; margin-bottom: 5px; font-size: 1.8rem; font-weight: 800; }
+.form-instruction { font-size: 0.85rem; color: #666; margin-bottom: 20px; }
+
+.form-section-title {
+    background-color: #f4f6f9; /* Changed to match image */
+    color: var(--prussian-blue); /* Changed to match image */
+    padding: 12px 15px;
+    margin: 30px 0 20px 0;
+    border-left: 4px solid var(--orange); /* Changed to match image */
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Strict 4 Column Grid */
+.form-grid {
+    display: grid; 
+    grid-template-columns: repeat(4, 1fr); 
+    gap: 20px 25px; /* 20px row gap, 25px column gap */
+    margin-bottom: 25px;
+}
+
+.input-group { 
+    display: flex; 
+    flex-direction: column; 
+    margin-bottom: 0; 
+}
+
+.input-group label { 
+    font-size: 0.85rem; 
+    font-weight: 700; 
+    margin-bottom: 8px; 
+    color: #333; 
+}
+
+.input-group input, .input-group select, .input-group textarea {
+    padding: 12px 15px; /* Slightly thicker */
+    border: 1px solid #ccc; 
+    border-radius: 5px;
+    font-size: 0.9rem; 
+    transition: border 0.3s;
+    width: 100%;
+}
+
+.input-group input:focus, .input-group select:focus, .input-group textarea:focus { 
+    border-color: #4CAF50; outline: none; 
+}
+
+.upload-area {
+    border: 2px dashed #bbb; padding: 30px; text-align: center;
+    border-radius: 10px; background: white; cursor: pointer; transition: 0.3s;
+}
+
+.upload-area:hover { background: #f0f8f0; border-color: #4CAF50; }
+.upload-area i { font-size: 2rem; color: #4CAF50; margin-bottom: 10px; }
+
+.submit-full {
+    background: #2d5a27 !important; margin-top: 20px; font-size: 1.1rem;
+    padding: 18px !important; letter-spacing: 1px; width: 100%; cursor: pointer;
+    color: white; border: none; border-radius: 5px;
+}
+
+/* ==========================================================================
+   10. OFFICIALS PAGE LAYOUT (COMPACT 2x2 STYLE)
+   ========================================================================== */
+
+.officials-main { 
+    margin-top: 80px; 
+    padding-bottom: 80px;
+}
+
+.org-chart-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    padding: 20px;
+}
+
+.tier {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.official-card {
+    background: var(--white);
+    padding: 20px 10px;
+    border-radius: 8px;
+    text-align: center;
+    width: 190px; 
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+    border-bottom: 4px solid var(--prussian-blue);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.official-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+/* Top Tier - Chairman Special Style */
+.top-tier .official-card {
+    width: 260px;
+    border-bottom: 4px solid var(--orange);
+}
+
+/* 2x2 Photo Style */
+.official-photo {
+    width: 120px; 
+    height: 120px; 
+    object-fit: cover; 
+    border-radius: 4px; 
+    margin-bottom: 15px;
+    border: 2px solid #f0f0f0;
+    background-color: #eee; 
+    display: block;
+}
+
+.top-tier .official-photo {
+    width: 150px;
+    height: 150px;
+}
+
+.official-card h4 {
+    color: var(--prussian-blue);
+    margin-bottom: 5px;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.official-card p {
+    color: var(--orange);
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.tier-label {
+    text-align: center;
+    font-weight: 800;
+    color: #a0a0a0;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-top: 20px;
+    margin-bottom: -10px;
+}
+
+/* Navigation Active State */
+nav ul li a.active-link { 
+    color: var(--orange) !important; 
+    border-bottom: 2px solid var(--orange); 
+    padding-bottom: 5px; 
+}
+
+/* This section creates the blue tint over the image */
+.banner-overlay {
+    background: linear-gradient(rgba(253, 226, 94, 0.683), rgba(217, 224, 77, 0.696)), url('../brgy.jpg');
+    background-size: cover;
+    background-position: center;
+    color: white;
+    text-align: center;
+    padding: 60px 10%; 
+    width: 100%;
+}
+
+.banner-overlay h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    line-height: 1.2;
+}
+
+.banner-overlay p {
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto;
+    opacity: 0.9;
+    line-height: 1.6;
+}
+
+/* ==========================================================================
+   11. RESIDENT GALLERY (SIDE SCROLLING)
+   ========================================================================== */
+.gallery-section {
+    padding: 20px 0;
+    background-color: var(--white);
+}
+
+.gallery-wrapper {
+    width: 100%;
+    overflow: hidden;
+    padding: 20px 0;
+}
+
+.gallery-scroll-container {
+    display: flex;
+    gap: 25px;
+    overflow-x: auto; 
+    padding: 20px 10%;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch; 
+}
+
+/* Custom Scrollbar for the Gallery */
+.gallery-scroll-container::-webkit-scrollbar {
+    height: 8px;
+}
+.gallery-scroll-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+.gallery-scroll-container::-webkit-scrollbar-thumb {
+    background: var(--orange);
+    border-radius: 10px;
+}
+
+.gallery-item {
+    flex: 0 0 350px; 
+    height: 250px;
+    scroll-snap-align: center;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+    border: 3px solid white;
+}
+
+.gallery-item:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.2);
+}
+
+.gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.scroll-hint {
+    text-align: center;
+    margin-top: 20px;
+    color: var(--prussian-blue);
+    font-size: 0.9rem;
+    font-weight: 600;
+    opacity: 0.7;
+}
+
+/* ==========================================================================
+   12. RESIDENT SERVICES (Data Privacy & Extras)
+   ========================================================================== */
+
+.privacy-box {
+    background: #f0f4f8;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 5px solid var(--prussian-blue);
+    margin: 20px 0;
+}
+
+.privacy-box h4 { 
+    font-size: 0.95rem; 
+    margin-bottom: 8px; 
+    color: var(--prussian-blue); 
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.privacy-box p { 
+    font-size: 0.8rem; 
+    color: #555; 
+    line-height: 1.6;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 18px 0;
+    cursor: pointer;
+    padding: 5px;
+    transition: background 0.3s ease;
+}
+
+.checkbox-group:hover {
+    background-color: rgba(0,0,0,0.02);
+    border-radius: 5px;
+}
+
+.checkbox-group input[type="checkbox"] { 
+    width: 20px; 
+    height: 20px; 
+    margin-top: 2px; 
+    cursor: pointer;
+    accent-color: var(--orange); 
+}
+
+.checkbox-group label { 
+    font-size: 0.85rem; 
+    color: #444; 
+    line-height: 1.5; 
+    font-weight: 500; 
+    cursor: pointer;
+}
+.official-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Graceful responsive columns */
+    gap: 30px; 
+    max-width: 1200px; /* Constrains the width on large monitors */
+    margin: 0 auto; 
+}

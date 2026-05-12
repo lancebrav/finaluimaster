@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account | Barangay 663</title>
+    <link rel="stylesheet" href="home.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="login-body">
+
+    <div class="login-split-container">
+        <div class="login-logo-section">
+            <img src="logo.png" alt="Barangay 663 Official Seal" class="big-side-logo">
+            <h1 class="logo-text">BARANGAY 663</h1>
+            <p class="logo-subtext">Resident Registration</p>
+        </div>
+
+        <div class="login-card" style="max-width: 500px;"> <div class="login-header">
+                <h2>Create Account</h2>
+                <p>Register to access e-services and updates.</p>
+            </div>
+
+            <form id="signupForm">
+                <div class="login-group">
+                    <label><i class="fas fa-user"></i> Full Name</label>
+                    <input type="text" placeholder="Juan Dela Cruz" required>
+                </div>
+
+                <div class="login-group">
+                    <label><i class="fas fa-envelope"></i> Email Address</label>
+                    <input type="email" placeholder="email@example.com" required>
+                </div>
+
+                <div class="login-group">
+                    <label><i class="fas fa-map-marker-alt"></i> House Number / Street</label>
+                    <input type="text" placeholder="123 Street Name" required>
+                </div>
+
+                <div class="login-group">
+                    <label><i class="fas fa-lock"></i> Create Password</label>
+                    <input type="password" placeholder="Minimum 8 characters" required>
+                </div>
+
+                <button type="submit" class="login-page-btn">REGISTER NOW</button>
+            </form>
+
+            <div class="login-footer">
+                <p class="signup-text">Already have an account? <a href="login.html" class="signup-link">Login Here</a></p>
+                <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+                <a href="home.html" class="back-home"><i class="fas fa-arrow-left"></i> Back to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('signupForm').onsubmit = function(e) {
+            e.preventDefault();
+            alert("Registration successful! (Demo Mode)");
+        };
+    </script>
+</body>
+</html>

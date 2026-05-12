@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us | Barangay 663</title>
+    <link rel="stylesheet" href="../css/home.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Specific styling for the History text alignment */
+        .history-text {
+            text-align: justify;
+            max-width: 900px;
+            margin: 0 auto;
+            line-height: 1.8;
+            color: #444;
+        }
+        
+        /* Highlight the active page */
+        nav ul li a.active-link { 
+            color: var(--orange) !important; 
+            border-bottom: 2px solid var(--orange); 
+            padding-bottom: 5px; 
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo-container">
+        <img src="../logo.png" alt="Barangay 663 Logo" class="header-logo">
+        <div class="logo-text">BARANGAY 663</div>
+    </div>
+    <nav>
+        <ul>
+            <li><a href="home.html">HOME</a></li>
+            <li><a href="about.html" class="active-link">ABOUT</a></li>
+            <li><a href="resident-announcements.html">ANNOUNCEMENTS</a></li>
+            <li><a href="resident-services.html">SERVICES</a></li>
+            <li><a href="resident-gallery.html">GALLERY</a></li>
+            <li><a href="resident-officials.html">OFFICIALS</a></li>
+            <li><a href="login.html" class="admin-btn">ADMIN LOGIN</a></li>
+        </ul>
+    </nav>
+</header>
+
+<main style="margin-top: 90px;">
+    <div class="banner-overlay">
+        <h1>About Our Barangay</h1>
+        <p>Serving the community of Ermita, Manila with integrity, transparency, and dedication.</p>
+    </div>
+
+    <div class="mission-vision-container">
+        <div class="info-card">
+            <i class="fas fa-eye"></i>
+            <h2>Our Vision</h2>
+            <p>To build a sustainable, peaceful, and well-organized community for all residents of Barangay 663.</p>
+        </div>
+        <div class="info-card">
+            <i class="fas fa-bullseye"></i>
+            <h2>Our Mission</h2>
+            <p>To provide efficient public service and promote progressive development within the community.</p>
+        </div>
+    </div>
+
+    <section class="history-section" style="padding: 10px 20% 80px 20%;">
+        <h2 class="section-title">Our History</h2>
+        <div class="history-text">
+            <p>
+                Barangay 663 has long been a cornerstone of the Ermita district in Manila. From its humble beginnings to 
+                becoming a digitally-integrated community, our barangay has remained committed to the core values of 
+                Filipino "Bayanihan." Barangays play a vital role in managing and maintaining records of residents within their jurisdiction. 
+                As the primary unit of governance, they are responsible for organizing demographic data, verifying residency, and providing 
+                essential documents such as Barangay Certificates, Certificates of Residency, and Certificates of Indigency.
+            </p>
+            <br>
+            <p>
+                Accurate and well-maintained resident records are crucial in ensuring efficient public service, proper identification, and effective implementation of community programs. 
+                The Barangay Hall of Barangay 663, originally located on Sylvia Street, was relocated to 663 Street, Ayala in 2017 to provide a more accessible and organized facility for 
+                both residents and barangay personnel.
+            </p>
+            <br>
+            <p>
+                Since its establishment, the barangay hall has served as the central office for managing resident information, processing document requests, and maintaining official records 
+                necessary for governance and public service delivery. As we move forward into 2026, we continue to evolve by adapting modern solutions—like this digital resident portal—to 
+                better serve our constituents, streamline document requests, and keep our community informed and safe.
+            </p>
+        </div>
+    </section>
+    <section class="location-section" style="padding: 0 10% 70px 10%; text-align: center;">
+        <h2 class="section-title" style="margin-bottom: 30px; color: var(--prussian-blue);">Our Location</h2>
+        <div class ="map-container">
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3861.1618809406195!2d120.9831155793457!3d14.589849900000015!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397ca2017c7800f%3A0x876eea58502623d!2sBarangay%20663%20Hall!5e0!3m2!1sen!2sph!4v1775739746344!5m2!1sen!2sph" width="800" height="600" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <div class="footer-cols">
+        <div class="footer-brand">
+            <div class="footer-logo-container">
+                <img src="../logo.png" alt="Barangay 663 Logo" class="footer-logo">
+                <h4 style="color:white; margin-left: 10px; display: inline-block; vertical-align: middle; ">Barangay 663</h4>
+            </div>
+        </div>
+
+        <div class="footer-info">
+            <h4>Emergency</h4>
+            <p><i class="fas fa-phone"></i> 911 | 123-4567</p>
+        </div>
+
+        <div class="footer-info">
+            <h4>Address</h4>
+            <p><i class="fas fa-map-marker-alt"></i> 663, Zone 71 - District 5, Ermita, Manila</p>
+        </div>
+    </div>
+    <div class="footer-bottom">&copy; 2026 Barangay 663. All Rights Reserved.</div>
+</footer>
+
+<script src="../js/home.js"></script>
+</body>
+</html>

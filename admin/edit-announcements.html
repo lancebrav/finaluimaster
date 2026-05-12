@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Announcements | Barangay 663</title>
+    <link rel="stylesheet" href="../css/home.css">
+    <link rel="stylesheet" href="../css/admin-dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="admin-body">
+
+    <aside class="sidebar" id="sidebar"> 
+        <div class="menu-toggle" id="menuBtn">
+            <i class="fas fa-bars"></i>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="sidebar-logo-container">
+                <img src="../logo.png" alt="Barangay Seal" class="sidebar-logo">
+            </div>
+
+            <div class="nav-links-top">
+                <a href="admin-dashboard.php" class="nav-item">
+                    <i class="fas fa-chart-line"></i> <span>Dashboard</span>
+                </a>
+                <a href="edit-announcements.html" class="nav-item active">
+                    <i class="fas fa-bullhorn"></i> <span>Announcements</span>
+                </a>
+                <a href="document-requests.html" class="nav-item">
+                    <i class="fas fa-file-invoice"></i> <span>Documents</span>
+                </a>
+                <a href="manage-residents.html" class="nav-item">
+                    <i class="fas fa-users-cog"></i> <span>Residents List</span>
+                </a>
+                <a href="office-roles.html" class="nav-item">
+                    <i class="fas fa-laptop-house"></i> <span>Office Roles</span>
+                </a>
+                <a href="../php/logout.php" class="nav-item">
+                    <i class="fas fa-archive"></i> <span>Archives</span>
+                </a>
+            </div>
+
+            <a href="../pages/home.html" class="nav-item logout-item">
+                <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+            </a>
+        </nav>
+    </aside>
+
+    <main class="main-dashboard">
+        <header class="admin-header">
+            <div class="header-left">
+                <h2>Barangay 663 - Zone 71</h2>
+            </div>
+            <div class="header-right">
+                <span class="admin-label">Admin</span>
+                <i class="fas fa-user-circle profile-icon"></i>
+            </div>
+        </header>
+
+        <div class="announcements-container">
+            <div class="page-actions">
+                <button class="add-event-btn" id="addEventBtn">
+                    <i class="fas fa-plus"></i> Add New Event
+                </button>
+            </div>
+
+            <div class="announcement-group">
+                <h1 class="group-title">On-Going:</h1>
+                <div id="ongoingEventsList" class="events-grid-container"></div>
+            </div>
+
+            <hr style="border: 1px solid #eee; width: 100%; margin: 20px 0;">
+
+            <div class="announcement-group">
+                <h1 class="group-title">Upcoming:</h1>
+                <div id="upcomingEventsList" class="events-grid-container"></div>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal-overlay" id="eventModal">
+        <div class="event-form-modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Create New Announcement</h3>
+                <i class="fas fa-times close-modal" id="closeEventModal"></i>
+            </div>
+            <form id="addEventForm">
+                <input type="hidden" id="editEventId" value="">
+                
+                <div class="form-group">
+                    <label>Event Title</label>
+                    <input type="text" id="eventTitle" placeholder="Enter event name..." required>
+                </div>
+
+                <div class="form-group">
+                    <label>Event Details</label>
+                    <textarea id="eventDetails" placeholder="Enter brief details about the event..." rows="3" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="eventType" required>
+                        <option value="ongoing">On-Going</option>
+                        <option value="upcoming" selected>Upcoming</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Event Date</label>
+                    <input type="date" id="eventDate" required>
+                </div>
+
+                <div class="form-group photo-upload-group">
+                    <label style="font-weight: bold; font-size: 0.85rem;">EVENT PHOTO (OPTIONAL)</label>
+                    <div class="photo-upload-wrapper">
+                        <div id="eventPhotoPreview" class="photo-preview-container">
+                            <i class="fas fa-image default-photo-icon"></i>
+                            <img src="" alt="Preview" id="loadedPhoto" style="display:none; width:100%; height:100%; object-fit:cover;">
+                        </div>
+                        <button type="button" id="uploadPhotoBtn" class="upload-photo-btn">Upload Photo</button>
+                        <input type="file" id="eventPhotoInput" accept="image/*" style="display:none">
+                    </div>
+                </div>
+                <button type="submit" class="submit-event-btn">Save Announcement</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/admin-dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery | Barangay 663</title>
+    <link rel="stylesheet" href="../css/home.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Temporarily disable scroll-snapping so the JavaScript auto-scroll is perfectly smooth */
+        #autoPhotos {
+            scroll-snap-type: none !important;
+        }
+        #autoPhotos .gallery-item {
+            scroll-snap-align: none !important;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo-container">
+        <img src="../logo.png" alt="Barangay 663 Logo" class="header-logo">
+        <div class="logo-text">BARANGAY 663</div>
+    </div>
+    
+    <div class="menu-toggle" id="mobile-menu">
+        <i class="fas fa-bars"></i>
+    </div>
+
+    <nav>
+        <ul>
+            <li><a href="home.html">HOME</a></li>
+            <li><a href="about.html">ABOUT</a></li>
+            <li><a href="resident-announcements.html">ANNOUNCEMENTS</a></li>
+            <li><a href="resident-services.html">SERVICES</a></li>
+            <li><a href="resident-gallery.html" class="active-link">GALLERY</a></li>
+            <li><a href="resident-officials.html">OFFICIALS</a></li>
+            <li><a href="login.html" class="admin-btn">ADMIN LOGIN</a></li>
+        </ul>
+    </nav>
+</header>
+
+<main style="margin-top: 90px;">
+    <div class="banner-overlay">
+        <h1>Barangay Gallery</h1>
+        <p style="color: #000000; font-weight: 600;">Capturing the community life and official activities of Barangay 663.</p>
+    </div>
+
+    <section class="gallery-section">
+        <div class="gallery-wrapper">
+            <div class="gallery-scroll-container" id="autoPhotos">
+                <div class="gallery-item"><img src="../tanod.jpg" alt="Gallery 1"></div>
+                <div class="gallery-item"><img src="../tanod2.jpg" alt="Gallery 2"></div>
+                <div class="gallery-item"><img src="../tanod3.jpg" alt="Gallery 3"></div>
+                <div class="gallery-item"><img src="../tanod.jpg" alt="Gallery 4"></div>
+                <div class="gallery-item"><img src="../tanod2.jpg" alt="Gallery 5"></div>
+                <div class="gallery-item"><img src="../tanod3.jpg" alt="Gallery 6"></div>
+            </div>
+        </div>
+        <p class="scroll-hint">
+            <i class="fas fa-mouse-pointer"></i> Hover over the images to pause scrolling
+        </p>
+    </section>
+</main>
+
+<footer>
+    <div class="footer-cols">
+        <div class="footer-brand">
+            <div class="footer-logo-container">
+                <img src="../logo.png" alt="Barangay 663 Logo" class="footer-logo">
+                <h4 style="color:white; margin-left: 10px; display: inline-block; vertical-align: middle;">Barangay 663</h4>
+            </div>
+        </div>
+        <div class="footer-info">
+            <h4>Emergency</h4>
+            <p><i class="fas fa-phone"></i> 911 | 123-4567</p>
+        </div>
+        <div class="footer-info">
+            <h4>Address</h4>
+            <p><i class="fas fa-map-marker-alt"></i> 663, Zone 71 - District 5, Ermita, Manila</p>
+        </div>
+    </div>
+    <div class="footer-bottom">&copy; 2026 Barangay 663. All Rights Reserved.</div>
+</footer>
+
+<script src="../js/home.js"></script>
+</body>
+</html>

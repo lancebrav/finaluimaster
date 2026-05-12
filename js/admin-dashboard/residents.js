@@ -216,6 +216,38 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const columnSelectorToggle = document.getElementById('columnSelectorToggle');
+    const columnSelectorDropdown = document.getElementById('columnSelectorDropdown');
+    const columnSelectorMenu = document.getElementById('columnSelectorMenu');
+
+    if (columnSelectorToggle && columnSelectorDropdown && columnSelectorMenu) {
+        columnSelectorToggle.addEventListener('click', () => {
+            columnSelectorDropdown.classList.toggle('open');
+        });
+
+        columnSelectorMenu.addEventListener('change', () => {
+            const selected = Array.from(columnSelectorMenu.querySelectorAll('input[type="checkbox"]:checked'))
+                .map(input => input.value);
+            window.selectedColumns = selected;
+            const count = selected.length;
+            columnSelectorToggle.textContent = count ? `${count} columns` : 'Select columns';
+            window.currentPage = 1;
+            window.loadAndRenderResidents();
+        });
+
+        window.addEventListener('click', (e) => {
+            if (!columnSelectorDropdown.contains(e.target)) {
+                columnSelectorDropdown.classList.remove('open');
+            }
+        });
+
+        window.updateColumnSelectorLabel = function() {
+            const count = window.selectedColumns.length;
+            columnSelectorToggle.textContent = count ? `${count} columns` : 'Select columns';
+        };
+    }
+
+
     if (document.querySelector('#residentTable tbody')) {
         window.loadAndRenderResidents();
     }
@@ -276,6 +308,27 @@ window.rowsPerPage = 8;
 window.cachedResidents = [];
 window.filteredResidentsTotal = 0;
 window.residentFilters = { field: '', values: [], ageMin: '', ageMax: '' };
+window.selectedColumns = ['fullName', 'houseNum', 'streetName', 'birthday', 'gender', 'age', 'status'];
+
+window.getColumnLabel = function(col) {
+    const labels = {
+        'fullName': 'Full Name',
+        'houseNum': 'House No.',
+        'streetName': 'Street Name',
+        'placeOfBirth': 'Place of Birth',
+        'birthday': 'Date of Birth',
+        'gender': 'Sex',
+        'civilStatus': 'Civil Status',
+        'citizenship': 'Citizenship',
+        'occupation': 'Occupation',
+        'houseHeadRelationship': 'House Head Relationship',
+        'age': 'Age',
+        'status': 'Status',
+        'voterStatus': 'Voter Status',
+        'address': 'Address'
+    };
+    return labels[col] || col;
+};
 
 window.getResidentFieldValue = function(res, field) {
     switch (field) {
@@ -303,9 +356,53 @@ window.getResidentFieldValue = function(res, field) {
             return res.is_archived == 1 ? 'Archived' : 'Active';
         case 'address':
             return res.address || '';
+        case 'birthday':
+            return res.birthday || '';
+        case 'age':
+            return res.birthday ? window.calculateAge(res.birthday) : 'N/A';
         default:
             return res[field] || '';
     }
+};
+
+window.buildResidentRowHTML = function(res) {
+    const cols = window.selectedColumns || ['fullName', 'houseNum', 'streetName', 'birthday', 'gender', 'age', 'status'];
+    let html = '';
+    
+    cols.forEach(col => {
+        const value = window.getResidentFieldValue(res, col);
+        if (col === 'voterStatus') {
+            html += `<td style="font-weight:600; color:${value === 'Registered' ? '#27ae60' : '#e74c3c'}">${value}</td>`;
+        } else {
+            html += `<td>${value}</td>`;
+        }
+    });
+    
+    // Always add Actions column
+    html += `<td class="action-icons">
+        <i class="fas fa-pencil-alt edit-icon" onclick="editResident(${res.resident_id})" title="Edit"></i>
+        <i class="fas fa-archive archive-icon" onclick="archiveResident(${res.resident_id})" title="Archive"></i>
+        <i class="fas fa-trash-alt delete-icon" onclick="deleteResident(${res.resident_id})" title="Delete"></i>
+    </td>`;
+    
+    return html;
+};
+
+window.updateTableHeader = function() {
+    const thead = document.querySelector('#residentTable thead tr');
+    if (!thead) return;
+    
+    const cols = window.selectedColumns || ['fullName', 'houseNum', 'streetName', 'birthday', 'gender', 'age', 'status'];
+    let html = '';
+    
+    cols.forEach(col => {
+        html += `<th>${window.getColumnLabel(col)}</th>`;
+    });
+    
+    // Always add Actions column header
+    html += '<th>Actions</th>';
+    
+    thead.innerHTML = html;
 };
 
 window.updateFilterToggleLabel = function() {
@@ -417,6 +514,9 @@ window.loadAndRenderResidents = function() {
 
         window.filteredResidentsTotal = residents.length;
 
+        // Update table header
+        window.updateTableHeader();
+
         tbody.innerHTML = '';
         const start = (window.currentPage - 1) * window.rowsPerPage;
         const end = start + window.rowsPerPage;
@@ -424,61 +524,7 @@ window.loadAndRenderResidents = function() {
 
         paginatedItems.forEach(res => {
             const row = document.createElement('tr');
-            const displayAge = res.birthday ? window.calculateAge(res.birthday) : 'N/A';
-
-            if (isAdminLayout) {
-                row.innerHTML = `
-                <td>${res.fullName || 'Unnamed'}</td>
-                <td>${res.houseNum || 'N/A'}</td>
-                <td>${res.streetName || 'N/A'}</td>
-                <td>${res.placeOfBirth || 'N/A'}</td>
-                <td>${res.birthday || 'N/A'}</td>
-                <td>${res.gender || 'N/A'}</td>
-                <td>${res.civilStatus || 'N/A'}</td>
-                <td>${res.citizenship || 'Filipino'}</td>
-                <td>${res.occupation || 'N/A'}</td>
-                <td>${res.houseHeadRelationship || 'N/A'}</td>
-                <td>${displayAge}</td>
-                <td>${res.is_archived == 1 ? 'Archived' : 'Active'}</td>
-                <td style="font-weight:600; color:${res.voterStatus === 'Registered' ? '#27ae60' : '#e74c3c'}">${res.voterStatus || 'N/A'}</td>
-                <td>${res.address || 'N/A'}</td>
-                <td class="action-icons">
-                    <i class="fas fa-pencil-alt edit-icon" onclick="editResident(${res.resident_id})" title="Edit"></i>
-                    <i class="fas fa-archive archive-icon" onclick="archiveResident(${res.resident_id})" title="Archive"></i>
-                    <i class="fas fa-trash-alt delete-icon" onclick="deleteResident(${res.resident_id})" title="Delete"></i>
-                </td>`;
-            } else {
-                const profileDisplay = res.photo
-                    ? `<img src="${res.photo}" style="width:35px; height:35px; border-radius:50%; object-fit:cover;">`
-                    : `<div class="profile-pic pic-blue">${res.firstName?.charAt(0)}${res.lastName?.charAt(0)}</div>`;
-                row.innerHTML = `
-                <td>${res.resident_id || 'N/A'}</td>
-                <td class="name-cell">
-                    ${profileDisplay}
-                    <span>${res.fullName || 'Unnamed'}</span>
-                </td>
-                <td>${res.birthday || 'N/A'}</td>
-                <td>${res.gender || 'N/A'}</td>
-                <td>${res.houseNum || 'N/A'}</td>
-                <td>${res.streetName || 'N/A'}</td>
-                <td>${res.address || 'N/A'}</td>
-                <td>${res.placeOfBirth || 'N/A'}</td>
-                <td>${res.civilStatus || 'N/A'}</td>
-                <td style="font-weight:600; color:${res.voterStatus === 'Registered' ? '#27ae60' : '#e74c3c'}">${res.voterStatus || 'N/A'}</td>
-                <td>${res.citizenship || 'Filipino'}</td>
-                <td>${res.occupation || 'N/A'}</td>
-                <td>${res.houseHeadRelationship || 'N/A'}</td>
-                <td>${res.is_archived == 1 ? 'Yes' : 'No'}</td>
-                <td>${res.archived_date ? new Date(res.archived_date).toLocaleDateString() : 'N/A'}</td>
-                <td>${res.created_at ? new Date(res.created_at).toLocaleDateString() : 'N/A'}</td>
-                <td>${res.updated_at ? new Date(res.updated_at).toLocaleDateString() : 'N/A'}</td>
-                <td class="action-icons">
-                    <i class="fas fa-pencil-alt edit-icon" onclick="editResident(${res.resident_id})" title="Edit"></i>
-                    <i class="fas fa-archive archive-icon" onclick="archiveResident(${res.resident_id})" title="Archive"></i>
-                    <i class="fas fa-trash-alt delete-icon" onclick="deleteResident(${res.resident_id})" title="Delete"></i>
-                </td>`;
-            }
-
+            row.innerHTML = window.buildResidentRowHTML(res);
             tbody.appendChild(row);
         });
     });
@@ -495,33 +541,12 @@ window.exportResidentsToExcel = function() {
             return;
         }
 
-        const headers = [
-            'Last Name', 'First Name', 'Middle Name', 'Suffix',
-            'House No.', 'Street Name', 'Address',
-            'Place of Birth', 'Date of Birth', 'Age',
-            'Sex', 'Civil Status', 'Citizenship',
-            'Occupation', 'House Head Relationship',
-            'Voter Status'
-        ];
+        const selectedCols = window.selectedColumns || ['fullName', 'houseNum', 'streetName', 'birthday', 'gender', 'age', 'status'];
+        const headers = selectedCols.map(col => window.getColumnLabel(col));
 
-        const rows = residents.map(res => [
-            res.lastName || '',
-            res.firstName || '',
-            res.middleName || '',
-            res.suffix || '',
-            res.houseNum || '',
-            res.streetName || '',
-            res.address || '',
-            res.placeOfBirth || '',
-            res.birthday || '',
-            res.birthday ? window.calculateAge(res.birthday) : (res.age || ''),
-            res.gender || '',
-            res.civilStatus || '',
-            res.citizenship || 'Filipino',
-            res.occupation || '',
-            res.houseHeadRelationship || '',
-            res.voterStatus || ''
-        ]);
+        const rows = residents.map(res => {
+            return selectedCols.map(col => window.getResidentFieldValue(res, col));
+        });
 
         const wsData = [headers, ...rows];
         const ws = XLSX.utils.aoa_to_sheet(wsData);

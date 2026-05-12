@@ -73,4 +73,9 @@ All communicate via JSON POST requests:
 ## System Testing
 `http://localhost/finaluimaster/php/status.php`
 
+#
 
+http://localhost/finaluimaster/php/hash.php
+
+
+UPDATE admin_users SET password = 'ctrl v the hash' WHERE user_id = 1;

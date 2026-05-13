@@ -149,10 +149,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 residentFirstName: allTextInputsList[0].value,
                 residentMiddleName: allTextInputsList[1].value,
                 residentLastName: allTextInputsList[2].value,
+                residentSuffix: allTextInputsList[3].value,
                 residentGender: allDropdownMenusList[0].value,
+                residentNationality: allTextInputsList[4].value,
+                residentCivilStatus: allDropdownMenusList[1].value,
                 residentBirthDate: birthDateInput.value,
+                residentPlaceOfBirth: allTextInputsList[5].value,
                 residentEmailAddress: emailAddressInput.value,
                 residentContactNumber: contactNumberInput.value,
+                residentVoterStatus: allDropdownMenusList[2].value,
+                residentPrecinctNumber: allTextInputsList[6].value,
                 residentFullAddress: `${allTextInputsList[7].value} ${allDropdownMenusList[3].value}, Barangay 663, Manila`,
                 residentPurposeOfRequest: purposeOfRequestInput.value
             };

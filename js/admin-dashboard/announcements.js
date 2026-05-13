@@ -1,4 +1,68 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Function to update event statuses based on date
+    window.updateEventStatuses = function() {
+        let events = JSON.parse(localStorage.getItem('brgyEvents')) || [];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        events.forEach(event => {
+            if (event.type === 'upcoming' && event.date) {
+                const eventDate = new Date(event.date);
+                if (eventDate <= today) {
+                    event.type = 'ongoing';
+                }
+            }
+        });
+
+        localStorage.setItem('brgyEvents', JSON.stringify(events));
+    };
+
+    // Function to generate birthday announcements
+    window.generateBirthdayAnnouncements = function() {
+        const officers = JSON.parse(localStorage.getItem('brgyOfficers')) || [];
+        let events = JSON.parse(localStorage.getItem('brgyEvents')) || [];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        officers.forEach(officer => {
+            if (officer.birthday) {
+                const birthDate = new Date(officer.birthday);
+                const currentYear = today.getFullYear();
+                const nextBirthday = new Date(currentYear, birthDate.getMonth(), birthDate.getDate());
+
+                if (nextBirthday < today) {
+                    nextBirthday.setFullYear(currentYear + 1);
+                }
+
+                const daysUntil = Math.ceil((nextBirthday - today) / (1000 * 60 * 60 * 24));
+
+                if (daysUntil <= 10 && daysUntil >= 0) {
+                    const bdayId = `bday-${officer.id}`;
+                    const existing = events.find(e => e.id == bdayId);
+
+                    if (!existing) {
+                        events.push({
+                            id: bdayId,
+                            title: `🎉 Happy Birthday ${officer.name}!`,
+                            details: `Celebrating ${officer.position} on their special day. Join us in wishing them well!`,
+                            type: 'upcoming',
+                            date: nextBirthday.toISOString().split('T')[0],
+                            photo: officer.photo || '',
+                            isBirthday: true,
+                            visibility: 'admin'
+                        });
+                    }
+                }
+            }
+        });
+
+        localStorage.setItem('brgyEvents', JSON.stringify(events));
+    };
+
+    // Call updates on load
+    updateEventStatuses();
+    generateBirthdayAnnouncements();
+
     // 1. Unified Display Function
     window.displayEvents = function() {
         const events = JSON.parse(localStorage.getItem('brgyEvents')) || [];
@@ -11,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function createEventCard(event) {
             const card = document.createElement('div');
-            card.className = 'event-card';
+            card.className = event.isBirthday ? 'event-card birthday-card' : 'event-card';
 
             const photoSrc = event.photo ? event.photo : 'https://via.placeholder.com/400x200?text=No+Photo';
             
@@ -35,32 +99,33 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="event-actions">
                         <div class="view-details" style="visibility:hidden;"></div>
                         <div class="card-icons">
-                            <i class="fas fa-pencil-alt edit-icon" title="Edit"></i>
-                            <i class="fas fa-trash-alt delete-icon" title="Delete"></i>
+                            ${event.isBirthday ? '' : '<i class="fas fa-pencil-alt edit-icon" title="Edit"></i>'}
+                            ${event.isBirthday ? '' : '<i class="fas fa-trash-alt delete-icon" title="Delete"></i>'}
                         </div>
                     </div>
                 </div>
             `;
 
-            // Delete Event Listener
-            const deleteBtn = card.querySelector('.delete-icon');
-            deleteBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent card triggers if any
-                if (confirm(`Are you sure you want to delete "${event.title}"?`)) {
-                    let currentEvents = JSON.parse(localStorage.getItem('brgyEvents')) || [];
-                    currentEvents = currentEvents.filter(ev => ev.id !== event.id);
-                    localStorage.setItem('brgyEvents', JSON.stringify(currentEvents));
-                    displayEvents(); // Dynamically reload lists
-                }
-            });
-
-            // Edit Event Listener
-            const editBtn = card.querySelector('.edit-icon');
-            if (editBtn) {
-                editBtn.addEventListener('click', (e) => {
+            // Only add edit/delete if not birthday
+            if (!event.isBirthday) {
+                const deleteBtn = card.querySelector('.delete-icon');
+                deleteBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    window.editEvent(event.id);
+                    if (confirm(`Are you sure you want to delete "${event.title}"?`)) {
+                        let currentEvents = JSON.parse(localStorage.getItem('brgyEvents')) || [];
+                        currentEvents = currentEvents.filter(ev => ev.id !== event.id);
+                        localStorage.setItem('brgyEvents', JSON.stringify(currentEvents));
+                        displayEvents();
+                    }
                 });
+
+                const editBtn = card.querySelector('.edit-icon');
+                if (editBtn) {
+                    editBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        window.editEvent(event.id);
+                    });
+                }
             }
 
             return card;
@@ -131,7 +196,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const title = document.getElementById('eventTitle').value;
             const details = document.getElementById('eventDetails').value;
             const type = document.getElementById('eventType').value;
+            const visibility = document.getElementById('eventVisibility').value;
             const date = document.getElementById('eventDate').value;
+
+            // Date validation
+            if (type === 'upcoming' && date) {
+                const selectedDate = new Date(date);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                if (selectedDate < today) {
+                    alert('Upcoming events cannot be set to a past date.');
+                    return;
+                }
+            }
 
             let photoBase64 = "";
 
@@ -148,13 +225,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (editId) {
                 const index = events.findIndex(ev => ev.id == editId);
                 if (index !== -1) {
-                    events[index] = { ...events[index], title, details, type, date, photo: photoBase64 };
+                    events[index] = { ...events[index], title, details, type, visibility, date, photo: photoBase64 };
                 }
             } else {
-                events.push({ id: Date.now(), title, details, type, date, photo: photoBase64 });
+                events.push({ id: Date.now(), title, details, type, visibility, date, photo: photoBase64 });
             }
 
             localStorage.setItem('brgyEvents', JSON.stringify(events));
+
+            // Update statuses automatically
+            updateEventStatuses();
 
             // Clean up state
             eventForm.reset();
@@ -188,6 +268,7 @@ window.editEvent = function(id) {
         document.getElementById('eventTitle').value = ev.title || '';
         document.getElementById('eventDetails').value = ev.details || '';
         document.getElementById('eventType').value = ev.type || 'upcoming';
+        document.getElementById('eventVisibility').value = ev.visibility || 'both';
         document.getElementById('eventDate').value = ev.date || '';
 
         const loadedPhoto = document.getElementById('loadedPhoto');

@@ -6,10 +6,7 @@
     --orange: #F77F00;
     --white: #ffffff;
     --apple-red: #ff4d4d;
-
-    /* New variable for the dark blue overlay tint */
     --prussian-blue-90: rgba(7, 14, 80, 0.90);
-    
     --shadow: 0 4px 15px rgba(0,0,0,0.1);
     --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
@@ -168,7 +165,7 @@ nav ul li a:hover { color: var(--orange); }
 
 .announcement-grid { 
     display: grid; 
-    grid-template-columns: repeat(3, 1fr); /* This strictly forces 3 equal columns */
+    grid-template-columns: repeat(3, 1fr); 
     gap: 30px; 
 }
 
@@ -176,7 +173,7 @@ nav ul li a:hover { color: var(--orange); }
     background: var(--white); border-radius: 12px; overflow: hidden; 
     box-shadow: var(--shadow); transition: var(--transition); 
     display: flex; flex-direction: column; border: 1px solid rgba(0,0,0,0.05);
-    cursor: pointer; /* Indicates card interactivity */
+    cursor: pointer; 
 }
 
 .news-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
@@ -265,72 +262,45 @@ footer { background: var(--prussian-blue); color: white; padding: 30px 10% 15px;
 .footer-logo-container { display: flex; align-items: center; gap: 15px; }
 
 /* ==========================================================================
-   8. RESPONSIVENESS (Mobile Updates Included)
+   8. RESPONSIVENESS
    ========================================================================== */
-
-/* Mobile Menu Toggle Style */
 .menu-toggle {
-    display: none;
-    font-size: 1.8rem;
-    color: var(--white);
-    cursor: pointer;
-    z-index: 1001;
-    transition: var(--transition);
+    display: none; font-size: 1.8rem; color: var(--white);
+    cursor: pointer; z-index: 1001; transition: var(--transition);
 }
-
 .menu-toggle:hover { color: var(--orange); }
 
-/* Tablet & Smaller Laptops */
 @media (max-width: 992px) {
     header { padding: 10px 5%; }
     .menu-toggle { display: block; }
-    
-    /* Sliding Mobile Navigation */
     nav {
-        position: absolute;
-        top: 90px;
-        left: -100%;
-        width: 100%;
-        background: var(--prussian-blue-90);
-        backdrop-filter: blur(8px);
-        transition: var(--transition);
-        box-shadow: 0 10px 15px rgba(0,0,0,0.2);
+        position: absolute; top: 90px; left: -100%; width: 100%;
+        background: var(--prussian-blue-90); backdrop-filter: blur(8px);
+        transition: var(--transition); box-shadow: 0 10px 15px rgba(0,0,0,0.2);
     }
-
     nav.active { left: 0; }
     nav ul { flex-direction: column; padding: 40px 0; gap: 25px; }
     nav ul li a { font-size: 1.1rem; }
-
-    /* Hero Layout Adjustments */
     .hero-content { flex-direction: column; text-align: center; padding-top: 120px; }
     .main-portal-seal { max-width: 280px; height: 280px; border-width: 5px; }
     .hero-text-side h1 { font-size: 2.8rem; }
 }
 
-/* Mobile Phones */
 @media (max-width: 768px) {
     section { padding: 60px 5%; }
     .mission-vision-container, .announcement-grid { grid-template-columns: 1fr; }
-    .about-hero h1 { font-size: 2.2rem; }
-    .hero-text-side h1 { font-size: 2.2rem; }
+    .about-hero h1, .hero-text-side h1 { font-size: 2.2rem; }
     .hero-text-side p { font-size: 1rem; margin: 0 auto 30px; }
-    
-    /* Adjust Footer for Mobile */
     .footer-cols { flex-direction: column; text-align: center; align-items: center; }
     .footer-logo-container { justify-content: center; }
-    
-    /* Adjust Official Cards */
     .official-card { width: 160px; }
     .official-photo { width: 100px; height: 100px; }
     .top-tier .official-card { width: 100%; max-width: 260px; }
-
-    /* MODAL MOBILE FALLBACK FOR THE 4-COLUMN GRID */
     .form-grid { grid-template-columns: 1fr !important; gap: 15px !important; }
     .form-grid .input-group[style] { grid-column: span 1 !important; }
     .modal-content { padding: 25px 20px; }
 }
 
-/* Small Mobile Phones */
 @media (max-width: 480px) {
     .logo-text { font-size: 1rem; }
     .header-logo { width: 45px !important; height: 45px !important; }
@@ -341,7 +311,86 @@ footer { background: var(--prussian-blue); color: white; padding: 30px 10% 15px;
 }
 
 /* ==========================================================================
-   9. ANNOUNCEMENT DETAILS MODAL (ABSOLUTE CONTAINMENT SCROLL)
+   9A. RESTORED: SERVICES PAGE DOCUMENT REQUEST MODAL
+   ========================================================================== */
+.modal {
+    display: none; position: fixed; z-index: 2000; left: 0; top: 0; 
+    width: 100%; height: 100%; background-color: rgba(7, 14, 80, 0.8); 
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background-color: #ffffff; 
+    margin: 5vh auto; 
+    padding: 40px 50px; 
+    border-radius: 12px;
+    width: 90%; 
+    max-width: 900px; 
+    max-height: 85vh; 
+    overflow-y: auto; 
+    position: relative; 
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+}
+
+.close-btn {
+    position: sticky; top: 0; float: right; font-size: 28px;
+    font-weight: bold; cursor: pointer; color: var(--prussian-blue); z-index: 10;
+}
+
+#modalHeader { color: #2d5a27; margin-bottom: 5px; font-size: 1.8rem; font-weight: 800; }
+.form-instruction { font-size: 0.85rem; color: #666; margin-bottom: 20px; }
+
+.form-section-title {
+    background-color: #f4f6f9; 
+    color: var(--prussian-blue); 
+    padding: 12px 15px;
+    margin: 30px 0 20px 0;
+    border-left: 4px solid var(--orange); 
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.form-grid {
+    display: grid; 
+    grid-template-columns: repeat(4, 1fr); 
+    gap: 20px 25px; 
+    margin-bottom: 25px;
+}
+
+.input-group { display: flex; flex-direction: column; margin-bottom: 0; }
+.input-group label { font-size: 0.85rem; font-weight: 700; margin-bottom: 8px; color: #333; }
+
+.input-group input, .input-group select, .input-group textarea {
+    padding: 12px 15px; 
+    border: 1px solid #ccc; 
+    border-radius: 5px;
+    font-size: 0.9rem; 
+    transition: border 0.3s;
+    width: 100%;
+}
+
+.input-group input:focus, .input-group select:focus, .input-group textarea:focus { 
+    border-color: #4CAF50; outline: none; 
+}
+
+.upload-area {
+    border: 2px dashed #bbb; padding: 30px; text-align: center;
+    border-radius: 10px; background: white; cursor: pointer; transition: 0.3s;
+}
+
+.upload-area:hover { background: #f0f8f0; border-color: #4CAF50; }
+.upload-area i { font-size: 2rem; color: #4CAF50; margin-bottom: 10px; }
+
+.submit-full {
+    background: #2d5a27 !important; margin-top: 20px; font-size: 1.1rem;
+    padding: 18px !important; letter-spacing: 1px; width: 100%; cursor: pointer;
+    color: white; border: none; border-radius: 5px;
+}
+
+/* ==========================================================================
+   9B. NEW: ANNOUNCEMENT DETAILS MODAL (CENTERED CONTAINMENT SCROLL)
    ========================================================================== */
 .modal-overlay {
     display: none;
@@ -351,15 +400,13 @@ footer { background: var(--prussian-blue); color: white; padding: 30px 10% 15px;
     background: rgba(0, 0, 0, 0.6);
     z-index: 2000;
     
-    /* 1. USE FLEXBOX ON THE OVERLAY TO FORCE CENTERING */
-    display: flex; 
-    justify-content: center; /* Centers horizontally */
-    align-items: center;     /* Centers vertically */
+    /* Flexbox overlay locks container to the dead center */
+    justify-content: center; 
+    align-items: center;     
     
     backdrop-filter: blur(5px);
 }
 
-/* When active, ensure it displays as a flex container */
 .modal-overlay.active {
     display: flex !important; 
 }
@@ -369,18 +416,14 @@ footer { background: var(--prussian-blue); color: white; padding: 30px 10% 15px;
     width: 90%;
     max-width: 600px;
     
-    /* 2. REMOVE ABSOLUTE POSITIONING */
-    /* Since the parent overlay is centering this item, we don't need top/left/transform */
+    /* Auto layout safety for flex children */
     position: relative; 
-    margin: auto; /* Fallback centering safety */
+    margin: auto; 
     
-    /* 3. STRICT PIXEL BOUNDARIES */
     height: 550px; 
     max-height: 85vh; 
-    
     border-radius: 12px;
     
-    /* 4. STRICT OVERFLOW RULES */
     overflow-y: auto !important; 
     overflow-x: hidden !important;
     
@@ -388,19 +431,16 @@ footer { background: var(--prussian-blue); color: white; padding: 30px 10% 15px;
     display: block; 
 }
 
-/* Custom internal container scrollbar mapping */
 .detail-modal::-webkit-scrollbar { width: 6px; }
 .detail-modal::-webkit-scrollbar-track { background: #f1f1f1; }
 .detail-modal::-webkit-scrollbar-thumb { background: rgba(7, 14, 80, 0.2); border-radius: 10px; }
 .detail-modal::-webkit-scrollbar-thumb:hover { background: rgba(7, 14, 80, 0.5); }
 
 .modal-close {
-    /* STICKY BEHAVIOR: Prevents the button from sliding off the screen edge */
     position: sticky;
     top: 15px; 
     float: right;
     margin-right: 15px;
-    
     background: rgba(0,0,0,0.5);
     color: white;
     border: none;
@@ -418,91 +458,36 @@ footer { background: var(--prussian-blue); color: white; padding: 30px 10% 15px;
 .modal-close:hover { background: #d9534f; }
 
 .modal-cover-img {
-    width: 100%;
-    height: 200px; 
-    object-fit: cover;
-    display: block;
-    background-color: #f0f0f0; 
-    
-    /* Clear float and adjust mapping alignment to sit under the sticky button smoothly */
-    clear: both; 
-    margin-top: -50px; 
+    width: 100%; height: 200px; object-fit: cover; display: block;
+    background-color: #f0f0f0; clear: both; margin-top: -50px; 
 }
 
-.modal-body {
-    padding: 25px;
-    height: auto; 
-    overflow: visible; 
-}
+.modal-body { padding: 25px; height: auto; overflow: visible; }
 
-/* Announcement Meta Content Styles */
 .modal-tag {
-    display: inline-block;
-    background: var(--orange);
-    color: white;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    text-transform: uppercase;
-    margin-bottom: 10px;
+    display: inline-block; background: var(--orange); color: white;
+    padding: 4px 12px; border-radius: 20px; font-size: 0.8rem;
+    font-weight: bold; text-transform: uppercase; margin-bottom: 10px;
 }
 
-.modal-title {
-    color: var(--prussian-blue);
-    font-size: 1.6rem;
-    margin-bottom: 15px;
-    line-height: 1.3;
-}
+.modal-title { color: var(--prussian-blue); font-size: 1.6rem; margin-bottom: 15px; line-height: 1.3; }
 
 .modal-meta-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    border-left: 4px solid var(--prussian-blue);
+    display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
+    background: #f8f9fa; padding: 15px; border-radius: 8px;
+    margin-bottom: 20px; border-left: 4px solid var(--prussian-blue);
 }
 
-.meta-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 0.95rem;
-    color: #444;
-}
-
-.meta-item i {
-    color: var(--prussian-blue);
-    font-size: 1.1rem;
-}
-
-.modal-desc-label {
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 8px;
-    font-size: 1rem;
-}
-
-.modal-desc {
-    color: #555;
-    line-height: 1.6;
-    font-size: 0.95rem;
-    white-space: pre-wrap; 
-}
+.meta-item { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; color: #444; }
+.meta-item i { color: var(--prussian-blue); font-size: 1.1rem; }
+.modal-desc-label { font-weight: bold; color: #333; margin-bottom: 8px; font-size: 1rem; }
+.modal-desc { color: #555; line-height: 1.6; font-size: 0.95rem; white-space: pre-wrap; }
 
 /* ==========================================================================
    10. OFFICIALS PAGE LAYOUT (COMPACT 2x2 STYLE)
    ========================================================================== */
 .officials-main { margin-top: 80px; padding-bottom: 80px; }
-
-.org-chart-container {
-    max-width: 1200px; margin: 0 auto;
-    display: flex; flex-direction: column; gap: 40px; padding: 20px;
-}
-
+.org-chart-container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; padding: 20px; }
 .tier { display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; }
 
 .official-card {
@@ -513,18 +498,14 @@ footer { background: var(--prussian-blue); color: white; padding: 30px 10% 15px;
 }
 
 .official-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
-
-/* Top Tier - Chairman Special Style */
 .top-tier .official-card { width: 260px; border-bottom: 4px solid var(--orange); }
 
-/* 2x2 Photo Style */
 .official-photo {
     width: 120px; height: 120px; object-fit: cover; border-radius: 4px; 
     margin-bottom: 15px; border: 2px solid #f0f0f0; background-color: #eee; display: block;
 }
 
 .top-tier .official-photo { width: 150px; height: 150px; }
-
 .official-card h4 { color: var(--prussian-blue); margin-bottom: 5px; font-size: 1rem; font-weight: 700; line-height: 1.2; }
 .official-card p { color: var(--orange); font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
 
@@ -533,10 +514,8 @@ footer { background: var(--prussian-blue); color: white; padding: 30px 10% 15px;
     text-transform: uppercase; letter-spacing: 3px; margin-top: 20px; margin-bottom: -10px;
 }
 
-/* Navigation Active State */
 nav ul li a.active-link { color: var(--orange) !important; border-bottom: 2px solid var(--orange); padding-bottom: 5px; }
 
-/* Banner Overlay Style */
 .banner-overlay {
     background: linear-gradient(rgba(253, 226, 94, 0.683), rgba(217, 224, 77, 0.696)), url('../brgy.jpg');
     background-size: cover; background-position: center; color: white;
@@ -557,7 +536,6 @@ nav ul li a.active-link { color: var(--orange) !important; border-bottom: 2px so
     scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; 
 }
 
-/* Custom Scrollbar for the Gallery */
 .gallery-scroll-container::-webkit-scrollbar { height: 8px; }
 .gallery-scroll-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
 .gallery-scroll-container::-webkit-scrollbar-thumb { background: var(--orange); border-radius: 10px; }

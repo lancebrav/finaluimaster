@@ -367,7 +367,7 @@ window.getResidentFieldValue = function(res, field) {
 
 window.buildResidentRowHTML = function(res) {
     const cols = window.selectedColumns || ['fullName', 'houseNum', 'streetName', 'birthday', 'gender', 'age', 'status'];
-    let html = '';
+    let html = `<td><input type="checkbox" class="resident-checkbox" data-id="${res.resident_id}"></td>`;
     
     cols.forEach(col => {
         const value = window.getResidentFieldValue(res, col);
@@ -393,7 +393,7 @@ window.updateTableHeader = function() {
     if (!thead) return;
     
     const cols = window.selectedColumns || ['fullName', 'houseNum', 'streetName', 'birthday', 'gender', 'age', 'status'];
-    let html = '';
+    let html = '<th><input type="checkbox" id="selectAllResidents"></th>';
     
     cols.forEach(col => {
         html += `<th>${window.getColumnLabel(col)}</th>`;
@@ -403,6 +403,15 @@ window.updateTableHeader = function() {
     html += '<th>Actions</th>';
     
     thead.innerHTML = html;
+
+    // Add select all functionality
+    const selectAll = document.getElementById('selectAllResidents');
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('#residentTable tbody .resident-checkbox');
+            checkboxes.forEach(cb => cb.checked = this.checked);
+        });
+    }
 };
 
 window.updateFilterToggleLabel = function() {
@@ -513,6 +522,7 @@ window.loadAndRenderResidents = function() {
         }
 
         window.filteredResidentsTotal = residents.length;
+        window.filteredResidents = residents; // Store filtered residents for export
 
         // Update table header
         window.updateTableHeader();
@@ -531,52 +541,60 @@ window.loadAndRenderResidents = function() {
 };
 
 window.exportResidentsToExcel = function() {
-    fetch('../php/get_residents.php')
-    .then(response => response.json())
-    .then(data => {
-        const residents = data.residents || [];
+    const filteredResidents = window.filteredResidents || [];
+    if (filteredResidents.length === 0) {
+        alert('No residents to export.');
+        return;
+    }
 
-        if (residents.length === 0) {
-            alert('No residents found to export.');
-            return;
-        }
+    // Check if any checkboxes are checked
+    const checkedBoxes = document.querySelectorAll('#residentTable tbody .resident-checkbox:checked');
+    const exportAll = checkedBoxes.length === 0;
 
-        const selectedCols = window.selectedColumns || ['fullName', 'houseNum', 'streetName', 'birthday', 'gender', 'age', 'status'];
-        const headers = selectedCols.map(col => window.getColumnLabel(col));
+    let residentsToExport = [];
+    if (exportAll) {
+        residentsToExport = filteredResidents;
+    } else {
+        const selectedIds = Array.from(checkedBoxes).map(cb => String(cb.dataset.id));
+        residentsToExport = filteredResidents.filter(res => selectedIds.includes(String(res.resident_id)));
+    }
 
-        const rows = residents.map(res => {
-            return selectedCols.map(col => window.getResidentFieldValue(res, col));
-        });
+    if (residentsToExport.length === 0) {
+        alert('No residents selected to export.');
+        return;
+    }
 
-        const wsData = [headers, ...rows];
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
+    const selectedCols = window.selectedColumns || ['fullName', 'houseNum', 'streetName', 'birthday', 'gender', 'age', 'status'];
+    const headers = selectedCols.map(col => window.getColumnLabel(col));
 
-        const headerRange = XLSX.utils.decode_range(ws['!ref']);
-        for (let C = headerRange.s.c; C <= headerRange.e.c; C++) {
-            const cellAddr = XLSX.utils.encode_cell({ r: 0, c: C });
-            if (ws[cellAddr]) {
-                ws[cellAddr].s = { font: { bold: true } };
-            }
-        }
-
-        ws['!cols'] = headers.map((h, i) => {
-            const maxLen = Math.max(
-                h.length,
-                ...rows.map(r => String(r[i] || '').length)
-            );
-            return { wch: Math.min(maxLen + 4, 40) };
-        });
-
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Residents');
-
-        const today = new Date().toISOString().slice(0, 10);
-        XLSX.writeFile(wb, `Barangay663_Residents_${today}.xlsx`);
-    })
-    .catch(err => {
-        console.error('Export error:', err);
-        alert('Failed to export residents. Please try again.');
+    const rows = residentsToExport.map(res => {
+        return selectedCols.map(col => window.getResidentFieldValue(res, col));
     });
+
+    const wsData = [headers, ...rows];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    const headerRange = XLSX.utils.decode_range(ws['!ref']);
+    for (let C = headerRange.s.c; C <= headerRange.e.c; C++) {
+        const cellAddr = XLSX.utils.encode_cell({ r: 0, c: C });
+        if (ws[cellAddr]) {
+            ws[cellAddr].s = { font: { bold: true } };
+        }
+    }
+
+    ws['!cols'] = headers.map((h, i) => {
+        const maxLen = Math.max(
+            h.length,
+            ...rows.map(r => String(r[i] || '').length)
+        );
+        return { wch: Math.min(maxLen + 4, 40) };
+    });
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Residents');
+
+    const today = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `Barangay663_Residents_${today}.xlsx`);
 };
 
 window.editResident = (id) => {

@@ -1,4 +1,3 @@
-//NEEDS TO PROPERLY WIRE AND CONNECT TO THE JS, DOCUMENTS.JS ISSUE: DOCUMENTS ARE NOT APPEARING TO THE ADMINDASHBOARDHTML DOCUMENT REQUESTS 
 
 <!DOCTYPE html>
 <html lang="en">
@@ -81,10 +80,15 @@
 
             <div class="request-section">
                 <div class="section-badge approved">Approved Requests</div>
+                <div class="filter-actions" style="margin-bottom: 12px;">
+                    <button type="button" id="selectApprovedAllBtn" class="filter-btn secondary" data-select-all="true">Select All</button>
+                    <button type="button" id="deleteApprovedBtn" class="filter-btn secondary">Delete Selected</button>
+                </div>
                 <div class="table-card">
                     <table class="request-table">
                         <thead>
                             <tr>
+                                <th></th>
                                 <th>Name</th>
                                 <th>Document Type</th>
                                 <th>Release Date</th>
@@ -98,10 +102,15 @@
 
             <div class="request-section">
                 <div class="section-badge rejected">Rejected Requests</div>
+                <div class="filter-actions" style="margin-bottom: 12px;">
+                    <button type="button" id="selectRejectedAllBtn" class="filter-btn secondary" data-select-all="true">Select All</button>
+                    <button type="button" id="deleteRejectedBtn" class="filter-btn secondary">Delete Selected</button>
+                </div>
                 <div class="table-card">
                     <table class="request-table">
                         <thead>
                             <tr>
+                                <th></th>
                                 <th>Name</th>
                                 <th>Document Type</th>
                                 <th>Date Rejected</th>

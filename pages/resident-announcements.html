@@ -254,7 +254,10 @@
         });
 
         // Pull the events from the Admin dashboard
-        const events = JSON.parse(localStorage.getItem('brgyEvents')) || [];
+        const allEvents = JSON.parse(localStorage.getItem('brgyEvents')) || [];
+        const events = allEvents.filter(event => 
+            (event.visibility === 'public' || event.visibility === 'both' || (!event.visibility && !event.isBirthday))
+        );
         grid.innerHTML = ''; 
 
         if (events.length === 0) {

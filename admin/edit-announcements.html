@@ -36,12 +36,12 @@
                 <a href="office-roles.html" class="nav-item">
                     <i class="fas fa-laptop-house"></i> <span>Office Roles</span>
                 </a>
-                <a href="../php/logout.php" class="nav-item">
+                <a href="archives.html" class="nav-item">
                     <i class="fas fa-archive"></i> <span>Archives</span>
                 </a>
             </div>
 
-            <a href="../pages/home.html" class="nav-item logout-item">
+            <a href="../php/logout.php" class="nav-item logout-item">
                 <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
             </a>
         </nav>
@@ -103,6 +103,15 @@
                     <select id="eventType" required>
                         <option value="ongoing">On-Going</option>
                         <option value="upcoming" selected>Upcoming</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Visibility</label>
+                    <select id="eventVisibility" required>
+                        <option value="both" selected>Both (Public & Admin)</option>
+                        <option value="admin">Admin Only</option>
+                        <option value="public">Public Only</option>
                     </select>
                 </div>
 

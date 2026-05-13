@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ongoingBody.appendChild(tr);
             } else if (req.status === 'Approved') {
                 tr.innerHTML = `
+                    <td><input type="checkbox" class="request-checkbox" data-id="${req.id}"></td>
                     <td class="name-cell">
                         <div class="profile-pic pic-red">${initials || '?'}</div>
                         <span>${fullName || 'Unknown'}</span>
@@ -50,6 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 approvedBody.appendChild(tr);
             } else if (req.status === 'Rejected') {
                 tr.innerHTML = `
+                    <td><input type="checkbox" class="request-checkbox" data-id="${req.id}"></td>
                     <td class="name-cell">
                         <div class="profile-pic pic-purple">${initials || '?'}</div>
                         <span>${fullName || 'Unknown'}</span>
@@ -68,7 +70,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const req = requests.find(r => r.id == id);
         if (!req) return;
 
-        const fields = ['residentFirstName', 'residentMiddleName', 'residentLastName', 'residentGender', 'residentBirthDate', 'residentEmailAddress', 'residentContactNumber', 'residentFullAddress', 'residentPurposeOfRequest'];
+        const fields = [
+            'residentFirstName',
+            'residentMiddleName',
+            'residentLastName',
+            'residentSuffix',
+            'residentGender',
+            'residentNationality',
+            'residentCivilStatus',
+            'residentBirthDate',
+            'residentPlaceOfBirth',
+            'residentEmailAddress',
+            'residentContactNumber',
+            'residentVoterStatus',
+            'residentPrecinctNumber',
+            'residentFullAddress',
+            'residentPurposeOfRequest'
+        ];
 
         fields.forEach(field => {
             const el = document.getElementById(field);
@@ -79,7 +97,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modal) modal.classList.add('active');
     };
 
-    const closeDocumentModalIcon = document.getElementById('closeDocModal');
+window.loadAndRenderDocumentRequests();
+
+        const closeDocumentModalIcon = document.getElementById('closeDocModal');
     if (closeDocumentModalIcon) {
         closeDocumentModalIcon.addEventListener('click', () => {
             document.getElementById('docDetailsModal').classList.remove('active');
@@ -103,6 +123,63 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.loadAndRenderDocumentRequests();
             }
         });
+    }
+
+    const deleteApprovedBtn = document.getElementById('deleteApprovedBtn');
+    const deleteRejectedBtn = document.getElementById('deleteRejectedBtn');
+    const selectApprovedAllBtn = document.getElementById('selectApprovedAllBtn');
+    const selectRejectedAllBtn = document.getElementById('selectRejectedAllBtn');
+
+    const toggleSectionSelection = (button, bodyId) => {
+        const checkboxes = document.querySelectorAll(`#${bodyId} .request-checkbox`);
+        const selectAll = button.dataset.selectAll === 'true';
+        checkboxes.forEach(cb => cb.checked = selectAll);
+        button.dataset.selectAll = selectAll ? 'false' : 'true';
+        button.textContent = selectAll ? 'Clear Selection' : 'Select All';
+    };
+
+    const resetSelectionButtons = () => {
+        [selectApprovedAllBtn, selectRejectedAllBtn].forEach(btn => {
+            if (btn) {
+                btn.dataset.selectAll = 'true';
+                btn.textContent = 'Select All';
+            }
+        });
+    };
+
+    const deleteSelectedRequests = (status) => {
+        const bodyId = status === 'Approved' ? 'approvedRequestsBody' : 'rejectedRequestsBody';
+        const selectedIds = Array.from(document.querySelectorAll(`#${bodyId} .request-checkbox:checked`)).map(cb => cb.dataset.id);
+        if (!selectedIds.length) {
+            alert('Please select at least one row to delete.');
+            return;
+        }
+
+        if (!confirm(`Delete ${selectedIds.length} selected ${status.toLowerCase()} request(s)?`)) {
+            return;
+        }
+
+        let requests = JSON.parse(localStorage.getItem('brgyDocumentRequests')) || [];
+        requests = requests.filter(req => !(selectedIds.includes(String(req.id)) && req.status === status));
+        localStorage.setItem('brgyDocumentRequests', JSON.stringify(requests));
+        window.loadAndRenderDocumentRequests();
+        resetSelectionButtons();
+    };
+
+    if (selectApprovedAllBtn) {
+        selectApprovedAllBtn.addEventListener('click', () => toggleSectionSelection(selectApprovedAllBtn, 'approvedRequestsBody'));
+    }
+
+    if (selectRejectedAllBtn) {
+        selectRejectedAllBtn.addEventListener('click', () => toggleSectionSelection(selectRejectedAllBtn, 'rejectedRequestsBody'));
+    }
+
+    if (deleteApprovedBtn) {
+        deleteApprovedBtn.addEventListener('click', () => deleteSelectedRequests('Approved'));
+    }
+
+    if (deleteRejectedBtn) {
+        deleteRejectedBtn.addEventListener('click', () => deleteSelectedRequests('Rejected'));
     }
 });
 

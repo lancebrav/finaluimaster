@@ -352,6 +352,12 @@ html {
     height: 16px;
 }
 
+.resident-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--sidebar-bg);
+}
+
 .age-range {
     display: flex;
     align-items: center;
@@ -529,7 +535,7 @@ html {
 }
 
 .events-grid-container {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 20px; width: 100%; margin-bottom: 20px;
 }
 
@@ -892,6 +898,19 @@ form { padding: 20px 30px; overflow-y: auto; flex-grow: 1; }
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.birthday-card {
+    border: 2px solid #ff6b6b;
+    background: linear-gradient(135deg, #fff5f5 0%, #ffffff 100%);
+}
+
+.birthday-card .event-title {
+    color: #ff6b6b;
+}
+
+.birthday-card .event-date {
+    color: #ff4757;
+}
+
 .event-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 25px rgba(0,0,0,0.1);
@@ -935,6 +954,9 @@ form { padding: 20px 30px; overflow-y: auto; flex-grow: 1; }
     line-height: 1.6;
     margin-bottom: 20px;
     flex-grow: 1;
+    max-height: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .event-actions {

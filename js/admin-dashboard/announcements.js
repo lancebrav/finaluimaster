@@ -16,7 +16,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const formattedDate = new Date(event.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
             const detailsText = event.details || 'No additional details provided.';
 
-            card.innerHTML = `
+            card.innerHTML = ` 
+
+            /* NEEDS REFACTORING: ISSUE: If event is uploaded, it triples and duplicates*/
+            
                 <img src="${photoSrc}" alt="Event Picture" class="event-pic">
                 <div class="event-content">
                     <div class="event-date"><i class="far fa-calendar-alt"></i> ${formattedDate}</div>

@@ -1,12 +1,10 @@
-
-/* FIX THIS CODE: ISSUE: DUPLICATING ANNOUCEMENTS */
-
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. Unified Display Function
     window.displayEvents = function() {
         const events = JSON.parse(localStorage.getItem('brgyEvents')) || [];
 
         const ongoingEvents = events.filter(event => event.type === 'ongoing');
-        const upcomingEvents = events.filter(event => event.type === 'upcoming');
+        const upcomingEvents = events.filter(event => event.type === 'upcoming' || !event.type);
 
         const ongoingEventsList = document.getElementById('ongoingEventsList');
         const upcomingEventsList = document.getElementById('upcomingEventsList');
@@ -16,12 +14,18 @@ document.addEventListener('DOMContentLoaded', () => {
             card.className = 'event-card';
 
             const photoSrc = event.photo ? event.photo : 'https://via.placeholder.com/400x200?text=No+Photo';
-            const formattedDate = new Date(event.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            
+            let formattedDate = event.date || 'No Date';
+            if (event.date) {
+                const parsed = new Date(event.date);
+                if (!isNaN(parsed)) {
+                    formattedDate = parsed.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                }
+            }
+
             const detailsText = event.details || 'No additional details provided.';
 
             card.innerHTML = ` 
-
-
                 <img src="${photoSrc}" alt="Event Picture" class="event-pic">
                 <div class="event-content">
                     <div class="event-date"><i class="far fa-calendar-alt"></i> ${formattedDate}</div>
@@ -29,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="event-desc">${detailsText}</div>
 
                     <div class="event-actions">
-                        <div class="view-details">View Details <i class="fas fa-chevron-right"></i></div>
+                        <div class="view-details" style="visibility:hidden;"></div>
                         <div class="card-icons">
                             <i class="fas fa-pencil-alt edit-icon" title="Edit"></i>
                             <i class="fas fa-trash-alt delete-icon" title="Delete"></i>
@@ -38,19 +42,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
 
+            // Delete Event Listener
             const deleteBtn = card.querySelector('.delete-icon');
-            deleteBtn.addEventListener('click', () => {
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent card triggers if any
                 if (confirm(`Are you sure you want to delete "${event.title}"?`)) {
                     let currentEvents = JSON.parse(localStorage.getItem('brgyEvents')) || [];
-                    currentEvents = currentEvents.filter(e => e.id !== event.id);
+                    currentEvents = currentEvents.filter(ev => ev.id !== event.id);
                     localStorage.setItem('brgyEvents', JSON.stringify(currentEvents));
-                    displayEvents();
+                    displayEvents(); // Dynamically reload lists
                 }
             });
 
+            // Edit Event Listener
             const editBtn = card.querySelector('.edit-icon');
             if (editBtn) {
-                editBtn.addEventListener('click', () => {
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
                     window.editEvent(event.id);
                 });
             }
@@ -58,29 +66,29 @@ document.addEventListener('DOMContentLoaded', () => {
             return card;
         }
 
+        // Render Ongoing List safely
         if (ongoingEventsList) {
             ongoingEventsList.innerHTML = '';
             ongoingEvents.forEach(event => {
-                const card = createEventCard(event);
-                ongoingEventsList.appendChild(card);
+                ongoingEventsList.appendChild(createEventCard(event));
             });
         }
 
+        // Render Upcoming List safely
         if (upcomingEventsList) {
             upcomingEventsList.innerHTML = '';
             upcomingEvents.forEach(event => {
-                const card = createEventCard(event);
-                upcomingEventsList.appendChild(card);
+                upcomingEventsList.appendChild(createEventCard(event));
             });
         }
     };
 
-    if (document.getElementById('ongoingEventsList')) {
+    // Initial load trigger
+    if (document.getElementById('ongoingEventsList') || document.getElementById('upcomingEventsList')) {
         displayEvents();
     }
-});
 
-document.addEventListener('DOMContentLoaded', () => {
+    // 2. Photo Handling logic
     const eventPhotoInput = document.getElementById('eventPhotoInput');
     const uploadPhotoBtn = document.getElementById('uploadPhotoBtn');
     const loadedPhoto = document.getElementById('loadedPhoto');
@@ -103,6 +111,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Helper: File to Base64 Converter if not globally mapped
+    if (typeof window.getBase64 !== 'function') {
+        window.getBase64 = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    // 3. Form Submission Handling
     const eventForm = document.getElementById('addEventForm');
     if (eventForm) {
         eventForm.addEventListener('submit', async (e) => {
@@ -137,6 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             localStorage.setItem('brgyEvents', JSON.stringify(events));
 
+            // Clean up state
             eventForm.reset();
             if (document.getElementById('editEventId')) document.getElementById('editEventId').value = "";
 
@@ -147,12 +167,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const titleEl = document.querySelector('#eventModal .modal-header h3');
             if (titleEl) titleEl.innerText = "Create New Announcement";
 
-            document.getElementById('eventModal').classList.remove('active');
-            if (typeof window.displayEvents === 'function') window.displayEvents();
+            const modalElement = document.getElementById('eventModal');
+            if (modalElement) modalElement.classList.remove('active');
+
+            // Refresh UI directly
+            displayEvents();
         });
     }
 });
 
+// Global Trigger to Open Edit view
 window.editEvent = function(id) {
     const events = JSON.parse(localStorage.getItem('brgyEvents')) || [];
     const ev = events.find(e => e.id == id);
@@ -184,37 +208,7 @@ window.editEvent = function(id) {
         const titleEl = document.querySelector('#eventModal .modal-header h3');
         if (titleEl) titleEl.innerText = "Edit Announcement Details";
 
-        document.getElementById('eventModal').classList.add('active');
-    }
-};
-
-window.displayEvents = function() {
-    const ongoing = document.getElementById('ongoingEventsList');
-    const upcoming = document.getElementById('upcomingEventsList');
-    if (!ongoing) return;
-
-    const events = JSON.parse(localStorage.getItem('brgyEvents')) || [];
-    ongoing.innerHTML = '';
-    upcoming.innerHTML = '';
-
-    events.forEach(event => {
-        const html = `
-            <div class="event-card">
-                <div class="event-info">
-                    <strong>${event.title}</strong>
-                    <span><i class="far fa-calendar-alt"></i> ${event.date}</span>
-                </div>
-                <i class="fas fa-trash-alt delete-icon" onclick="deleteEvent(${event.id})"></i>
-            </div>`;
-        if (event.type === 'ongoing') ongoing.innerHTML += html;
-        else upcoming.innerHTML += html;
-    });
-};
-
-window.deleteEvent = (id) => {
-    if (confirm("Delete announcement?")) {
-        let evs = JSON.parse(localStorage.getItem('brgyEvents')) || [];
-        localStorage.setItem('brgyEvents', JSON.stringify(evs.filter(e => e.id !== id)));
-        window.displayEvents();
+        const modalElement = document.getElementById('eventModal');
+        if (modalElement) modalElement.classList.add('active');
     }
 };

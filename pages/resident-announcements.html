@@ -6,6 +6,138 @@
     <title>Announcements | Barangay 663</title>
     <link rel="stylesheet" href="../css/home.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* --- MODAL STYLING --- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .detail-modal {
+            background: #fff;
+            width: 100%;
+            max-width: 600px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px; right: 15px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            width: 35px; height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #d9534f;
+        }
+
+        .modal-cover-img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .modal-body {
+            padding: 25px;
+        }
+
+        .modal-tag {
+            display: inline-block;
+            background: #ff8c00;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .modal-title {
+            color: #070e50;
+            font-size: 1.6rem;
+            margin-bottom: 15px;
+        }
+
+        .modal-meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #070e50;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95rem;
+            color: #444;
+        }
+
+        .meta-item i {
+            color: #070e50;
+            font-size: 1.1rem;
+        }
+
+        .modal-desc-label {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .modal-desc {
+            color: #555;
+            line-height: 1.6;
+            font-size: 0.95rem;
+            white-space: pre-wrap; /* Preserves line breaks from textarea */
+        }
+
+        /* Add cursor pointer to cards to indicate clickability */
+        .news-card {
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .news-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+    </style>
 </head>
 <body class="announcements-page">
 
@@ -41,10 +173,40 @@
     </section>
 
     <section class="announcement-section">
-        <div class="announcement-grid" id="liveAnnouncementsGrid">
-            </div>
+        <div class="announcement-grid" id="liveAnnouncementsGrid"></div>
     </section>
 </main>
+
+<div class="modal-overlay" id="announcementModal">
+    <div class="detail-modal">
+        <button class="modal-close" id="closeModalBtn"><i class="fas fa-times"></i></button>
+        <img src="" alt="Cover" class="modal-cover-img" id="modalImg">
+        <div class="modal-body">
+            <span class="modal-tag" id="modalTag">Upcoming</span>
+            <h2 class="modal-title" id="modalTitle">Announcement Title</h2>
+            
+            <div class="modal-meta-grid">
+                <div class="meta-item">
+                    <i class="far fa-calendar-alt"></i>
+                    <div>
+                        <strong style="display:block; font-size:0.8rem; color:#888;">WHEN</strong>
+                        <span id="modalDate">2026-05-22</span>
+                    </div>
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <div>
+                        <strong style="display:block; font-size:0.8rem; color:#888;">WHERE</strong>
+                        <span id="modalLocation">Barangay 663 Hall</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-desc-label">Full Details:</div>
+            <div class="modal-desc" id="modalDetails">Details go here...</div>
+        </div>
+    </div>
+</div>
 
 <footer>
     <div class="footer-cols">
@@ -71,13 +233,30 @@
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const grid = document.getElementById('liveAnnouncementsGrid');
+        const modalOverlay = document.getElementById('announcementModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        
+        // Modal elements to populate
+        const modalImg = document.getElementById('modalImg');
+        const modalTag = document.getElementById('modalTag');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalDate = document.getElementById('modalDate');
+        const modalLocation = document.getElementById('modalLocation');
+        const modalDetails = document.getElementById('modalDetails');
+
         if (!grid) return;
+
+        // Close Modal Handlers
+        const closeModal = () => modalOverlay.classList.remove('active');
+        closeModalBtn.addEventListener('click', closeModal);
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) closeModal();
+        });
 
         // Pull the events from the Admin dashboard
         const events = JSON.parse(localStorage.getItem('brgyEvents')) || [];
         grid.innerHTML = ''; 
 
-        // If the admin hasn't posted anything, show a message
         if (events.length === 0) {
             grid.innerHTML = '<p style="text-align:center; color:#777; width:100%; grid-column: 1 / -1; margin-top: 40px; font-size: 1.1rem; font-weight: bold;">No new announcements at this time. Please check back later.</p>';
             return;
@@ -90,6 +269,15 @@
         events.forEach(event => {
             const photoSrc = event.photo ? event.photo : 'brgy-hall.png'; 
             const typeLabel = event.type ? event.type.charAt(0).toUpperCase() + event.type.slice(1) : 'Update';
+            
+            // Format readable date
+            let displayDate = event.date || 'No Date Specified';
+            if (event.date) {
+                const parsed = new Date(event.date);
+                if (!isNaN(parsed)) {
+                    displayDate = parsed.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                }
+            }
 
             const article = document.createElement('article');
             article.className = 'news-card';
@@ -100,12 +288,28 @@
                 </div>
                 <div class="news-body">
                     <span class="news-date">
-                        <i class="far fa-calendar-alt"></i> ${event.date || 'No Date Specified'}
+                        <i class="far fa-calendar-alt"></i> ${displayDate}
                     </span>
                     <h3 style="color: #070e50; margin-bottom: 10px; font-size: 1.3rem;">${event.title}</h3>
-                    <p style="color: #555; line-height: 1.6; font-size: 0.95rem;">${event.details}</p>
+                    <p style="color: #555; line-height: 1.6; font-size: 0.95rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${event.details}</p>
                 </div>
             `;
+
+            // CLICK EVENT: Open Modal and populate data
+            article.addEventListener('click', () => {
+                modalImg.src = photoSrc;
+                modalTag.textContent = typeLabel;
+                modalTitle.textContent = event.title;
+                modalDate.textContent = displayDate;
+                
+                // Assuming standard events happen at the Brgy Hall unless specified otherwise.
+                // If you add a 'location' input to your admin form later, use `event.location || 'Barangay 663 Hall'`
+                modalLocation.textContent = event.location ? event.location : 'Barangay 663 Hall'; 
+                modalDetails.textContent = event.details || 'No additional details provided.';
+                
+                modalOverlay.classList.add('active');
+            });
+
             grid.appendChild(article);
         });
     });

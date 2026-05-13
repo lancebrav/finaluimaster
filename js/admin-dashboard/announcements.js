@@ -1,3 +1,6 @@
+
+/* FIX THIS CODE: ISSUE: DUPLICATING ANNOUCEMENTS */
+
 document.addEventListener('DOMContentLoaded', () => {
     window.displayEvents = function() {
         const events = JSON.parse(localStorage.getItem('brgyEvents')) || [];
@@ -18,8 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             card.innerHTML = ` 
 
-            /* NEEDS REFACTORING: ISSUE: If event is uploaded, it triples and duplicates*/
-            
+
                 <img src="${photoSrc}" alt="Event Picture" class="event-pic">
                 <div class="event-content">
                     <div class="event-date"><i class="far fa-calendar-alt"></i> ${formattedDate}</div>

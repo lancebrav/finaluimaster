@@ -1,3 +1,7 @@
+/* DOCUMENT REQUESTS: ISSUE, IT DOES NOT UPLOAD THE DOCUMENTS TO THE ADMIN DASHBOARD*/
+
+
+
 document.addEventListener('DOMContentLoaded', () => {
     window.loadAndRenderDocumentRequests = function() {
         const ongoingBody = document.getElementById('ongoingRequestsBody');

@@ -164,15 +164,19 @@ nav ul li a:hover { color: var(--orange); }
     padding: 60px 20px; 
     max-width: 1200px; 
     margin: 0 auto; 
-}.announcement-grid { 
+}
+
+.announcement-grid { 
     display: grid; 
     grid-template-columns: repeat(3, 1fr); /* This strictly forces 3 equal columns */
     gap: 30px; 
 }
+
 .news-card { 
     background: var(--white); border-radius: 12px; overflow: hidden; 
     box-shadow: var(--shadow); transition: var(--transition); 
     display: flex; flex-direction: column; border: 1px solid rgba(0,0,0,0.05);
+    cursor: pointer; /* Indicates card interactivity */
 }
 
 .news-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
@@ -258,11 +262,7 @@ footer { background: var(--prussian-blue); color: white; padding: 30px 10% 15px;
 .footer-info h4 { margin-bottom: 10px; font-size: 0.9rem; color: var(--orange); text-transform: uppercase; }
 .footer-info p { font-size: 0.85rem; margin: 0; }
 .footer-bottom { text-align: center; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.75rem; opacity: 0.6; }
-.footer-logo-container {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
+.footer-logo-container { display: flex; align-items: center; gap: 15px; }
 
 /* ==========================================================================
    8. RESPONSIVENESS (Mobile Updates Included)
@@ -278,14 +278,11 @@ footer { background: var(--prussian-blue); color: white; padding: 30px 10% 15px;
     transition: var(--transition);
 }
 
-.menu-toggle:hover {
-    color: var(--orange);
-}
+.menu-toggle:hover { color: var(--orange); }
 
 /* Tablet & Smaller Laptops */
 @media (max-width: 992px) {
     header { padding: 10px 5%; }
-    
     .menu-toggle { display: block; }
     
     /* Sliding Mobile Navigation */
@@ -300,16 +297,8 @@ footer { background: var(--prussian-blue); color: white; padding: 30px 10% 15px;
         box-shadow: 0 10px 15px rgba(0,0,0,0.2);
     }
 
-    nav.active {
-        left: 0;
-    }
-
-    nav ul {
-        flex-direction: column;
-        padding: 40px 0;
-        gap: 25px;
-    }
-
+    nav.active { left: 0; }
+    nav ul { flex-direction: column; padding: 40px 0; gap: 25px; }
     nav ul li a { font-size: 1.1rem; }
 
     /* Hero Layout Adjustments */
@@ -336,16 +325,9 @@ footer { background: var(--prussian-blue); color: white; padding: 30px 10% 15px;
     .top-tier .official-card { width: 100%; max-width: 260px; }
 
     /* MODAL MOBILE FALLBACK FOR THE 4-COLUMN GRID */
-    .form-grid {
-        grid-template-columns: 1fr !important; /* Stack vertically on small screens */
-        gap: 15px !important;
-    }
-    .form-grid .input-group[style] {
-        grid-column: span 1 !important; /* Overrides any inline spans so they don't break the mobile screen */
-    }
-    .modal-content {
-        padding: 25px 20px; /* Reduce modal padding on mobile */
-    }
+    .form-grid { grid-template-columns: 1fr !important; gap: 15px !important; }
+    .form-grid .input-group[style] { grid-column: span 1 !important; }
+    .modal-content { padding: 25px 20px; }
 }
 
 /* Small Mobile Phones */
@@ -358,7 +340,9 @@ footer { background: var(--prussian-blue); color: white; padding: 30px 10% 15px;
     .service-box { padding: 30px 20px; }
 }
 
-/* --- FULL CONTAINER SCROLL MODAL STYLING --- */
+/* ==========================================================================
+   9. ANNOUNCEMENT DETAILS MODAL (ABSOLUTE CONTAINMENT SCROLL)
+   ========================================================================== */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -366,44 +350,52 @@ footer { background: var(--prussian-blue); color: white; padding: 30px 10% 15px;
     width: 100%; height: 100%;
     background: rgba(0, 0, 0, 0.6);
     z-index: 2000;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
+    
+    /* 1. USE FLEXBOX ON THE OVERLAY TO FORCE CENTERING */
+    display: flex; 
+    justify-content: center; /* Centers horizontally */
+    align-items: center;     /* Centers vertically */
+    
     backdrop-filter: blur(5px);
 }
 
+/* When active, ensure it displays as a flex container */
 .modal-overlay.active {
-    display: flex;
+    display: flex !important; 
 }
 
 .detail-modal {
     background: #fff;
-    width: 100%;
+    width: 90%;
     max-width: 600px;
     
-    /* 1. FIXED CONTAINER FOOTPRINT */
+    /* 2. REMOVE ABSOLUTE POSITIONING */
+    /* Since the parent overlay is centering this item, we don't need top/left/transform */
+    position: relative; 
+    margin: auto; /* Fallback centering safety */
+    
+    /* 3. STRICT PIXEL BOUNDARIES */
     height: 550px; 
     max-height: 85vh; 
     
     border-radius: 12px;
     
-    /* 2. CRITICAL CHANGE: Shift scrollability to the parent container */
-    overflow-y: auto; 
-    overflow-x: hidden;
+    /* 4. STRICT OVERFLOW RULES */
+    overflow-y: auto !important; 
+    overflow-x: hidden !important;
     
     box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-    position: relative;
     display: block; 
 }
 
-/* Custom Scrollbar applied directly to the outer modal window */
+/* Custom internal container scrollbar mapping */
 .detail-modal::-webkit-scrollbar { width: 6px; }
 .detail-modal::-webkit-scrollbar-track { background: #f1f1f1; }
 .detail-modal::-webkit-scrollbar-thumb { background: rgba(7, 14, 80, 0.2); border-radius: 10px; }
 .detail-modal::-webkit-scrollbar-thumb:hover { background: rgba(7, 14, 80, 0.5); }
 
 .modal-close {
-    /* 3. CRITICAL CHANGE: Changed from absolute to fixed/sticky anchoring */
+    /* STICKY BEHAVIOR: Prevents the button from sliding off the screen edge */
     position: sticky;
     top: 15px; 
     float: right;
@@ -420,12 +412,10 @@ footer { background: var(--prussian-blue); color: white; padding: 30px 10% 15px;
     align-items: center;
     justify-content: center;
     transition: background 0.2s;
-    z-index: 100; /* Keeps it layered securely over the sliding image */
+    z-index: 100; 
 }
 
-.modal-close:hover {
-    background: #d9534f;
-}
+.modal-close:hover { background: #d9534f; }
 
 .modal-cover-img {
     width: 100%;
@@ -434,23 +424,21 @@ footer { background: var(--prussian-blue); color: white; padding: 30px 10% 15px;
     display: block;
     background-color: #f0f0f0; 
     
-    /* Clear the float from the sticky close button */
+    /* Clear float and adjust mapping alignment to sit under the sticky button smoothly */
     clear: both; 
-    /* Pull image up to ignore the close button's spacing */
     margin-top: -50px; 
 }
 
 .modal-body {
     padding: 25px;
-    /* Remove inner restriction so it expands fully inside the scrolling parent */
     height: auto; 
-    overflow-y: visible; 
+    overflow: visible; 
 }
 
-/* --- Internal Typography & Layout (Remains unchanged) --- */
+/* Announcement Meta Content Styles */
 .modal-tag {
     display: inline-block;
-    background: var(--orange, #F77F00);
+    background: var(--orange);
     color: white;
     padding: 4px 12px;
     border-radius: 20px;
@@ -461,7 +449,7 @@ footer { background: var(--prussian-blue); color: white; padding: 30px 10% 15px;
 }
 
 .modal-title {
-    color: var(--prussian-blue, #070e50);
+    color: var(--prussian-blue);
     font-size: 1.6rem;
     margin-bottom: 15px;
     line-height: 1.3;
@@ -475,7 +463,7 @@ footer { background: var(--prussian-blue); color: white; padding: 30px 10% 15px;
     padding: 15px;
     border-radius: 8px;
     margin-bottom: 20px;
-    border-left: 4px solid var(--prussian-blue, #070e50);
+    border-left: 4px solid var(--prussian-blue);
 }
 
 .meta-item {
@@ -487,7 +475,7 @@ footer { background: var(--prussian-blue); color: white; padding: 30px 10% 15px;
 }
 
 .meta-item i {
-    color: var(--prussian-blue, #070e50);
+    color: var(--prussian-blue);
     font-size: 1.1rem;
 }
 
@@ -508,258 +496,103 @@ footer { background: var(--prussian-blue); color: white; padding: 30px 10% 15px;
 /* ==========================================================================
    10. OFFICIALS PAGE LAYOUT (COMPACT 2x2 STYLE)
    ========================================================================== */
-
-.officials-main { 
-    margin-top: 80px; 
-    padding-bottom: 80px;
-}
+.officials-main { margin-top: 80px; padding-bottom: 80px; }
 
 .org-chart-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 40px;
-    padding: 20px;
+    max-width: 1200px; margin: 0 auto;
+    display: flex; flex-direction: column; gap: 40px; padding: 20px;
 }
 
-.tier {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 20px;
-}
+.tier { display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; }
 
 .official-card {
-    background: var(--white);
-    padding: 20px 10px;
-    border-radius: 8px;
-    text-align: center;
-    width: 190px; 
-    box-shadow: var(--shadow);
-    transition: var(--transition);
-    border-bottom: 4px solid var(--prussian-blue);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    background: var(--white); padding: 20px 10px; border-radius: 8px;
+    text-align: center; width: 190px; box-shadow: var(--shadow);
+    transition: var(--transition); border-bottom: 4px solid var(--prussian-blue);
+    display: flex; flex-direction: column; align-items: center;
 }
 
-.official-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-}
+.official-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
 
 /* Top Tier - Chairman Special Style */
-.top-tier .official-card {
-    width: 260px;
-    border-bottom: 4px solid var(--orange);
-}
+.top-tier .official-card { width: 260px; border-bottom: 4px solid var(--orange); }
 
 /* 2x2 Photo Style */
 .official-photo {
-    width: 120px; 
-    height: 120px; 
-    object-fit: cover; 
-    border-radius: 4px; 
-    margin-bottom: 15px;
-    border: 2px solid #f0f0f0;
-    background-color: #eee; 
-    display: block;
+    width: 120px; height: 120px; object-fit: cover; border-radius: 4px; 
+    margin-bottom: 15px; border: 2px solid #f0f0f0; background-color: #eee; display: block;
 }
 
-.top-tier .official-photo {
-    width: 150px;
-    height: 150px;
-}
+.top-tier .official-photo { width: 150px; height: 150px; }
 
-.official-card h4 {
-    color: var(--prussian-blue);
-    margin-bottom: 5px;
-    font-size: 1rem;
-    font-weight: 700;
-    line-height: 1.2;
-}
-
-.official-card p {
-    color: var(--orange);
-    font-weight: 700;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
+.official-card h4 { color: var(--prussian-blue); margin-bottom: 5px; font-size: 1rem; font-weight: 700; line-height: 1.2; }
+.official-card p { color: var(--orange); font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
 
 .tier-label {
-    text-align: center;
-    font-weight: 800;
-    color: #a0a0a0;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    margin-top: 20px;
-    margin-bottom: -10px;
+    text-align: center; font-weight: 800; color: #a0a0a0; font-size: 0.8rem;
+    text-transform: uppercase; letter-spacing: 3px; margin-top: 20px; margin-bottom: -10px;
 }
 
 /* Navigation Active State */
-nav ul li a.active-link { 
-    color: var(--orange) !important; 
-    border-bottom: 2px solid var(--orange); 
-    padding-bottom: 5px; 
-}
+nav ul li a.active-link { color: var(--orange) !important; border-bottom: 2px solid var(--orange); padding-bottom: 5px; }
 
-/* This section creates the blue tint over the image */
+/* Banner Overlay Style */
 .banner-overlay {
     background: linear-gradient(rgba(253, 226, 94, 0.683), rgba(217, 224, 77, 0.696)), url('../brgy.jpg');
-    background-size: cover;
-    background-position: center;
-    color: white;
-    text-align: center;
-    padding: 60px 10%; 
-    width: 100%;
+    background-size: cover; background-position: center; color: white;
+    text-align: center; padding: 60px 10%; width: 100%;
 }
 
-.banner-overlay h1 {
-    font-size: 2.8rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    margin-bottom: 10px;
-    line-height: 1.2;
-}
-
-.banner-overlay p {
-    font-size: 1.1rem;
-    max-width: 600px;
-    margin: 0 auto;
-    opacity: 0.9;
-    line-height: 1.6;
-}
+.banner-overlay h1 { font-size: 2.8rem; font-weight: 800; text-transform: uppercase; margin-bottom: 10px; line-height: 1.2; }
+.banner-overlay p { font-size: 1.1rem; max-width: 600px; margin: 0 auto; opacity: 0.9; line-height: 1.6; }
 
 /* ==========================================================================
    11. RESIDENT GALLERY (SIDE SCROLLING)
    ========================================================================== */
-.gallery-section {
-    padding: 20px 0;
-    background-color: var(--white);
-}
-
-.gallery-wrapper {
-    width: 100%;
-    overflow: hidden;
-    padding: 20px 0;
-}
+.gallery-section { padding: 20px 0; background-color: var(--white); }
+.gallery-wrapper { width: 100%; overflow: hidden; padding: 20px 0; }
 
 .gallery-scroll-container {
-    display: flex;
-    gap: 25px;
-    overflow-x: auto; 
-    padding: 20px 10%;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch; 
+    display: flex; gap: 25px; overflow-x: auto; padding: 20px 10%;
+    scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; 
 }
 
 /* Custom Scrollbar for the Gallery */
-.gallery-scroll-container::-webkit-scrollbar {
-    height: 8px;
-}
-.gallery-scroll-container::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
-.gallery-scroll-container::-webkit-scrollbar-thumb {
-    background: var(--orange);
-    border-radius: 10px;
-}
+.gallery-scroll-container::-webkit-scrollbar { height: 8px; }
+.gallery-scroll-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+.gallery-scroll-container::-webkit-scrollbar-thumb { background: var(--orange); border-radius: 10px; }
 
 .gallery-item {
-    flex: 0 0 350px; 
-    height: 250px;
-    scroll-snap-align: center;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: var(--shadow);
-    transition: var(--transition);
-    border: 3px solid white;
+    flex: 0 0 350px; height: 250px; scroll-snap-align: center;
+    border-radius: 12px; overflow: hidden; box-shadow: var(--shadow);
+    transition: var(--transition); border: 3px solid white;
 }
 
-.gallery-item:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 12px 25px rgba(0,0,0,0.2);
-}
-
-.gallery-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.scroll-hint {
-    text-align: center;
-    margin-top: 20px;
-    color: var(--prussian-blue);
-    font-size: 0.9rem;
-    font-weight: 600;
-    opacity: 0.7;
-}
+.gallery-item:hover { transform: translateY(-10px); box-shadow: 0 12px 25px rgba(0,0,0,0.2); }
+.gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+.scroll-hint { text-align: center; margin-top: 20px; color: var(--prussian-blue); font-size: 0.9rem; font-weight: 600; opacity: 0.7; }
 
 /* ==========================================================================
    12. RESIDENT SERVICES (Data Privacy & Extras)
    ========================================================================== */
-
 .privacy-box {
-    background: #f0f4f8;
-    padding: 20px;
-    border-radius: 8px;
-    border-left: 5px solid var(--prussian-blue);
-    margin: 20px 0;
+    background: #f0f4f8; padding: 20px; border-radius: 8px;
+    border-left: 5px solid var(--prussian-blue); margin: 20px 0;
 }
 
-.privacy-box h4 { 
-    font-size: 0.95rem; 
-    margin-bottom: 8px; 
-    color: var(--prussian-blue); 
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.privacy-box p { 
-    font-size: 0.8rem; 
-    color: #555; 
-    line-height: 1.6;
-}
+.privacy-box h4 { font-size: 0.95rem; margin-bottom: 8px; color: var(--prussian-blue); text-transform: uppercase; letter-spacing: 0.5px; }
+.privacy-box p { font-size: 0.8rem; color: #555; line-height: 1.6; }
 
 .checkbox-group {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    margin: 18px 0;
-    cursor: pointer;
-    padding: 5px;
-    transition: background 0.3s ease;
+    display: flex; align-items: flex-start; gap: 12px; margin: 18px 0;
+    cursor: pointer; padding: 5px; transition: background 0.3s ease;
 }
 
-.checkbox-group:hover {
-    background-color: rgba(0,0,0,0.02);
-    border-radius: 5px;
-}
+.checkbox-group:hover { background-color: rgba(0,0,0,0.02); border-radius: 5px; }
+.checkbox-group input[type="checkbox"] { width: 20px; height: 20px; margin-top: 2px; cursor: pointer; accent-color: var(--orange); }
+.checkbox-group label { font-size: 0.85rem; color: #444; line-height: 1.5; font-weight: 500; cursor: pointer; }
 
-.checkbox-group input[type="checkbox"] { 
-    width: 20px; 
-    height: 20px; 
-    margin-top: 2px; 
-    cursor: pointer;
-    accent-color: var(--orange); 
-}
-
-.checkbox-group label { 
-    font-size: 0.85rem; 
-    color: #444; 
-    line-height: 1.5; 
-    font-weight: 500; 
-    cursor: pointer;
-}
 .official-grid { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Graceful responsive columns */
-    gap: 30px; 
-    max-width: 1200px; /* Constrains the width on large monitors */
-    margin: 0 auto; 
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px; max-width: 1200px; margin: 0 auto; 
 }

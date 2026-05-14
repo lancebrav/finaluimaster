@@ -274,7 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 6. Simulate Success and Reset
             setTimeout(() => {
-                alert(docType + " Submitted Successfully! You will receive an SMS update shortly.");
+                alert(docType + " Submitted Successfully!");
                 this.reset();
                 if(typeof closeModal === 'function') closeModal(); 
                 if(typeof resetUploadUI === 'function') resetUploadUI();

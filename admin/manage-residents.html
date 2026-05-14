@@ -37,6 +37,22 @@
 </head>
 <body class="admin-body">
 
+    <script>
+        // Prevent direct URL access - check session
+        fetch('../php/session_check.php')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.logged_in) {
+                    // Not logged in, redirect to login
+                    window.location.href = '../pages/login.html';
+                }
+            })
+            .catch(error => {
+                console.error('Session check error:', error);
+                window.location.href = '../pages/login.html';
+            });
+    </script>
+
 <aside class="sidebar" id="sidebar"> <div class="menu-toggle" id="menuBtn">
         <i class="fas fa-bars"></i>
     </div>

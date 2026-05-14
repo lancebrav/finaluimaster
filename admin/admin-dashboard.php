@@ -46,6 +46,9 @@ if (!isset($_SESSION['admin'])) {
             <a href="archives.html" class="nav-item">
                 <i class="fas fa-archive"></i> <span>Archives</span>
             </a>
+            <a href="#" class="nav-item" id="backup-btn">
+                <i class="fas fa-database"></i> <span>Backup Database</span>
+            </a>
         </div>
                 
         <a href="../php/logout.php" class="nav-item logout-item">

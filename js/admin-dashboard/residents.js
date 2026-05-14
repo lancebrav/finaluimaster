@@ -15,6 +15,11 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', () => {
     const residentForm = document.getElementById('addResidentForm');
 
+    const birthdayInput = document.getElementById('resBirthday');
+    if (birthdayInput) {
+        birthdayInput.max = new Date().toISOString().split('T')[0];
+    }
+
     if (residentForm) {
         residentForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -37,7 +42,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 const displaySuffix = suffix ? ` ${suffix}` : '';
                 const fullName = `${fName} ${middleInitial}${lName}${displaySuffix}`.trim();
                 const birthday = document.getElementById('resBirthday')?.value || '';
+                const birthDate = birthday ? new Date(birthday) : null;
+                const today = new Date();
+
+                if (birthDate && birthDate > today) {
+                    alert('Birthday cannot be in the future. Please choose a valid birth date.');
+                    return;
+                }
+
                 const computedAge = window.calculateAge(birthday);
+                if (computedAge < 0) {
+                    alert('Birthday cannot be in the future. Please choose a valid birth date.');
+                    return;
+                }
                 const gender = document.getElementById('resGender')?.value || '';
                 const house = document.getElementById('resHouse')?.value || '';
                 const status = document.getElementById('resStatus')?.value || '';

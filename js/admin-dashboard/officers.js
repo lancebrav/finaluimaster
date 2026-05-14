@@ -24,7 +24,7 @@ window.loadAndRenderOfficers = function() {
         const displayAge = off.birthday ? window.calculateAge(off.birthday) : (off.age || 'N/A');
 
         const profileDisplay = off.photo
-            ? `<img src="${off.photo}" style="width:35px; height:35px; border-radius:50%; object-fit:cover; border: 1px solid #ddd;">`
+            ? `<img src="${off.photo}" alt="${off.name}" class="profile-image">`
             : `<div class="profile-pic pic-red">${initials}</div>`;
 
         const row = document.createElement('tr');
@@ -59,18 +59,38 @@ if (offForm) {
         const position = document.getElementById('offPosition').value;
         const term = document.getElementById('offTerm').value;
 
+        const uniquePositions = [
+            'Punong Barangay',
+            'SK Chairman',
+            'Barangay Secretary',
+            'Barangay Treasurer',
+            'SK Secretary',
+            'SK Treasurer'
+        ];
+
+        let officers = JSON.parse(localStorage.getItem('brgyOfficers')) || [];
+        const existingSameRoleCount = officers.filter(o => o.position === position && o.id != editId).length;
+
+        if (uniquePositions.includes(position) && existingSameRoleCount >= 1) {
+            alert(`Only one ${position} may be added at a time.`);
+            return;
+        }
+
+        if ((position === 'SK Kagawad' || position === 'Barangay Kagawad') && existingSameRoleCount >= 7) {
+            alert(`Only seven ${position} members may be added.`);
+            return;
+        }
+
         const photoInput = document.getElementById('offPhoto');
         let photoBase64 = "";
 
         if (photoInput && photoInput.files[0]) {
             photoBase64 = await window.getBase64(photoInput.files[0]);
         } else if (editId) {
-            const officers = JSON.parse(localStorage.getItem('brgyOfficers')) || [];
-            const existingOff = officers.find(o => o.id == editId);
+            const officersForPhoto = JSON.parse(localStorage.getItem('brgyOfficers')) || [];
+            const existingOff = officersForPhoto.find(o => o.id == editId);
             photoBase64 = existingOff ? existingOff.photo : "";
         }
-
-        let officers = JSON.parse(localStorage.getItem('brgyOfficers')) || [];
 
         if (editId) {
             const index = officers.findIndex(o => o.id == editId);

@@ -33,6 +33,9 @@ function openModal(documentType) {
         header.innerText = "Application for " + documentType;
         form.setAttribute('data-doc-type', documentType); 
         
+        // 4. Initialize phone validation
+        initializePhoneValidation();
+        
         modal.style.display = "block";
         document.body.style.overflow = "hidden"; 
     }
@@ -112,6 +115,102 @@ document.querySelectorAll('.upload-area').forEach((area, index) => {
         }
     });
 });
+
+// --- 5. PHONE NUMBER VALIDATION ---
+function initializePhoneValidation() {
+    const contactNumberInput = document.querySelector('input[type="tel"]');
+    if (!contactNumberInput) return;
+
+    contactNumberInput.addEventListener('input', function(event) {
+        let value = this.value;
+        
+        // Remove any non-digit characters
+        const digitsOnly = value.replace(/\D/g, '');
+        
+        // If user tried to enter letters, show warning
+        if (digitsOnly !== value && value.length > digitsOnly.length) {
+            showNotification('⚠️ Only numbers are allowed in the phone field!', 'warning');
+        }
+        
+        // Limit to 11 digits
+        if (digitsOnly.length > 11) {
+            showNotification('❌ Phone number cannot exceed 11 digits!', 'error');
+            this.value = digitsOnly.substring(0, 11);
+        } else {
+            this.value = digitsOnly;
+        }
+    });
+
+    contactNumberInput.addEventListener('keypress', function(event) {
+        // Check if the key pressed is NOT a number
+        if (!/[0-9]/.test(event.key)) {
+            event.preventDefault();
+            showNotification('⚠️ Only numeric input is allowed!', 'warning');
+        }
+    });
+}
+
+// Helper function to show notifications
+function showNotification(message, type = 'info') {
+    // Remove existing notification if any
+    const existingNotif = document.querySelector('.notification');
+    if (existingNotif) existingNotif.remove();
+    
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 15px 20px;
+        background-color: ${type === 'error' ? '#f44336' : type === 'warning' ? '#ff9800' : '#2196F3'};
+        color: white;
+        border-radius: 4px;
+        font-weight: 500;
+        z-index: 10000;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        animation: slideIn 0.3s ease-in-out;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-in-out';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Add animation styles
+if (!document.querySelector('style[data-phone-validation]')) {
+    const style = document.createElement('style');
+    style.setAttribute('data-phone-validation', 'true');
+    style.textContent = `
+        @keyframes slideIn {
+            from {
+                transform: translateX(-50%) translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+        @keyframes slideOut {
+            from {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(-50%) translateY(-20px);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+}
 
 // --- 5. FORM SUBMISSION & ADMIN SYNC ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -194,8 +293,20 @@ window.addEventListener("load", () => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    const mobileMenu = document.getElementById('mobile-menu');
-    const nav = document.querySelector('nav');
+    const nav = document.querySelector('header nav');
+    let mobileMenu = document.getElementById('mobile-menu');
+
+    if (nav && !mobileMenu) {
+        const header = document.querySelector('header');
+        if (header) {
+            mobileMenu = document.createElement('div');
+            mobileMenu.className = 'menu-toggle';
+            mobileMenu.id = 'mobile-menu';
+            mobileMenu.innerHTML = '<i class="fas fa-bars"></i>';
+            header.insertBefore(mobileMenu, nav);
+        }
+    }
+
     if (mobileMenu && nav) {
         const menuIcon = mobileMenu.querySelector('i');
         mobileMenu.addEventListener('click', () => {

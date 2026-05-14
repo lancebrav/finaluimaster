@@ -458,14 +458,25 @@ html {
 .request-table th, .request-table td {
     padding: 15px 20px;
     border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
 }
 
 .name-cell { white-space: nowrap; }
 
-.name-cell .profile-pic {
-    display: inline-flex; 
+.name-cell .profile-pic,
+.name-cell img.profile-image {
+    display: inline-flex;
     vertical-align: middle;
     margin-right: 15px;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+..name-cell img.profile-image {
+    border: 1px solid #ddd;
 }
 
 .name-cell span {
@@ -710,6 +721,24 @@ form { padding: 20px 30px; overflow-y: auto; flex-grow: 1; }
     .main-dashboard {
         margin-left: var(--side-collapsed);
         width: calc(100% - var(--side-collapsed));
+    }
+
+    .sidebar {
+        position: fixed;
+        width: var(--side-collapsed);
+        height: 100vh;
+    }
+
+    .sidebar-nav {
+        padding-top: 0;
+    }
+
+    .admin-header {
+        padding: 0 20px;
+    }
+
+    .header-right {
+        gap: 10px;
     }
 }
 

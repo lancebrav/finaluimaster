@@ -165,7 +165,7 @@ nav ul li a:hover { color: var(--orange); }
 
 .announcement-grid { 
     display: grid; 
-    grid-template-columns: repeat(3, 1fr); 
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
     gap: 30px; 
 }
 
@@ -174,13 +174,14 @@ nav ul li a:hover { color: var(--orange); }
     box-shadow: var(--shadow); transition: var(--transition); 
     display: flex; flex-direction: column; border: 1px solid rgba(0,0,0,0.05);
     cursor: pointer; 
+    min-height: 100%;
 }
 
 .news-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
 
 .news-image { 
     width: 100%; 
-    aspect-ratio: 4 / 3;
+    min-height: 220px;
     height: auto;    
     position: relative; 
     overflow: hidden; 
@@ -205,6 +206,43 @@ nav ul li a:hover { color: var(--orange); }
     font-weight: 800; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; transition: 0.3s;
 }
 .read-more:hover { gap: 15px; color: var(--prussian-blue); }
+
+@media (max-width: 992px) {
+    .page-banner { padding: 120px 5% 40px; }
+    .banner-content h1 { font-size: 2.4rem; }
+    .banner-content p { font-size: 1rem; }
+    .announcement-section { padding: 40px 5%; }
+    .news-image { min-height: 200px; }
+}
+
+@media (max-width: 768px) {
+    .page-banner { padding: 100px 5% 30px; }
+    .banner-content h1 { font-size: 2rem; }
+    .banner-content p { font-size: 0.95rem; }
+    .announcement-section { padding: 30px 5%; }
+    .news-body { padding: 20px; }
+    .news-body h3 { font-size: 1.2rem; }
+    .news-body p { font-size: 0.92rem; }
+    .modal-cover-img { height: 220px; }
+    .modal-body { padding: 20px; }
+    .modal-meta-grid { grid-template-columns: 1fr; gap: 12px; }
+}
+
+@media (max-width: 480px) {
+    .page-banner { padding: 90px 5% 25px; }
+    .banner-content h1 { font-size: 1.8rem; }
+    .banner-content p { font-size: 0.9rem; }
+    .announcement-section { padding: 25px 5%; }
+    .news-body { padding: 18px; }
+    .news-body h3 { font-size: 1.1rem; }
+    .news-body p { font-size: 0.9rem; }
+    .news-date { font-size: 0.78rem; }
+    .read-more { font-size: 0.85rem; }
+    .modal-cover-img { height: 180px; }
+    .modal-body { padding: 18px; }
+    .modal-title { font-size: 1.4rem; }
+    .modal-meta-grid { gap: 10px; padding: 12px; }
+}
 
 /* ==========================================================================
    5. SERVICES & OTHER SECTIONS
@@ -262,52 +300,90 @@ footer { background: var(--prussian-blue); color: white; padding: 30px 10% 15px;
 .footer-logo-container { display: flex; align-items: center; gap: 15px; }
 
 /* ==========================================================================
-   8. RESPONSIVENESS
+   8. IMPROVED RESPONSIVENESS (REPLACES YOUR EXISTING SECTION 8)
    ========================================================================== */
 .menu-toggle {
     display: none; font-size: 1.8rem; color: var(--white);
     cursor: pointer; z-index: 1001; transition: var(--transition);
 }
-.menu-toggle:hover { color: var(--orange); }
 
-@media (max-width: 992px) {
-    header { padding: 10px 5%; }
-    .menu-toggle { display: block; }
+@media (max-width: 980px) {
+    header { padding: 10px 5%; height: 80px; }
+    .logo-text { font-size: 1rem; }
+    .menu-toggle { display: block; position: relative; z-index: 1002; }
+    
     nav {
-        position: absolute; top: 90px; left: -100%; width: 100%;
-        background: var(--prussian-blue-90); backdrop-filter: blur(8px);
-        transition: var(--transition); box-shadow: 0 10px 15px rgba(0,0,0,0.2);
+        position: fixed; top: 80px; left: -100%; width: 100%; height: calc(100vh - 80px);
+        background: var(--prussian-blue); transition: var(--transition);
+        z-index: 1001; overflow-y: auto;
     }
     nav.active { left: 0; }
-    nav ul { flex-direction: column; padding: 40px 0; gap: 25px; }
-    nav ul li a { font-size: 1.1rem; }
-    .hero-content { flex-direction: column; text-align: center; padding-top: 120px; }
-    .main-portal-seal { max-width: 280px; height: 280px; border-width: 5px; }
-    .hero-text-side h1 { font-size: 2.8rem; }
+    nav ul { flex-direction: column; padding: 50px 20px; gap: 25px; }
+    nav ul li { width: 100%; text-align: center; }
+    nav ul li a { font-size: 1.2rem; display: block; padding: 15px; }
+
+    .hero-content { flex-direction: column-reverse; text-align: center; padding-top: 100px; gap: 30px; }
+    .main-portal-seal { max-width: 250px; height: 250px; }
+    .hero-text-side h1 { font-size: 2.5rem; }
+    
+    /* Services/Announcements adjustments */
+    .announcement-grid, .services-container { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
 }
 
 @media (max-width: 768px) {
-    section { padding: 60px 5%; }
-    .mission-vision-container, .announcement-grid { grid-template-columns: 1fr; }
-    .about-hero h1, .hero-text-side h1 { font-size: 2.2rem; }
-    .hero-text-side p { font-size: 1rem; margin: 0 auto 30px; }
+    section { padding: 40px 5%; }
+    .about-hero h1 { font-size: 2rem; }
+    .mission-vision-container { grid-template-columns: 1fr; margin-top: -30px; }
+    
+    /* Form Grid Fix - CRITICAL for the Document Request Modal */
+    .form-grid { 
+        grid-template-columns: 1fr !important; 
+        gap: 15px !important; 
+    }
+    
+    /* Org Chart / Officials Fix */
+    .tier { gap: 15px; }
+    .official-card { width: 45% !important; min-width: 140px; }
+    .top-tier .official-card { width: 90% !important; max-width: 300px; }
+    
+    /* Footer */
     .footer-cols { flex-direction: column; text-align: center; align-items: center; }
     .footer-logo-container { justify-content: center; }
-    .official-card { width: 160px; }
-    .official-photo { width: 100px; height: 100px; }
-    .top-tier .official-card { width: 100%; max-width: 260px; }
-    .form-grid { grid-template-columns: 1fr !important; gap: 15px !important; }
-    .form-grid .input-group[style] { grid-column: span 1 !important; }
-    .modal-content { padding: 25px 20px; }
 }
 
 @media (max-width: 480px) {
-    .logo-text { font-size: 1rem; }
+    .hero-text-side h1 { font-size: 2rem; }
+    .hero-text-side p { font-size: 0.95rem; }
     .header-logo { width: 45px !important; height: 45px !important; }
-    .hero-text-side h1 { font-size: 1.8rem; }
-    .main-portal-seal { max-width: 200px; height: 200px; }
-    .banner-overlay h1 { font-size: 2rem; }
-    .service-box { padding: 30px 20px; }
+    
+    .modal-content { padding: 25px 15px; width: 95%; margin: 2vh auto; }
+    #modalHeader { font-size: 1.4rem; }
+    
+    /* News/Cards */
+    .news-body h3 { font-size: 1.1rem; }
+    .gallery-item { flex: 0 0 280px; height: 200px; }
+
+    /* Fix for SK hierarchy gap */
+    .sk-hierarchy { margin-top: 20px !important; }
+}
+
+/* ==========================================================================
+   9. EXTRA OVERRIDES FOR FLEXIBILITY
+   ========================================================================== */
+/* Ensures images never overflow their parents */
+img { max-width: 100%; height: auto; }
+
+/* Ensures the Org Chart (Officials) wraps nicely on mobile */
+.org-chart-container { 
+    overflow-x: hidden; 
+    padding: 10px; 
+}
+
+/* Fixes the 4-column layout in the request form for small screens */
+.input-group[style*="grid-column: span 2"],
+.input-group[style*="grid-column: span 3"],
+.input-group[style*="grid-column: span 4"] {
+    grid-column: span 1 !important;
 }
 
 /* ==========================================================================
@@ -573,4 +649,33 @@ nav ul li a.active-link { color: var(--orange) !important; border-bottom: 2px so
 .official-grid { 
     display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 30px; max-width: 1200px; margin: 0 auto; 
+}
+
+/*MAP RESPONSIVENESS*/
+/* Container creates the responsive shape */
+.map-responsive {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    /* 16:9 Aspect Ratio (divide 9 by 16 = 0.5625) */
+    padding-bottom: 56.25%; 
+    height: 0;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+
+/* The iframe fills the container perfectly */
+.map-responsive iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Mobile Tweak: Make it more of a square so it's easier to see on phones */
+@media (max-width: 768px) {
+    .map-responsive {
+        padding-bottom: 75%; /* 4:3 Aspect Ratio */
+    }
 }

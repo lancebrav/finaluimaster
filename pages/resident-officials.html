@@ -58,14 +58,25 @@
         const bottomTier = [];
 
         // 2. SORT EVERYONE INTO THEIR CORRECT TIER
+        const skTopTier = [];
+        const skMiddleTier = [];
+        const skBottomTier = [];
+
         rawOfficers.forEach(off => {
             const pos = off.position || "";
             if (pos === "Punong Barangay") {
                 topTier.push(off);
             } else if (pos === "Barangay Kagawad") {
                 middleTier.push(off);
+            } else if (pos === "Barangay Secretary" || pos === "Barangay Treasurer") {
+                bottomTier.push(off);
+            } else if (pos === "SK Chairman") {
+                skTopTier.push(off);
+            } else if (pos === "SK Kagawad") {
+                skMiddleTier.push(off);
+            } else if (pos === "SK Secretary" || pos === "SK Treasurer") {
+                skBottomTier.push(off);
             } else {
-                // Secretary, Treasurer, SK Chairperson fall to the bottom
                 bottomTier.push(off);
             }
         });
@@ -107,10 +118,33 @@
             finalHTML += `</div>`;
         }
 
-        // Add Bottom Tier (Secretary, Treasurer, SK)
+        // Add Bottom Tier (Barangay Secretary & Treasurer)
         if (bottomTier.length > 0) {
             finalHTML += `<div class="tier bottom-tier">`;
             bottomTier.forEach(off => finalHTML += createCardHTML(off));
+            finalHTML += `</div>`;
+        }
+
+        // Add SK Officials in a separate hierarchy
+        if (skTopTier.length + skMiddleTier.length + skBottomTier.length > 0) {
+            finalHTML += `<div class="sk-hierarchy" style="width:100%; margin-top: 20px; display: flex; flex-direction: column; gap: 20px;">`;
+            finalHTML += `<h3 style="text-align:center; color: var(--prussian-blue); margin-bottom: 30px;">SK Officials</h3>`;
+            if (skTopTier.length > 0) {
+                finalHTML += `<div class="tier top-tier">`;
+                skTopTier.forEach(off => finalHTML += createCardHTML(off));
+                finalHTML += `</div>`;
+            }
+            if (skMiddleTier.length > 0) {
+                skMiddleTier.sort((a, b) => a.name.localeCompare(b.name));
+                finalHTML += `<div class="tier middle-tier">`;
+                skMiddleTier.forEach(off => finalHTML += createCardHTML(off));
+                finalHTML += `</div>`;
+            }
+            if (skBottomTier.length > 0) {
+                finalHTML += `<div class="tier bottom-tier">`;
+                skBottomTier.forEach(off => finalHTML += createCardHTML(off));
+                finalHTML += `</div>`;
+            }
             finalHTML += `</div>`;
         }
 

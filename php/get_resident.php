@@ -9,9 +9,11 @@ if (!$data || !isset($data['resident_id'])) {
     exit;
 }
 
-$resident_id = $data['resident_id'];
-//GET Resident, window.loadAndRenderResidents()
-$result = mysqli_query($conn, "SELECT * FROM residents WHERE resident_id = $resident_id");
+$resident_id = (int)$data['resident_id'];
+$stmt = mysqli_prepare($conn, "SELECT * FROM residents WHERE resident_id = ?");
+mysqli_stmt_bind_param($stmt, "i", $resident_id);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 
 if ($row = mysqli_fetch_assoc($result)) {
     echo json_encode(['success' => true, 'resident' => $row]);
@@ -19,5 +21,6 @@ if ($row = mysqli_fetch_assoc($result)) {
     echo json_encode(['success' => false, 'message' => 'Resident not found']);
 }
 
+mysqli_stmt_close($stmt);
 mysqli_close($conn);
 ?>

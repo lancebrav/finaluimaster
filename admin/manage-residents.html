@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Manage Residents | Barangay 663</title>
     <link rel="stylesheet" href="../css/home.css">
     <link rel="stylesheet" href="../css/admin-dashboard.css">
@@ -83,7 +86,7 @@
                 <i class="fas fa-archive"></i> <span>Archives</span>
             </a>
         </div>
-        <a href="../pages/home.html" class="nav-item logout-item">
+        <a href="../php/logout.php" class="nav-item logout-item">
             <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
         </a>
     </nav>
@@ -132,6 +135,9 @@
                 <option value="citizenship">Citizenship</option>
                 <option value="occupation">Occupation</option>
                 <option value="houseHeadRelationship">House Head Relationship</option>
+                <option value="householdHeadName">Household Head</option>
+                <option value="familyGroup">Family Group</option>
+                <option value="relatives">Relatives</option>
                 <option value="voterStatus">Voter Status</option>
                 <option value="status">Status</option>
                 <option value="address">Address</option>
@@ -175,6 +181,9 @@
                     <label class="checkbox-item"><input type="checkbox" value="citizenship"> Citizenship</label>
                     <label class="checkbox-item"><input type="checkbox" value="occupation"> Occupation</label>
                     <label class="checkbox-item"><input type="checkbox" value="houseHeadRelationship"> House Head Relationship</label>
+                    <label class="checkbox-item"><input type="checkbox" value="householdHeadName" checked> Household Head</label>
+                    <label class="checkbox-item"><input type="checkbox" value="familyGroup" checked> Family Group</label>
+                    <label class="checkbox-item"><input type="checkbox" value="relatives"> Relatives</label>
                     <label class="checkbox-item"><input type="checkbox" value="age" checked> Age</label>
                     <label class="checkbox-item"><input type="checkbox" value="status" checked> Status</label>
                     <label class="checkbox-item"><input type="checkbox" value="voterStatus"> Voter Status</label>

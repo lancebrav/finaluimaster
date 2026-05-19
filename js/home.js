@@ -403,12 +403,36 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('brgyDocumentRequests', JSON.stringify(existingRequests));
 
             setTimeout(() => {
-                showNotification(docType + " Submitted Successfully!", "success");
-                this.reset();
-                if(typeof closeModal === 'function') closeModal(); 
-                if(typeof resetUploadUI === 'function') resetUploadUI();
-                submitBtn.innerText = originalText;
-                submitBtn.disabled = false;
+                // Attempt to send confirmation email (best-effort)
+                fetch('../php/send_submission_email.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: newRequest.residentEmailAddress,
+                        name: (newRequest.residentFirstName + ' ' + (newRequest.residentLastName || '')).trim(),
+                        docType: newRequest.documentType,
+                        requestId: newRequest.id,
+                        subject: newRequest.documentType + ' Submission Received'
+                    })
+                })
+                .then(resp => resp.json())
+                .then(result => {
+                    if (!result.success) {
+                        showNotification('Submitted but email failed: ' + (result.message || ''), 'warning');
+                    }
+                })
+                .catch(err => {
+                    console.error('Email send error:', err);
+                    showNotification('Submitted but email failed to send.', 'warning');
+                })
+                .finally(() => {
+                    showNotification(docType + " Submitted Successfully!", "success");
+                    this.reset();
+                    if(typeof closeModal === 'function') closeModal(); 
+                    if(typeof resetUploadUI === 'function') resetUploadUI();
+                    submitBtn.innerText = originalText;
+                    submitBtn.disabled = false;
+                });
             }, 1500);
         });
     }

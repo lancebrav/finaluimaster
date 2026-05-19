@@ -25,8 +25,13 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
 
             try {
-                const photoInput = document.getElementById('resPhoto');
                 const editId = document.getElementById('editResidentId').value;
+                const confirmed = confirm(editId ?
+                    'Are you sure you want to save changes to this resident?' :
+                    'Are you sure you want to add this resident to the list?');
+                if (!confirmed) return;
+
+                const photoInput = document.getElementById('resPhoto');
                 let photoBase64 = "";
 
                 if (photoInput && photoInput.files[0]) {
@@ -86,28 +91,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const endpoint = editId ? '../php/edit_resident.php' : '../php/add_resident.php';
 
-                fetch(endpoint, {
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(residentData)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        residentForm.reset();
-                        document.getElementById('imagePreview').innerHTML = "?";
-                        document.getElementById('editResidentId').value = "";
-                        document.getElementById('modalTitle').innerText = "Register Resident";
-                        document.getElementById('residentModal').classList.remove('active');
-                        window.loadAndRenderResidents();
-                    } else {
-                        alert('Error saving resident: ' + data.message);
-                    }
-                })
-                .catch(fetchErr => {
-                    console.error("FETCH ERROR:", fetchErr);
-                    alert('Network error: Could not reach the server. Check your connection or PHP path.\n\n' + fetchErr.message);
                 });
+
+                const data = await window.parseJsonResponse(response, endpoint);
+
+                if (data.success) {
+                    residentForm.reset();
+                    const previewEl = document.getElementById('imagePreview');
+                    if (previewEl) {
+                        previewEl.innerHTML = "?";
+                    }
+                    document.getElementById('editResidentId').value = "";
+                    document.getElementById('modalTitle').innerText = "Register Resident";
+                    document.getElementById('residentModal').classList.remove('active');
+                    window.loadAndRenderResidents();
+                } else {
+                    alert('Error saving resident: ' + data.message);
+                }
 
             } catch (err) {
                 console.error("FORM ERROR:", err);
@@ -293,9 +297,215 @@ document.addEventListener('DOMContentLoaded', () => {
 window.currentPage = 1;
 window.rowsPerPage = 8;
 window.cachedResidents = [];
+window.residentMapById = {};
+window.familyMembersByKey = {};
 window.filteredResidentsTotal = 0;
 window.residentFilters = { field: '', values: [], ageMin: '', ageMax: '' };
-window.selectedColumns = ['fullName', 'houseNum', 'streetName', 'birthday', 'gender', 'age', 'status'];
+window.selectedColumns = ['fullName', 'houseNum', 'streetName', 'familyGroup', 'householdHeadName', 'birthday', 'gender', 'age', 'status'];
+
+window.escapeHtml = function(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+};
+
+window.ensureFamilyDetailsModal = function() {
+    if (document.getElementById('familyDetailsModal')) return;
+
+    const modal = document.createElement('div');
+    modal.id = 'familyDetailsModal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="event-form-modal" style="max-width: 780px; width: min(92vw, 780px);">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 id="familyModalTitle">Family Details</h3>
+                <i class="fas fa-times close-modal" id="closeFamilyModal" style="cursor:pointer;"></i>
+            </div>
+            <div style="padding: 16px 6px 6px;">
+                <div id="familyModalSummary" style="margin-bottom: 12px; color:#334; font-size:0.95rem;"></div>
+                <div style="overflow-x:auto;">
+                    <table class="resident-table" style="min-width: 640px;">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Relationship</th>
+                                <th>Household Head</th>
+                                <th>Age</th>
+                            </tr>
+                        </thead>
+                        <tbody id="familyModalBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    document.getElementById('closeFamilyModal')?.addEventListener('click', () => {
+        modal.classList.remove('active');
+    });
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.remove('active');
+        }
+    });
+};
+
+window.showFamilyDetailsModalForResident = function(residentId) {
+    window.ensureFamilyDetailsModal();
+
+    const resident = window.residentMapById[String(residentId)];
+    if (!resident) {
+        alert('Resident details not found for family mapping.');
+        return;
+    }
+
+    const familyKey = resident.familyKey;
+    const familyMembers = window.familyMembersByKey[familyKey] || [resident];
+    const headName = resident.householdHeadName || 'Not set';
+
+    const title = document.getElementById('familyModalTitle');
+    const summary = document.getElementById('familyModalSummary');
+    const tbody = document.getElementById('familyModalBody');
+
+    if (!title || !summary || !tbody) return;
+
+    title.textContent = `Family Details: ${resident.familyGroup || 'Household'}`;
+    summary.innerHTML = `
+        <strong>Household Head:</strong> ${window.escapeHtml(headName)}
+        &nbsp;|&nbsp;
+        <strong>Total Members:</strong> ${familyMembers.length}
+    `;
+
+    tbody.innerHTML = familyMembers.map(member => {
+        const relation = member.houseHeadRelationship || (window.isHouseholdHead(member) ? 'Head' : 'Member');
+        const age = member.birthday ? window.calculateAge(member.birthday) : 'N/A';
+        const isSelected = String(member.resident_id) === String(residentId);
+        return `
+            <tr style="${isSelected ? 'background:#f1f6ff;' : ''}">
+                <td style="font-weight:${isSelected ? '700' : '600'};">${window.escapeHtml(member.fullName || '')}</td>
+                <td>${window.escapeHtml(relation)}</td>
+                <td>${window.escapeHtml(headName)}</td>
+                <td>${window.escapeHtml(age)}</td>
+            </tr>
+        `;
+    }).join('');
+
+    document.getElementById('familyDetailsModal')?.classList.add('active');
+};
+
+window.setupResidentRowClick = function() {
+    const tbody = document.querySelector('#residentTable tbody');
+    if (!tbody || tbody.dataset.familyClickBound === '1') return;
+
+    tbody.dataset.familyClickBound = '1';
+    tbody.addEventListener('click', (e) => {
+        if (e.target.closest('.action-icons') || e.target.closest('.resident-checkbox')) {
+            return;
+        }
+
+        const row = e.target.closest('tr[data-resident-id]');
+        if (!row) return;
+
+        const residentId = row.dataset.residentId;
+        if (residentId) {
+            window.showFamilyDetailsModalForResident(residentId);
+        }
+    });
+};
+
+window.parseJsonResponse = async function(response, endpoint) {
+    const text = await response.text();
+    try {
+        return JSON.parse(text);
+    } catch (err) {
+        const preview = text.slice(0, 180).replace(/\s+/g, ' ').trim();
+        throw new Error(`Invalid JSON from ${endpoint}. Response starts with: ${preview || '[empty response]'}`);
+    }
+};
+
+window.normalizeFamilyText = function(value) {
+    return String(value || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '')
+        .trim();
+};
+
+window.isHouseholdHead = function(resident) {
+    const relation = String(resident.houseHeadRelationship || '').toLowerCase().trim();
+    return relation === 'head' || relation === 'household head' || relation === 'self';
+};
+
+window.buildFamilyMappings = function(residents) {
+    const groups = new Map();
+
+    residents.forEach((resident, index) => {
+        const houseNum = String(resident.houseNum || '').trim();
+        const street = String(resident.streetName || '').trim();
+        const address = String(resident.address || '').trim();
+        const fallback = `resident-${resident.resident_id || index}`;
+        const rawKey = (houseNum || street)
+            ? `${window.normalizeFamilyText(houseNum)}|${window.normalizeFamilyText(street)}`
+            : window.normalizeFamilyText(address) || fallback;
+
+        if (!groups.has(rawKey)) {
+            groups.set(rawKey, []);
+        }
+        groups.get(rawKey).push(resident);
+    });
+
+    const enriched = [];
+    const familyMembersByKey = {};
+    const residentMapById = {};
+
+    groups.forEach((members, key) => {
+        const explicitHeads = members.filter(window.isHouseholdHead);
+        let head = explicitHeads[0];
+
+        if (!head) {
+            const sortable = [...members].sort((a, b) => {
+                const aDate = a.birthday ? new Date(a.birthday).getTime() : Number.POSITIVE_INFINITY;
+                const bDate = b.birthday ? new Date(b.birthday).getTime() : Number.POSITIVE_INFINITY;
+                return aDate - bDate;
+            });
+            head = sortable[0] || members[0];
+        }
+
+        const headName = head?.fullName || 'Not set';
+        const familyLabel = members.length > 1 ? `Family ${key.slice(0, 8).toUpperCase()}` : 'Single-member household';
+
+        familyMembersByKey[key] = members.map(m => ({ ...m }));
+
+        members.forEach(member => {
+            const relatives = members
+                .filter(m => String(m.resident_id) !== String(member.resident_id))
+                .map(m => m.fullName)
+                .filter(Boolean);
+
+            const enrichedMember = {
+                ...member,
+                familyKey: key,
+                familyGroup: familyLabel,
+                householdHeadName: headName,
+                familySize: members.length,
+                relatives: relatives.length ? relatives.join(', ') : 'No linked relatives'
+            };
+
+            enriched.push(enrichedMember);
+            residentMapById[String(member.resident_id)] = enrichedMember;
+        });
+    });
+
+    window.familyMembersByKey = familyMembersByKey;
+    window.residentMapById = residentMapById;
+
+    return enriched;
+};
 
 window.getColumnLabel = function(col) {
     const labels = {
@@ -309,6 +519,9 @@ window.getColumnLabel = function(col) {
         'citizenship': 'Citizenship',
         'occupation': 'Occupation',
         'houseHeadRelationship': 'House Head Relationship',
+        'householdHeadName': 'Household Head',
+        'familyGroup': 'Family Group',
+        'relatives': 'Relatives',
         'age': 'Age',
         'status': 'Status',
         'voterStatus': 'Voter Status',
@@ -337,6 +550,12 @@ window.getResidentFieldValue = function(res, field) {
             return res.occupation || '';
         case 'houseHeadRelationship':
             return res.houseHeadRelationship || '';
+        case 'householdHeadName':
+            return res.householdHeadName || 'Not set';
+        case 'familyGroup':
+            return res.familyGroup || 'Unmapped';
+        case 'relatives':
+            return res.relatives || 'No linked relatives';
         case 'voterStatus':
             return res.voterStatus || '';
         case 'status':
@@ -459,9 +678,9 @@ window.updateResidentFilterValues = function(residents) {
 
 window.loadAndRenderResidents = function() {
     fetch('../php/get_residents.php')
-    .then(response => response.json())
+    .then(response => window.parseJsonResponse(response, '../php/get_residents.php'))
     .then(data => {
-        let residents = data.residents || [];
+        let residents = window.buildFamilyMappings(data.residents || []);
         window.cachedResidents = residents;
         window.updateResidentFilterValues(residents);
         const tbody = document.querySelector('#residentTable tbody');
@@ -475,7 +694,7 @@ window.loadAndRenderResidents = function() {
         if (searchInput && searchInput.value.trim() !== '') {
             const query = searchInput.value.toLowerCase();
             residents = residents.filter(res => {
-                const searchableText = `${res.fullName} ${res.address} ${res.voterStatus} ${res.gender} ${res.houseNum}`.toLowerCase();
+                const searchableText = `${res.fullName} ${res.address} ${res.voterStatus} ${res.gender} ${res.houseNum} ${res.familyGroup} ${res.householdHeadName} ${res.relatives}`.toLowerCase();
                 return searchableText.includes(query);
             });
         }
@@ -515,10 +734,14 @@ window.loadAndRenderResidents = function() {
 
         paginatedItems.forEach((res, index) => {
             const row = document.createElement('tr');
+            row.setAttribute('data-resident-id', String(res.resident_id));
+            row.style.cursor = 'pointer';
             const itemSequentialNumber = start + index + 1;
             row.innerHTML = window.buildResidentRowHTML(res, itemSequentialNumber);
             tbody.appendChild(row);
         });
+
+        window.setupResidentRowClick();
 
         const totalPages = Math.ceil(window.filteredResidentsTotal / window.rowsPerPage) || 1;
         const pageInfo = document.getElementById('pageInfo');
@@ -530,6 +753,10 @@ window.loadAndRenderResidents = function() {
         const nextBtn = document.getElementById('nextPageBtn');
         if (prevBtn) prevBtn.disabled = (window.currentPage === 1);
         if (nextBtn) nextBtn.disabled = (window.currentPage === totalPages || totalPages === 0);
+    })
+    .catch(err => {
+        console.error('Error loading residents:', err);
+        alert('Unable to load residents list: ' + err.message);
     });
 };
 
@@ -590,6 +817,7 @@ window.exportResidentsToExcel = function() {
 };
 
 window.editResident = (id) => {
+    if (!confirm('Open resident editor for this record?')) return;
     fetch('../php/get_resident.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -618,8 +846,9 @@ window.editResident = (id) => {
             document.getElementById('resHouseHeadRelationship').value = res.houseHeadRelationship || '';
             document.getElementById('resStreetName').value = res.streetName || '';
 
-            if (res.photo) {
-                document.getElementById('imagePreview').innerHTML = `<img src="${res.photo}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+            const previewEl = document.getElementById('imagePreview');
+            if (res.photo && previewEl) {
+                previewEl.innerHTML = `<img src="${res.photo}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
             }
 
             document.getElementById('residentModal').classList.add('active');
@@ -718,4 +947,29 @@ window.renderArchivedTable = function() {
     const totalPages = Math.ceil(window.cachedArchivedResidents.length / window.archiveRowsPerPage) || 1;
     const pageInfo = document.getElementById('archivePageInfo');
     if (pageInfo) pageInfo.textContent = `Page ${window.archiveCurrentPage} of ${totalPages}`;
+};
+
+window.restoreResident = function(id) {
+    if (!confirm('Restore this resident to the active list?')) return;
+
+    fetch('../php/restore_resident.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resident_id: id })
+    })
+    .then(response => window.parseJsonResponse(response, '../php/restore_resident.php'))
+    .then(data => {
+        if (data.success) {
+            alert('Resident restored successfully');
+            // refresh both archived and active lists
+            if (typeof window.loadAndRenderArchives === 'function') window.loadAndRenderArchives();
+            if (typeof window.loadAndRenderResidents === 'function') window.loadAndRenderResidents();
+        } else {
+            alert('Error restoring resident: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(err => {
+        console.error('Error restoring resident:', err);
+        alert('Failed to restore resident: ' + err.message);
+    });
 };

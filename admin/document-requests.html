@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Document Requests | Barangay 663</title>
     <link rel="stylesheet" href="../css/home.css">
     <link rel="stylesheet" href="../css/admin-dashboard.css">
@@ -244,8 +247,8 @@
                             <p id="residentVoterStatus">Registered</p>
                         </div>
                         <div class="info-group">
-                            <label>Precinct Number</label>
-                            <p id="residentPrecinctNumber">0542B</p>
+                            <label>PhilSys Number</label>
+                            <p id="residentPhilSysNumber">1234-5678-9012-3456</p>
                         </div>
                         
                         <div class="info-group">
@@ -281,6 +284,12 @@
                             </div>
                             <p class="id-hint">Click image to enlarge</p>
                         </div>
+                    </div>
+
+                    <div style="margin-top: 20px; display: flex; gap: 10px;">
+                        <button type="button" onclick="window.sendCustomEmail()" style="background: #070e50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                            <i class="fas fa-envelope"></i> Send Custom Email
+                        </button>
                     </div>
                 </div>
             </div>

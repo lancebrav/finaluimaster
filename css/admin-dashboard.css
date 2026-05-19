@@ -103,6 +103,92 @@ html { overflow-y: scroll; }
 .card-main i { font-size: 5rem; }
 
 /* =========================================
+   4A. SUMMARY REPORT
+   ========================================= */
+.summary-report {
+    padding: 0 40px 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.summary-header {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 18px;
+}
+
+.summary-header h3 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #111827;
+}
+
+.summary-header p {
+    color: #6b7280;
+    font-size: 0.95rem;
+}
+
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.summary-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px 18px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.summary-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: #6b7280;
+}
+
+.summary-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--sidebar-bg);
+}
+
+.summary-table-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+    overflow-x: auto;
+}
+
+.summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 680px;
+}
+
+.summary-table thead tr {
+    background-color: #1a1a4b;
+    color: white;
+    text-align: left;
+}
+
+.summary-table th,
+.summary-table td {
+    padding: 14px 18px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+}
+
+/* =========================================
    5. PAGE CONTAINERS & ACTION BARS
    ========================================= */
 .residents-page-container, .requests-container, .announcements-container {

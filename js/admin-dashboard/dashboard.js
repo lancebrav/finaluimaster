@@ -30,7 +30,20 @@ function updateDashboard() {
     fetch('../php/get_residents.php')
     .then(response => response.json())
     .then(data => {
-        const residents = data.residents || [];
+        const residents = (data.residents || []).map(res => {
+            const first = res.firstName || '';
+            const middle = res.middleName || '';
+            const last = res.lastName || '';
+            const suffix = res.suffix || '';
+            const middleInitial = middle ? `${middle.charAt(0).toUpperCase()}. ` : '';
+            const displaySuffix = suffix ? ` ${suffix}` : '';
+            const fullName = `${first} ${middleInitial}${last}${displaySuffix}`.trim();
+
+            return {
+                ...res,
+                fullName: res.fullName || fullName
+            };
+        });
 
         const total = residents.length;
         const males = residents.filter(r => r.gender === 'M').length;
@@ -44,9 +57,64 @@ function updateDashboard() {
 
         renderGenderPieChart(males, females);
         renderAgeLineChart(residents);
+        renderSummaryReport(residents);
     })
     .catch(err => {
         console.error('Error fetching residents:', err);
+    });
+}
+
+function renderSummaryReport(residents) {
+    const summaryFamiliesEl = document.getElementById('summary-families');
+    const summaryHeadsEl = document.getElementById('summary-heads');
+    const summarySingleEl = document.getElementById('summary-single');
+    const summaryAvgSizeEl = document.getElementById('summary-avg-size');
+    const familySummaryBody = document.getElementById('familySummaryBody');
+
+    if (!summaryFamiliesEl || !summaryHeadsEl || !summarySingleEl || !summaryAvgSizeEl || !familySummaryBody) {
+        return;
+    }
+
+    const enrichedResidents = window.buildFamilyMappings
+        ? window.buildFamilyMappings(residents)
+        : residents;
+
+    const families = new Map();
+
+    enrichedResidents.forEach(res => {
+        const familyKey = res.familyKey || `${res.houseNum || ''}|${res.streetName || ''}`.trim();
+        if (!families.has(familyKey)) {
+            const address = `${res.houseNum || ''} ${res.streetName || ''}`.trim() || res.address || 'N/A';
+            families.set(familyKey, {
+                familyGroup: res.familyGroup || 'Household',
+                headName: res.householdHeadName || res.fullName || 'Not set',
+                size: Number(res.familySize || 1),
+                address
+            });
+        }
+    });
+
+    const totalFamilies = families.size;
+    const singleMemberFamilies = Array.from(families.values()).filter(f => f.size === 1).length;
+    const avgFamilySize = totalFamilies ? (residents.length / totalFamilies).toFixed(1) : '0';
+
+    summaryFamiliesEl.textContent = totalFamilies;
+    summaryHeadsEl.textContent = totalFamilies;
+    summarySingleEl.textContent = singleMemberFamilies;
+    summaryAvgSizeEl.textContent = avgFamilySize;
+
+    const sortedFamilies = Array.from(families.values()).sort((a, b) => b.size - a.size);
+    familySummaryBody.innerHTML = '';
+
+    sortedFamilies.forEach(family => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${family.familyGroup}</td>
+            <td>${family.headName}</td>
+            <td>${family.size}</td>
+            <td>${family.address}</td>
+        `;
+        familySummaryBody.appendChild(tr);
     });
 }
 

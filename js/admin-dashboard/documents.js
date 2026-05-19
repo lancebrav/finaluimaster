@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'residentSuffix', 'residentGender', 'residentNationality',
             'residentCivilStatus', 'residentBirthDate', 'residentPlaceOfBirth',
             'residentEmailAddress', 'residentContactNumber', 'residentVoterStatus',
-            'residentPrecinctNumber', 'residentHouseNo', 'residentStreet', 
+            'residentPhilSysNumber', 'residentHouseNo', 'residentStreet', 
             'residentPurposeOfRequest', 'residentIsResident'
         ];
 
@@ -339,7 +339,95 @@ window.changeRequestStatus = function(requestId, newStatus) {
     if (index !== -1) {
         requests[index].status = newStatus;
         localStorage.setItem('brgyDocumentRequests', JSON.stringify(requests));
+
+        const req = requests[index];
+        const emailPayload = {
+            email: req.residentEmailAddress,
+            name: (req.residentFirstName + ' ' + (req.residentLastName || '')).trim(),
+            docType: req.documentType,
+            requestId: req.id
+        };
+
+        // Send approval email
+        if (newStatus === 'Approved') {
+            emailPayload.subject = req.documentType + ' - Approved for Pickup';
+            emailPayload.action = 'approved';
+
+            fetch('../php/send_submission_email.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(emailPayload)
+            })
+            .then(r => r.json())
+            .catch(err => console.error('Email send error:', err));
+        }
+        // Send rejection email
+        else if (newStatus === 'Rejected') {
+            emailPayload.subject = req.documentType + ' - Request Rejected';
+            emailPayload.action = 'rejected';
+
+            fetch('../php/send_submission_email.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(emailPayload)
+            })
+            .then(r => r.json())
+            .catch(err => console.error('Email send error:', err));
+        }
     }
+};
+
+window.sendCustomEmail = function() {
+    const customSubject = prompt('Enter email subject:');
+    if (!customSubject) return;
+
+    const customMessage = prompt('Enter email message/body:');
+    if (!customMessage === null) return;
+
+    const modal = document.getElementById('docDetailsModal');
+    if (!modal) return;
+
+    const emailEl = document.getElementById('residentEmailAddress');
+    const nameFirstEl = document.getElementById('residentFirstName');
+    const nameLastEl = document.getElementById('residentLastName');
+
+    if (!emailEl || !nameFirstEl || !nameLastEl) {
+        alert('Could not retrieve recipient email.');
+        return;
+    }
+
+    const email = emailEl.textContent || '';
+    const name = (nameFirstEl.textContent || '') + ' ' + (nameLastEl.textContent || '');
+
+    if (!email || email === 'N/A') {
+        alert('No valid email address found for this resident.');
+        return;
+    }
+
+    const payload = {
+        email: email,
+        name: name.trim(),
+        subject: customSubject,
+        customBody: customMessage
+    };
+
+    fetch('../php/send_submission_email.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            alert('Custom email sent successfully!');
+        } else {
+            alert('Email failed: ' + (result.message || 'Unknown error'));
+        }
+    })
+    .catch(err => {
+        console.error('Error sending custom email:', err);
+        alert('Failed to send custom email');
+    });
 };
 
 window.archiveRequest = function(id) {

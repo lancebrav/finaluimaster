@@ -1,9 +1,18 @@
 <?php //admin page, checks if user is logged in as admin
 session_start();
-if (!isset($_SESSION['admin'])) {
+
+// Protect restricted page - redirect if not authenticated
+if (!isset($_SESSION['admin']) || $_SESSION['admin'] !== true) {
+    session_destroy();
     header('Location: ../pages/login.html');
     exit;
-} //protects the dashboard.
+}
+
+// Prevent browser caching of admin pages (protect back button)
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0, private');
+header('Pragma: no-cache');
+header('Expires: 0');
+header('X-Frame-Options: SAMEORIGIN');
 ?> 
 <!DOCTYPE html>
 <html lang="en">
@@ -113,6 +122,44 @@ if (!isset($_SESSION['admin'])) {
             </div>
         </div>
     </div>
+
+    <section class="summary-report">
+        <div class="summary-header">
+            <h3>Summary Report</h3>
+            <p>Based on the current residents list.</p>
+        </div>
+        <div class="summary-cards">
+            <div class="summary-card">
+                <span class="summary-label">Total Families</span>
+                <span class="summary-value" id="summary-families">0</span>
+            </div>
+            <div class="summary-card">
+                <span class="summary-label">Household Heads</span>
+                <span class="summary-value" id="summary-heads">0</span>
+            </div>
+            <div class="summary-card">
+                <span class="summary-label">Single-Member Households</span>
+                <span class="summary-value" id="summary-single">0</span>
+            </div>
+            <div class="summary-card">
+                <span class="summary-label">Average Family Size</span>
+                <span class="summary-value" id="summary-avg-size">0</span>
+            </div>
+        </div>
+        <div class="summary-table-card">
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>Family Group</th>
+                        <th>Household Head</th>
+                        <th>Members</th>
+                        <th>Address</th>
+                    </tr>
+                </thead>
+                <tbody id="familySummaryBody"></tbody>
+            </table>
+        </div>
+    </section>
 
     <section class="dashboard-grid">
         <a href="edit-announcements.html" class="action-card">

@@ -66,17 +66,57 @@ window.loadAndRenderOfficers = function() {
     });
 };
 
+// Populate term options based on selected position
+window.populateOfficerTermOptions = function(position) {
+    const termSelect = document.getElementById('offTerm');
+    if (!termSelect) return;
+
+    // Clear existing options
+    termSelect.innerHTML = '';
+
+    // Basic term options - can be customized per position later
+    const defaultOptions = [
+        { value: '', text: 'Select Term...', disabled: true, selected: true },
+        { value: '2024-2027', text: '2024 - 2027' },
+        { value: '2023-2026', text: '2023 - 2026' },
+        { value: '2022-2025', text: '2022 - 2025' },
+        { value: 'Custom', text: 'Custom / Other' }
+    ];
+
+    // Example: SK positions commonly have separate term cycles
+    const skPositions = ['SK Chairman', 'SK Kagawad', 'SK Secretary', 'SK Treasurer'];
+    if (skPositions.includes(position)) {
+        termSelect.appendChild(new Option('Select Term...', '', true, true));
+        ['2023-2026', '2022-2025', 'Custom'].forEach(tm => termSelect.appendChild(new Option(tm, tm)));
+        return;
+    }
+
+    // Default population
+    defaultOptions.forEach(opt => {
+        const option = document.createElement('option');
+        option.value = opt.value;
+        option.text = opt.text;
+        if (opt.disabled) option.disabled = true;
+        if (opt.selected) option.selected = true;
+        termSelect.appendChild(option);
+    });
+};
+
 const offForm = document.getElementById('addOfficerForm');
 if (offForm) {
     offForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-
         const editId = document.getElementById('editOfficerId').value;
+        const confirmed = confirm(editId ? 'Are you sure you want to save changes to this officer?' : 'Are you sure you want to add this officer?');
+        if (!confirmed) return;
+
+        // (editId already read above when confirming)
         const name = document.getElementById('offName').value;
         const birthday = document.getElementById('offBirthday').value;
         const computedAge = window.calculateAge(birthday);
         const position = document.getElementById('offPosition').value;
-        const term = document.getElementById('offTerm').value;
+        const offTermEl = document.getElementById('offTerm');
+        let term = offTermEl ? offTermEl.value : '';
 
         const uniquePositions = [
             'Punong Barangay',
@@ -111,10 +151,22 @@ if (offForm) {
             photoBase64 = existingOff ? existingOff.photo : "";
         }
 
+        // If user selected 'Custom' show/require custom input value
+        let finalTerm = term;
+        if (term === 'Custom') {
+            const customInput = document.getElementById('offTermCustom');
+            const customVal = customInput ? customInput.value.trim() : '';
+            if (!customVal) {
+                alert('Please enter the custom term before saving.');
+                return;
+            }
+            finalTerm = customVal;
+        }
+
         if (editId) {
             const index = officers.findIndex(o => o.id == editId);
-            if (index !== -1) {
-                officers[index] = { ...officers[index], name, birthday, age: computedAge, position, term, photo: photoBase64 };
+                if (index !== -1) {
+                officers[index] = { ...officers[index], name, birthday, age: computedAge, position, term: finalTerm, photo: photoBase64 };
             }
         } else {
             officers.push({
@@ -123,7 +175,7 @@ if (offForm) {
                 birthday: birthday,
                 age: computedAge,
                 position,
-                term,
+                term: finalTerm,
                 photo: photoBase64
             });
         }
@@ -142,6 +194,7 @@ if (offForm) {
 }
 
 window.editOfficer = function(id) {
+    if (!confirm('Open officer editor for this record?')) return;
     const officers = JSON.parse(localStorage.getItem('brgyOfficers')) || [];
     const off = officers.find(o => o.id == id);
 
@@ -151,10 +204,69 @@ window.editOfficer = function(id) {
         document.getElementById('offName').value = off.name;
         document.getElementById('offBirthday').value = off.birthday || '';
         document.getElementById('offPosition').value = off.position;
-        document.getElementById('offTerm').value = off.term;
+        // ensure term options exist for this position before setting value
+        window.populateOfficerTermOptions(off.position);
+        const offTermEl = document.getElementById('offTerm');
+        if (offTermEl) {
+            const optMatch = offTermEl.querySelector(`option[value="${off.term}"]`);
+            if (optMatch) {
+                offTermEl.value = off.term || '';
+                if (window.hideCustomTermInput) window.hideCustomTermInput();
+            } else {
+                offTermEl.value = 'Custom';
+                if (window.showCustomTermInput) window.showCustomTermInput(off.term || '');
+            }
+        }
         document.getElementById('officerModal').classList.add('active');
     }
 };
+
+// Attach change listeners for position and term selects, and helper functions
+document.addEventListener('DOMContentLoaded', () => {
+    const posSelect = document.getElementById('offPosition');
+    const termSelect = document.getElementById('offTerm');
+    const termContainer = document.getElementById('termInputContainer');
+
+    window.showCustomTermInput = function(initialValue) {
+        if (!termContainer) return;
+        let existing = document.getElementById('offTermCustom');
+        if (existing) {
+            existing.value = initialValue || '';
+            existing.style.display = '';
+            return;
+        }
+        const input = document.createElement('input');
+        input.id = 'offTermCustom';
+        input.type = 'text';
+        input.placeholder = 'Enter custom term...';
+        input.value = initialValue || '';
+        input.style = 'width:100%; padding:8px; margin-top:6px; border-radius:4px; border:1px solid #ccc;';
+        termContainer.appendChild(input);
+    };
+
+    window.hideCustomTermInput = function() {
+        const el = document.getElementById('offTermCustom');
+        if (el && el.parentNode) el.parentNode.removeChild(el);
+    };
+
+    if (posSelect) {
+        posSelect.addEventListener('change', (e) => {
+            window.populateOfficerTermOptions(e.target.value);
+            // remove any custom input when changing position
+            window.hideCustomTermInput();
+        });
+    }
+
+    if (termSelect) {
+        termSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'Custom') {
+                window.showCustomTermInput('');
+            } else {
+                window.hideCustomTermInput();
+            }
+        });
+    }
+});
 
 window.archiveOfficer = function(id) {
     if (confirm("Are you sure you want to archive this officer?")) {

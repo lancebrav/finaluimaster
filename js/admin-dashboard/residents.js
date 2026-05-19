@@ -135,15 +135,20 @@ document.addEventListener('DOMContentLoaded', () => {
     setupModal('addEventBtn', 'eventModal', 'closeEventModal');
     setupModal('addOfficerBtn', 'officerModal', 'closeOfficerModal');
 
-    document.getElementById('prevPage')?.addEventListener('click', () => {
-        if (window.currentPage > 1) { window.currentPage--; window.loadAndRenderResidents(); }
+    // === UPDATED PAGINATION EVENT LISTENERS ===
+    document.getElementById('prevPageBtn')?.addEventListener('click', () => {
+        if (window.currentPage > 1) { 
+            window.currentPage--; 
+            window.loadAndRenderResidents(); 
+        }
     });
 
-    document.getElementById('nextPage')?.addEventListener('click', () => {
+    document.getElementById('nextPageBtn')?.addEventListener('click', () => {
         const totalResidents = typeof window.filteredResidentsTotal === 'number'
             ? window.filteredResidentsTotal
             : (window.cachedResidents || []).length;
-        if (window.currentPage * window.rowsPerPage < totalResidents) {
+        const totalPages = Math.ceil(totalResidents / window.rowsPerPage) || 1;
+        if (window.currentPage < totalPages) {
             window.currentPage++;
             window.loadAndRenderResidents();
         }
@@ -157,14 +162,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Dynamic Search across all tabs in Archives
     const archiveSearchInput = document.getElementById('archiveSearch');
     if (archiveSearchInput) {
         archiveSearchInput.addEventListener('keyup', () => {
             const query = archiveSearchInput.value.toLowerCase();
-            const rows = document.querySelectorAll('#archiveTable tbody tr');
-            rows.forEach(row => {
-                row.style.display = row.innerText.toLowerCase().includes(query) ? "" : "none";
-            });
+            const activeSection = document.querySelector('.request-section.active-section');
+            if (activeSection) {
+                const rows = activeSection.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    row.style.display = row.innerText.toLowerCase().includes(query) ? "" : "none";
+                });
+            }
         });
     }
 
@@ -264,7 +273,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-
     if (document.querySelector('#residentTable tbody')) {
         window.loadAndRenderResidents();
     }
@@ -273,15 +281,13 @@ document.addEventListener('DOMContentLoaded', () => {
         window.loadAndRenderOfficers();
     }
 
-    if (document.querySelector('#archiveTable tbody')) {
+    if (document.querySelector('#archiveResidentsTable tbody')) {
         window.loadAndRenderArchives();
     }
 
     if (document.getElementById('ongoingRequestsBody') && typeof window.loadAndRenderDocumentRequests === 'function') {
         window.loadAndRenderDocumentRequests();
     }
-
-    // ZOOM IN / ZOOM OUT INITIALIZERS REMOVED FROM HERE
 });
 
 window.currentPage = 1;
@@ -360,9 +366,8 @@ window.buildResidentRowHTML = function(res, index) {
     });
     
     html += `<td class="action-icons">
-        <i class="fas fa-pencil-alt edit-icon" onclick="editResident(${res.resident_id})" title="Edit"></i>
-        <i class="fas fa-archive archive-icon" onclick="archiveResident(${res.resident_id})" title="Archive"></i>
-        <i class="fas fa-trash-alt delete-icon" onclick="deleteResident(${res.resident_id})" title="Delete"></i>
+        <i class="fas fa-pencil-alt edit-icon" onclick="editResident(${res.resident_id})" title="Edit" style="cursor:pointer; color:#1a1a4b;"></i>
+        <i class="fas fa-archive archive-icon" onclick="archiveResident(${res.resident_id})" title="Archive" style="cursor:pointer; color:#f39c12;"></i>
     </td>`;
     
     return html;
@@ -514,6 +519,17 @@ window.loadAndRenderResidents = function() {
             row.innerHTML = window.buildResidentRowHTML(res, itemSequentialNumber);
             tbody.appendChild(row);
         });
+
+        const totalPages = Math.ceil(window.filteredResidentsTotal / window.rowsPerPage) || 1;
+        const pageInfo = document.getElementById('pageInfo');
+        if (pageInfo) {
+            pageInfo.textContent = `Page ${window.currentPage} of ${totalPages}`;
+        }
+        
+        const prevBtn = document.getElementById('prevPageBtn');
+        const nextBtn = document.getElementById('nextPageBtn');
+        if (prevBtn) prevBtn.disabled = (window.currentPage === 1);
+        if (nextBtn) nextBtn.disabled = (window.currentPage === totalPages || totalPages === 0);
     });
 };
 
@@ -640,113 +656,66 @@ window.archiveResident = (id) => {
     }
 };
 
-window.deleteResident = (id) => {
-    if (confirm("Are you sure you want to permanently delete this resident? This action cannot be undone.")) {
-        fetch('../php/delete_resident.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ resident_id: id })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Resident deleted successfully');
-                window.loadAndRenderResidents();
-            } else {
-                alert('Error deleting resident: ' + (data.message || 'Unknown error'));
-            }
-        })
-        .catch(err => {
-            console.error('Error:', err);
-            alert('Failed to delete resident');
-        });
-    }
-};
 
+// --- NEW GLOBAL STATE FOR ARCHIVE PAGINATION ---
+window.archiveCurrentPage = 1;
+window.archiveRowsPerPage = 8;
+window.cachedArchivedResidents = [];
+
+/* ==========================================================
+   UPDATED: ARCHIVES RENDER FUNCTION (WITH PAGINATION)
+   ========================================================== */
 window.loadAndRenderArchives = function() {
     fetch('../php/get_archived_residents.php')
     .then(response => response.json())
     .then(data => {
-        const archivedResidentsVault = data.residents || [];
-        const tableBody = document.querySelector('#archiveTable tbody');
-
-        if (!tableBody) return;
-        tableBody.innerHTML = '';
-
-        archivedResidentsVault.forEach(archivedPerson => {
-            const tableRow = document.createElement('tr');
-
-            const profileDisplay = archivedPerson.photo
-                ? `<img src="${archivedPerson.photo}" style="width:35px; height:35px; border-radius:50%; object-fit:cover;">`
-                : `<div class="profile-pic pic-blue">${archivedPerson.firstName?.charAt(0)}${archivedPerson.lastName?.charAt(0)}</div>`;
-
-            const displayAge = archivedPerson.birthday ? window.calculateAge(archivedPerson.birthday) : 'N/A';
-
-            tableRow.innerHTML = `
-                <td class="name-cell">
-                    ${profileDisplay}
-                    <span>${archivedPerson.fullName}</span>
-                </td>
-                <td>${displayAge}</td>
-                <td>${archivedPerson.gender}</td>
-                <td>${archivedPerson.civilStatus}</td>
-                <td>${archivedPerson.houseNum} ${archivedPerson.address}</td>
-                <td style="font-weight: 600; color: #800000;">${archivedPerson.archived_date ? new Date(archivedPerson.archived_date).toLocaleDateString() : 'Unknown'}</td>
-                <td class="action-icons">
-                    <i class="fas fa-undo-alt edit-icon" onclick="restoreResident(${archivedPerson.resident_id})" title="Restore to Active"></i>
-                    <i class="fas fa-trash-alt delete-icon" onclick="permanentlyDeleteArchive(${archivedPerson.resident_id})" title="Delete Permanently"></i>
-                </td>
-            `;
-            tableBody.appendChild(tableRow);
-        });
+        window.cachedArchivedResidents = data.residents || [];
+        window.archiveCurrentPage = 1; // Reset to page 1 on load
+        renderArchivedTable();
     })
     .catch(err => {
         console.error('Error fetching archived residents:', err);
     });
 };
 
-window.restoreResident = function(targetId) {
-    if (confirm("Restore this resident back to the active list?")) {
-        fetch('../php/restore_resident.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ resident_id: targetId })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Resident restored successfully');
-                window.loadAndRenderArchives();
-            } else {
-                alert('Error restoring resident: ' + (data.message || 'Unknown error'));
-            }
-        })
-        .catch(err => {
-            console.error('Error:', err);
-            alert('Failed to restore resident');
-        });
-    }
-};
+window.renderArchivedTable = function() {
+    const tableBody = document.querySelector('#archiveResidentsTable tbody');
+    if (!tableBody) return;
 
-window.permanentlyDeleteArchive = function(targetId) {
-    if (confirm("WARNING: This will permanently delete the resident's record. This action cannot be undone.")) {
-        fetch('../php/delete_resident.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ resident_id: targetId })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Resident permanently deleted');
-                window.loadAndRenderArchives();
-            } else {
-                alert('Error deleting resident: ' + (data.message || 'Unknown error'));
-            }
-        })
-        .catch(err => {
-            console.error('Error:', err);
-            alert('Failed to delete resident');
-        });
+    // Pagination slicing
+    const start = (window.archiveCurrentPage - 1) * window.archiveRowsPerPage;
+    const end = start + window.archiveRowsPerPage;
+    const paginatedItems = window.cachedArchivedResidents.slice(start, end);
+
+    tableBody.innerHTML = '';
+
+    if (window.cachedArchivedResidents.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 30px; color: #7f8c8d; font-weight: 600;">No archived residents found.</td></tr>`;
+        return;
     }
+
+    paginatedItems.forEach((archivedPerson, index) => {
+        const tableRow = document.createElement('tr');
+        const displayAge = archivedPerson.birthday ? window.calculateAge(archivedPerson.birthday) : 'N/A';
+        const displayDate = archivedPerson.archived_date ? new Date(archivedPerson.archived_date).toLocaleDateString() : 'Unknown';
+
+        tableRow.innerHTML = `
+            <td style="text-align: center; font-weight: bold; color: #7f8c8d;">${start + index + 1}</td>
+            <td class="name-cell">${archivedPerson.fullName}</td>
+            <td style="text-align: center;">${displayAge}</td>
+            <td style="text-align: center;">${archivedPerson.gender}</td>
+            <td style="text-align: center;">${archivedPerson.civilStatus}</td>
+            <td>${archivedPerson.houseNum} ${archivedPerson.address}</td>
+            <td style="font-weight: 600; color: #a93226; text-align: center;">${displayDate}</td>
+            <td class="action-icons" style="text-align: center;">
+                <i class="fas fa-undo edit-icon" onclick="restoreResident(${archivedPerson.resident_id})" title="Restore to Active List" style="cursor: pointer; color: #1a1a4b; font-size: 1.1rem;"></i>
+            </td>
+        `;
+        tableBody.appendChild(tableRow);
+    });
+
+    // Update Page Info
+    const totalPages = Math.ceil(window.cachedArchivedResidents.length / window.archiveRowsPerPage) || 1;
+    const pageInfo = document.getElementById('archivePageInfo');
+    if (pageInfo) pageInfo.textContent = `Page ${window.archiveCurrentPage} of ${totalPages}`;
 };

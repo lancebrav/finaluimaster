@@ -26,6 +26,15 @@ function openModal(documentType) {
         // 1. Reset the form fields so previous inputs don't reflect here
         form.reset();
         
+        // Remove any lingering red error highlights from regular inputs and checkbox groups
+        form.querySelectorAll('[required]').forEach(el => {
+            el.style.borderColor = '';
+            el.style.backgroundColor = '';
+            if (el.type === 'radio' || el.type === 'checkbox') {
+                el.closest('.checkbox-group, div').style.color = '';
+            }
+        });
+        
         // Ensure the "Others" container is hidden upon opening
         const otherPurposeContainer = document.getElementById("otherPurposeContainer");
         const otherPurposeText = document.getElementById("otherPurposeText");
@@ -41,8 +50,9 @@ function openModal(documentType) {
         header.innerText = "Application for " + documentType;
         form.setAttribute('data-doc-type', documentType); 
         
-        // 4. Initialize phone validation
+        // 4. Initialize validations
         initializePhoneValidation();
+        initializePhilSysValidation();
         
         modal.style.display = "block";
         document.body.style.overflow = "hidden"; 
@@ -69,9 +79,6 @@ function closeModal() {
         document.body.style.overflow = "auto"; // Resume scrolling
     }
 }
-
-// NOTE: The "Click outside to close" window.addEventListener has been intentionally removed
-// so the user does not lose form data if they accidentally click the background.
 
 // --- 3. AUTOMATIC PHOTO SCROLL (GALLERY) ---
 function startAutoScroll() {
@@ -118,39 +125,50 @@ document.querySelectorAll('.upload-area').forEach((area, index) => {
             const p = area.querySelector('p');
             if (p) p.innerText = fileName;
             
+            // Revert back to the active theme color if file is provided
             area.style.borderColor = "var(--orange)";
             area.style.backgroundColor = "#fff9f2";
         }
     });
 });
 
-// --- 5. PHONE NUMBER VALIDATION ---
+// --- 5. FIELD VALIDATIONS (PHONE & PHILSYS) ---
 function initializePhoneValidation() {
-    const contactNumberInput = document.querySelector('input[type="tel"]');
-    if (!contactNumberInput) return;
+    const contactPrefix = document.getElementById('contactPrefix');
+    const contactNumberInput = document.getElementById('contactNumber');
+    
+    if (!contactNumberInput || !contactPrefix) return;
+
+    // Update placeholder based on selected prefix
+    contactPrefix.addEventListener('change', function() {
+        contactNumberInput.value = ''; // Clear input on prefix change
+        if (this.value === '09') {
+            contactNumberInput.placeholder = "XXXXXXXXX (9 digits)";
+        } else {
+            contactNumberInput.placeholder = "9XXXXXXXXX (10 digits)";
+        }
+    });
 
     contactNumberInput.addEventListener('input', function(event) {
         let value = this.value;
-        
-        // Remove any non-digit characters
         const digitsOnly = value.replace(/\D/g, '');
         
-        // If user tried to enter letters, show warning
         if (digitsOnly !== value && value.length > digitsOnly.length) {
             showNotification('⚠️ Only numbers are allowed in the phone field!', 'warning');
         }
         
-        // Limit to 11 digits
-        if (digitsOnly.length > 11) {
-            showNotification('❌ Phone number cannot exceed 11 digits!', 'error');
-            this.value = digitsOnly.substring(0, 11);
+        // Determine max length based on prefix
+        const maxLength = contactPrefix.value === '09' ? 9 : 10;
+
+        if (digitsOnly.length > maxLength) {
+            showNotification(`❌ Phone number cannot exceed ${maxLength} digits for this format!`, 'error');
+            this.value = digitsOnly.substring(0, maxLength);
         } else {
             this.value = digitsOnly;
         }
     });
 
     contactNumberInput.addEventListener('keypress', function(event) {
-        // Check if the key pressed is NOT a number
         if (!/[0-9]/.test(event.key)) {
             event.preventDefault();
             showNotification('⚠️ Only numeric input is allowed!', 'warning');
@@ -158,9 +176,45 @@ function initializePhoneValidation() {
     });
 }
 
+function initializePhilSysValidation() {
+    const philsysInput = document.getElementById('philsysNumber');
+    if (!philsysInput) return;
+
+    philsysInput.addEventListener('input', function(event) {
+        let value = this.value;
+        
+        // Strip out any non-digit characters
+        let digitsOnly = value.replace(/\D/g, '');
+        
+        // Show warning if letters or symbols are typed
+        if (digitsOnly !== value && value.length > digitsOnly.length) {
+            showNotification('⚠️ Only numbers are allowed in the PhilSys field!', 'warning');
+        }
+
+        // Limit data capture to exactly 16 digits
+        if (digitsOnly.length > 16) {
+            showNotification('❌ PhilSys Number cannot exceed 16 digits!', 'error');
+            digitsOnly = digitsOnly.substring(0, 16);
+        }
+
+        // Chunk into groups of 4 separated by dashes (XXXX-XXXX-XXXX-XXXX)
+        const groups = digitsOnly.match(/\d{1,4}/g);
+        if (groups) {
+            this.value = groups.join('-');
+        } else {
+            this.value = '';
+        }
+    });
+
+    philsysInput.addEventListener('keypress', function(event) {
+        if (!/[0-9]/.test(event.key)) {
+            event.preventDefault();
+        }
+    });
+}
+
 // Helper function to show notifications
 function showNotification(message, type = 'info') {
-    // Remove existing notification if any
     const existingNotif = document.querySelector('.notification');
     if (existingNotif) existingNotif.remove();
     
@@ -173,7 +227,7 @@ function showNotification(message, type = 'info') {
         left: 50%;
         transform: translateX(-50%);
         padding: 15px 20px;
-        background-color: ${type === 'error' ? '#f44336' : type === 'warning' ? '#ff9800' : '#2196F3'};
+        background-color: ${type === 'error' ? '#f44336' : type === 'warning' ? '#ff9800' : '#2d5a27'};
         color: white;
         border-radius: 4px;
         font-weight: 500;
@@ -184,7 +238,6 @@ function showNotification(message, type = 'info') {
     
     document.body.appendChild(notification);
     
-    // Auto-remove after 3 seconds
     setTimeout(() => {
         notification.style.animation = 'slideOut 0.3s ease-in-out';
         setTimeout(() => notification.remove(), 300);
@@ -197,100 +250,160 @@ if (!document.querySelector('style[data-phone-validation]')) {
     style.setAttribute('data-phone-validation', 'true');
     style.textContent = `
         @keyframes slideIn {
-            from {
-                transform: translateX(-50%) translateY(-20px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(-50%) translateY(0);
-                opacity: 1;
-            }
+            from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
         }
         @keyframes slideOut {
-            from {
-                transform: translateX(-50%) translateY(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(-50%) translateY(-20px);
-                opacity: 0;
-            }
+            from { transform: translateX(-50%) translateY(0); opacity: 1; }
+            to { transform: translateX(-50%) translateY(-20px); opacity: 0; }
         }
     `;
     document.head.appendChild(style);
 }
 
-// --- 5. FORM SUBMISSION & ADMIN SYNC ---
+// --- 6. FORM SUBMISSION, VALIDATION & ADMIN SYNC ---
 document.addEventListener('DOMContentLoaded', () => {
     const residentForm = document.getElementById('residentForm');
 
+    // --- Auto-Capitalize First Letter of Every Word ---
+    const textInputs = document.querySelectorAll('#residentForm input[type="text"]');
+    textInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            this.value = this.value.replace(/\b[a-z]/g, char => char.toUpperCase());
+        });
+    });
+
     if (residentForm) {
+        const submitBtn = residentForm.querySelector('.submit-full');
+        
+        // --- Highlight empty upload areas when the submit button is clicked ---
+        if (submitBtn) {
+            submitBtn.addEventListener('click', () => {
+                document.querySelectorAll('.upload-area').forEach(area => {
+                    const input = area.querySelector('input[type="file"]');
+                    if (!input || input.files.length === 0) {
+                        area.style.borderColor = 'var(--apple-red, #ff4d4d)';
+                        area.style.backgroundColor = '#fff0f0';
+                    }
+                });
+            });
+        }
+        
+        // --- Error Highlighting for Native Required Fields ---
+        const requiredElements = residentForm.querySelectorAll('[required]');
+        requiredElements.forEach(element => {
+            element.addEventListener('invalid', function(event) {
+                // Highlight text inputs, select dropdowns, etc.
+                this.style.borderColor = 'var(--apple-red, #ff4d4d)';
+                this.style.backgroundColor = '#fff0f0';
+                
+                // NEW: Highlight checkbox text labels and radio wrappers red if missed
+                if(this.type === 'radio' || this.type === 'checkbox') {
+                    const group = this.closest('.checkbox-group') || this.parentElement;
+                    if (group) group.style.color = 'var(--apple-red, #ff4d4d)';
+                }
+
+                if (this === residentForm.querySelector(':invalid')) {
+                    showNotification('⚠️ Please fill out all required fields highlighted in red.', 'error');
+                }
+            });
+
+            // Remove formatting errors immediately as soon as a user interacts/changes data
+            const cleanError = function() {
+                this.style.borderColor = '';
+                this.style.backgroundColor = '';
+                
+                if(this.type === 'radio' || this.type === 'checkbox') {
+                    // Reset text color of all connected/sibling groups to normal text color
+                    const targetName = this.getAttribute('name');
+                    if (targetName && this.type === 'radio') {
+                        document.querySelectorAll(`input[name="${targetName}"]`).forEach(radio => {
+                            const grp = radio.closest('.checkbox-group') || radio.parentElement;
+                            if (grp) grp.style.color = '';
+                        });
+                    } else {
+                        const group = this.closest('.checkbox-group') || this.parentElement;
+                        if (group) group.style.color = '';
+                    }
+                }
+            };
+
+            element.addEventListener('input', cleanError);
+            element.addEventListener('change', cleanError);
+        });
+
         residentForm.addEventListener('submit', function(event) {
             event.preventDefault();
 
-            // 1. Identify Document Type
-            const docType = this.getAttribute('data-doc-type') || "Document Request";
+            // --- Custom Validation check for required file uploads ---
+            let filesMissing = false;
+            document.querySelectorAll('.upload-area').forEach(area => {
+                const input = area.querySelector('input[type="file"]');
+                if (!input || input.files.length === 0) {
+                    area.style.borderColor = 'var(--apple-red, #ff4d4d)';
+                    area.style.backgroundColor = '#fff0f0';
+                    filesMissing = true;
+                }
+            });
 
-            // 2. Fetch all inputs
-            const allTextInputsList = this.querySelectorAll('input[type="text"]');
-            const allDropdownMenusList = this.querySelectorAll('select');
-            const birthDateInput = this.querySelector('input[type="date"]');
-            const emailAddressInput = this.querySelector('input[type="email"]');
-            const contactNumberInput = this.querySelector('input[type="tel"]');
+            if (filesMissing) {
+                showNotification('⚠️ Please upload the required supporting documents.', 'error');
+                return; // Stop form execution completely
+            }
+
+            const docType = this.getAttribute('data-doc-type') || "Document Request";
             
             const purposeDropdown = document.getElementById('purposeDropdown');
             const otherPurposeText = document.getElementById('otherPurposeText');
-
-            // Determine final purpose: if "Others", grab the text box value instead
             let finalPurpose = purposeDropdown ? purposeDropdown.value : "";
             if (finalPurpose === 'Others' && otherPurposeText) {
                 finalPurpose = otherPurposeText.value;
             }
 
-            // 3. Update Button State
-            const submitBtn = this.querySelector('.submit-full');
+            const isResidentRadio = this.querySelector('input[name="isResident"]:checked');
+            const isResidentValue = isResidentRadio ? isResidentRadio.value : "N/A";
+
+            // Combine Prefix and Contact Number
+            const prefix = document.getElementById('contactPrefix')?.value || '';
+            const number = document.getElementById('contactNumber')?.value || '';
+            const fullContactNumber = prefix + number;
+
             const originalText = submitBtn.innerText;
             submitBtn.innerText = "Processing Request...";
             submitBtn.disabled = true;
 
-            // 4. Create the Request Object
             const newRequest = {
-                id: Date.now(), // Gives it a unique ID
-                status: 'Ongoing', // Sets default status so Admin knows it's new
-                dateRequested: new Date().toLocaleDateString(), // Captures today's date
+                id: Date.now(), 
+                status: 'Ongoing', 
+                dateRequested: new Date().toISOString().split('T')[0], 
                 documentType: docType,
                 
-                // Resident Info
-                residentFirstName: allTextInputsList[0].value,
-                residentMiddleName: allTextInputsList[1].value,
-                residentLastName: allTextInputsList[2].value,
-                residentSuffix: allTextInputsList[3].value,
-                residentGender: allDropdownMenusList[0].value,
-                residentNationality: allTextInputsList[4].value,
-                residentCivilStatus: allDropdownMenusList[1].value,
-                residentBirthDate: birthDateInput.value,
-                residentPlaceOfBirth: allTextInputsList[5].value,
-                residentEmailAddress: emailAddressInput.value,
-                residentContactNumber: contactNumberInput.value,
-                residentVoterStatus: allDropdownMenusList[2].value,
-                residentPrecinctNumber: allTextInputsList[6].value,
-                residentFullAddress: `${allTextInputsList[7].value} ${allDropdownMenusList[3].value}, Barangay 663, Manila`,
-                residentPurposeOfRequest: finalPurpose
+                residentFirstName: document.getElementById('firstName')?.value || '',
+                residentMiddleName: document.getElementById('middleName')?.value || '',
+                residentLastName: document.getElementById('lastName')?.value || '',
+                residentSuffix: document.getElementById('suffix')?.value || '',
+                residentGender: document.getElementById('gender')?.value || '',
+                residentNationality: document.getElementById('nationality')?.value || '',
+                residentCivilStatus: document.getElementById('civilStatus')?.value || '',
+                residentBirthDate: document.getElementById('birthDate')?.value || '',
+                residentPlaceOfBirth: document.getElementById('placeOfBirth')?.value || '',
+                residentEmailAddress: document.getElementById('emailAddress')?.value || '',
+                residentContactNumber: fullContactNumber,
+                residentVoterStatus: document.getElementById('voterStatus')?.value || '',
+                residentPhilSysNumber: document.getElementById('philsysNumber')?.value || '',
+                residentHouseNo: document.getElementById('houseNo')?.value || '',
+                residentStreet: document.getElementById('street')?.value || '',
+                
+                residentPurposeOfRequest: finalPurpose,
+                residentIsResident: isResidentValue 
             };
 
-            // 5. SAVE TO A PERMANENT ARRAY IN LOCALSTORAGE
-            // Get the existing list of requests (or start a new empty list)
             let existingRequests = JSON.parse(localStorage.getItem('brgyDocumentRequests')) || [];
-            
-            // Add the new request to the top of the list
             existingRequests.unshift(newRequest);
-            
-            // Save the updated list back to the browser
             localStorage.setItem('brgyDocumentRequests', JSON.stringify(existingRequests));
 
-            // 6. Simulate Success and Reset
             setTimeout(() => {
-                alert(docType + " Submitted Successfully!");
+                showNotification(docType + " Submitted Successfully!", "success");
                 this.reset();
                 if(typeof closeModal === 'function') closeModal(); 
                 if(typeof resetUploadUI === 'function') resetUploadUI();
@@ -301,7 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// --- 6. INITIALIZATION & MOBILE NAV ---
+// --- 7. INITIALIZATION & MOBILE NAV ---
 window.addEventListener("scroll", reveal);
 window.addEventListener("load", () => {
     reveal();
@@ -344,14 +457,14 @@ document.addEventListener("DOMContentLoaded", function () {
     if (purposeDropdown && otherPurposeContainer && otherPurposeText) {
         purposeDropdown.addEventListener("change", function () {
             if (this.value === "Others") {
-                // Show text box and make it required
                 otherPurposeContainer.style.display = "flex";
                 otherPurposeText.setAttribute("required", "required");
             } else {
-                // Hide text box and remove validation rule
                 otherPurposeContainer.style.display = "none";
                 otherPurposeText.removeAttribute("required");
-                otherPurposeText.value = ""; // Clear contents
+                otherPurposeText.value = ""; 
+                otherPurposeText.style.borderColor = '';
+                otherPurposeText.style.backgroundColor = '';
             }
         });
     }

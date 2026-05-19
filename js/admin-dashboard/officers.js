@@ -10,17 +10,36 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Set up real-time filter execution when typing in the search bar
+    const searchInput = document.getElementById('officerSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            window.loadAndRenderOfficers();
+        });
+    }
 });
 
 window.loadAndRenderOfficers = function() {
     const tbody = document.querySelector('#officerTable tbody');
     if (!tbody) return;
 
+    // Fetch the filter criteria
+    const searchInput = document.getElementById('officerSearchInput');
+    const filterText = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
     const officers = JSON.parse(localStorage.getItem('brgyOfficers')) || [];
     tbody.innerHTML = '';
 
-    officers.forEach(off => {
-        const initials = off.name.substring(0, 2).toUpperCase();
+    // Filter officers array conditionally
+    const filteredOfficers = officers.filter(off => {
+        const matchesName = off.name ? off.name.toLowerCase().includes(filterText) : false;
+        const matchesPosition = off.position ? off.position.toLowerCase().includes(filterText) : false;
+        return matchesName || matchesPosition;
+    });
+
+    filteredOfficers.forEach(off => {
+        const initials = off.name ? off.name.substring(0, 2).toUpperCase() : '??';
         const displayAge = off.birthday ? window.calculateAge(off.birthday) : (off.age || 'N/A');
 
         const profileDisplay = off.photo
@@ -39,8 +58,8 @@ window.loadAndRenderOfficers = function() {
                 <span style="font-size: 0.85rem; color: #666;">Term: ${off.term || 'Active'}</span>
             </td>
             <td class="action-icons">
-                <i class="fas fa-pencil-alt edit-icon" onclick="window.editOfficer(${off.id})"></i>
-                <i class="fas fa-trash-alt delete-icon" onclick="window.deleteOfficer(${off.id})"></i>
+                <i class="fas fa-pencil-alt edit-icon" title="Edit" style="cursor: pointer;" onclick="window.editOfficer(${off.id})"></i>
+                <i class="fas fa-archive archive-icon" title="Archive" style="cursor: pointer; color: #f39c12;" onclick="window.archiveOfficer(${off.id})"></i>
             </td>
         `;
         tbody.appendChild(row);
@@ -137,11 +156,26 @@ window.editOfficer = function(id) {
     }
 };
 
-window.deleteOfficer = function(id) {
-    if (confirm("Remove this officer from the list?")) {
+window.archiveOfficer = function(id) {
+    if (confirm("Are you sure you want to archive this officer?")) {
         let officers = JSON.parse(localStorage.getItem('brgyOfficers')) || [];
-        const filtered = officers.filter(o => o.id != id);
-        localStorage.setItem('brgyOfficers', JSON.stringify(filtered));
-        window.loadAndRenderOfficers();
+        let archivedOfficers = JSON.parse(localStorage.getItem('brgyArchivedOfficers')) || [];
+        
+        const index = officers.findIndex(o => o.id == id);
+        
+        if (index !== -1) {
+            const offToArchive = officers[index];
+            offToArchive.dateArchived = new Date().toLocaleDateString();
+            
+            // Push to archives
+            archivedOfficers.push(offToArchive);
+            localStorage.setItem('brgyArchivedOfficers', JSON.stringify(archivedOfficers));
+            
+            // Remove from active list
+            officers.splice(index, 1);
+            localStorage.setItem('brgyOfficers', JSON.stringify(officers));
+            
+            window.loadAndRenderOfficers();
+        }
     }
 };

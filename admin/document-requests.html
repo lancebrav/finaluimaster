@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="../css/home.css">
     <link rel="stylesheet" href="../css/admin-dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.37.11/docxtemplater.js"></script>
+    <script src="https://unpkg.com/pizzip@3.1.4/dist/pizzip.js"></script>
+    <script src="https://unpkg.com/pizzip@3.1.4/dist/pizzip-utils.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
 <body class="admin-body">
 
@@ -16,7 +21,6 @@
             .then(response => response.json())
             .then(data => {
                 if (!data.logged_in) {
-                    // Not logged in, redirect to login
                     window.location.href = '../pages/login.html';
                 }
             })
@@ -76,75 +80,111 @@
 
         <div class="requests-container">
     
-    <div class="tab-navigation">
-        <button class="tab-btn active" data-target="section-ongoing">Ongoing Requests</button>
-        <button class="tab-btn" data-target="section-approved">Approved Requests</button>
-        <button class="tab-btn" data-target="section-rejected">Rejected Requests</button>
-    </div>
+            <div class="tab-navigation">
+                <button class="tab-btn active" data-target="section-ongoing">Ongoing Requests</button>
+                <button class="tab-btn" data-target="section-approved">Approved Requests</button>
+                <button class="tab-btn" data-target="section-rejected">Rejected Requests</button>
+            </div>
 
-    <div id="section-ongoing" class="request-section active-section">
-        <div class="table-card">
-            <table class="request-table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Document Type</th>
-                        <th>Date Requested</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="ongoingRequestsBody"></tbody>
-            </table>
-        </div>
-    </div>
+            <div id="section-ongoing" class="request-section active-section">
+                <div class="table-card">
+                    <table class="request-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Document Type</th>
+                                <th>Date Requested</th>
+                                <th>Residency</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ongoingRequestsBody"></tbody>
+                    </table>
+                </div>
+                <div class="pagination-container">
+                    <span class="page-info" id="pageInfoOngoing">Page 1 of 1</span>
+                    <div class="pagination-controls">
+                        <button class="page-btn" id="prevOngoing">&lt; Previous</button>
+                        <button class="page-btn" id="nextOngoing">Next &gt;</button>
+                    </div>
+                </div>
+            </div>
 
-    <div id="section-approved" class="request-section hidden-section">
-        <div class="filter-actions" style="margin-bottom: 12px;">
-            <button type="button" id="selectApprovedAllBtn" class="filter-btn secondary" data-select-all="true">Select All</button>
-            <button type="button" id="deleteApprovedBtn" class="filter-btn secondary">Delete Selected</button>
-            <button type="button" id="archiveApprovedBtn" class="filter-btn secondary">Archive Selected</button>
-        </div>
-        <div class="table-card">
-            <table class="request-table">
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th>Name</th>
-                        <th>Document Type</th>
-                        <th>Release Date</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="approvedRequestsBody"></tbody>
-            </table>
-        </div>
-    </div>
+            <div id="section-approved" class="request-section hidden-section">
+                <div class="filter-actions" style="margin-bottom: 12px; align-items: center;">
+                    <button type="button" id="selectApprovedAllBtn" class="filter-btn secondary" data-select-all="true">Select All</button>
+                    <button type="button" id="deleteApprovedBtn" class="filter-btn secondary">Delete Selected</button>
+                    <button type="button" id="archiveApprovedBtn" class="filter-btn secondary">Archive Selected</button>
+                    
+                    <div class="dropdown print-dropdown" style="position: relative; display: inline-block;">
+                        <button class="filter-btn" id="printDropdownBtn" type="button" style="background: #070e50; color: white;">
+                            <i class="fas fa-print"></i> Generate Document
+                        </button>
+                        <div id="printDropdownMenu" class="dropdown-menu">
+                            <a href="#" onclick="printDocument('Barangay Residency')">Barangay Residency</a>
+                            <a href="#" onclick="printDocument('Barangay Clearance')">Barangay Clearance</a>
+                            <a href="#" onclick="printDocument('Barangay Indigency')">Barangay Indigency</a>
+                            <a href="#" onclick="printDocument('Barangay Certificate')">Barangay Certificate</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-card">
+                    <table class="request-table">
+                        <thead>
+                            <tr>
+                                <th class="request-checkbox-col"></th>
+                                <th>Name</th>
+                                <th>Document Type</th>
+                                <th>Release Date</th>
+                                <th>Residency</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="approvedRequestsBody"></tbody>
+                    </table>
+                </div>
+                <div class="pagination-container">
+                    <span class="page-info" id="pageInfoApproved">Page 1 of 1</span>
+                    <div class="pagination-controls">
+                        <button class="page-btn" id="prevApproved">&lt; Previous</button>
+                        <button class="page-btn" id="nextApproved">Next &gt;</button>
+                    </div>
+                </div>
+            </div>
 
-    <div id="section-rejected" class="request-section hidden-section">
-        <div class="filter-actions" style="margin-bottom: 12px;">
-            <button type="button" id="selectRejectedAllBtn" class="filter-btn secondary" data-select-all="true">Select All</button>
-            <button type="button" id="deleteRejectedBtn" class="filter-btn secondary">Delete Selected</button>
-            <button type="button" id="archiveRejectedBtn" class="filter-btn secondary">Archive Selected</button>
-        </div>
-        <div class="table-card">
-            <table class="request-table">
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th>Name</th>
-                        <th>Document Type</th>
-                        <th>Date Rejected</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="rejectedRequestsBody"></tbody>
-            </table>
-        </div>
-    </div>
+            <div id="section-rejected" class="request-section hidden-section">
+                <div class="filter-actions" style="margin-bottom: 12px;">
+                    <button type="button" id="selectRejectedAllBtn" class="filter-btn secondary" data-select-all="true">Select All</button>
+                    <button type="button" id="deleteRejectedBtn" class="filter-btn secondary">Delete Selected</button>
+                    <button type="button" id="archiveRejectedBtn" class="filter-btn secondary">Archive Selected</button>
+                </div>
+                <div class="table-card">
+                    <table class="request-table">
+                        <thead>
+                            <tr>
+                                <th class="request-checkbox-col"></th>
+                                <th>Name</th>
+                                <th>Document Type</th>
+                                <th>Date Rejected</th>
+                                <th>Residency</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rejectedRequestsBody"></tbody>
+                    </table>
+                </div>
+                <div class="pagination-container">
+                    <span class="page-info" id="pageInfoRejected">Page 1 of 1</span>
+                    <div class="pagination-controls">
+                        <button class="page-btn" id="prevRejected">&lt; Previous</button>
+                        <button class="page-btn" id="nextRejected">Next &gt;</button>
+                    </div>
+                </div>
+            </div>
 
-</div>
+        </div>
 
         <div class="modal-overlay" id="docDetailsModal">
             <div class="event-form-modal doc-modal-wide">
@@ -167,7 +207,7 @@
                             <label>Last Name</label>
                             <p id="residentLastName">Santos</p>
                         </div>
-                        <div class="info-group">
+                        <div class="info-group" style="grid-column: span 1;">
                             <label>Suffix</label>
                             <p id="residentSuffix">N/A</p>
                         </div>
@@ -207,13 +247,23 @@
                             <label>Precinct Number</label>
                             <p id="residentPrecinctNumber">0542B</p>
                         </div>
-                        <div class="info-group" style="grid-column: span 2;">
-                            <label>Full Address</label>
-                            <p id="residentFullAddress">123 Ermita, Barangay 663, Manila</p>
+                        
+                        <div class="info-group">
+                            <label>House/Unit No.</label>
+                            <p id="residentHouseNo">123</p>
                         </div>
+                        <div class="info-group">
+                            <label>Street</label>
+                            <p id="residentStreet">Ermita</p>
+                        </div>
+                        
                         <div class="info-group" style="grid-column: span 2;">
                             <label>Purpose of Request</label>
                             <p id="residentPurposeOfRequest">Employment</p>
+                        </div>
+                        <div class="info-group" style="grid-column: span 2;">
+                            <label>Are you a resident of Barangay 663?</label>
+                            <p id="residentIsResident">Yes</p>
                         </div>
                     </div>
 
@@ -241,7 +291,7 @@
     <script src="../js/admin-dashboard/sidebar.js"></script>
     <script src="../js/admin-dashboard/announcements.js"></script>
     <script src="../js/admin-dashboard/residents.js"></script>
-    <script src="../js/admin-dashboard/documents.js?v=4"></script>
+    <script src="../js/admin-dashboard/documents.js?v=6"></script>
     <script src="../js/admin-dashboard/officers.js"></script>
     <script src="../js/admin-dashboard/dashboard.js"></script>
 </body>

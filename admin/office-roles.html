@@ -16,7 +16,6 @@
             .then(response => response.json())
             .then(data => {
                 if (!data.logged_in) {
-                    // Not logged in, redirect to login
                     window.location.href = '../pages/login.html';
                 }
             })
@@ -77,6 +76,13 @@
                 <button class="add-resident-btn" id="addOfficerBtn">
                     <i class="fas fa-user-plus"></i> Add New Officer
                 </button>
+                
+                <div class="search-and-export-group">
+                    <div class="search-container">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="officerSearchInput" placeholder="Search officers by name or position...">
+                    </div>
+                </div>
             </div>
 
             <div class="table-card">
@@ -92,24 +98,24 @@
                     <tbody>
                         <tr>
                             <td class="name-cell">
-                                <div class="profile-pic pic-blue">Y</div> ynnah
+                                <div class="profile-pic pic-blue">Y</div> 
                             </td>
                             <td>67</td>
                             <td>kagawad</td>
                             <td class="action-icons">
                                 <i class="fas fa-pencil-alt edit-icon"></i>
-                                <i class="fas fa-trash-alt delete-icon"></i>
+                                <i class="fas fa-archive archive-icon"></i>
                             </td>
                         </tr>
                         <tr>
                             <td class="name-cell">
-                                <div class="profile-pic pic-red">D</div> dennise
+                                <div class="profile-pic pic-red">D</div> 
                             </td>
                             <td>50</td>
                             <td>treasurer</td>
                             <td class="action-icons">
                                 <i class="fas fa-pencil-alt edit-icon"></i>
-                                <i class="fas fa-trash-alt delete-icon"></i>
+                                <i class="fas fa-archive archive-icon"></i>
                             </td>
                         </tr>
                     </tbody>
@@ -162,7 +168,11 @@
 
             <div class="form-group">
                 <label>TERM IN POSITION</label>
-                <input type="text" id="offTerm" placeholder="e.g. 1st term" required>
+                <div id="termInputContainer">
+                    <select id="offTerm" required>
+                        <option value="" disabled selected>Select Position First...</option>
+                    </select>
+                </div>
             </div>
 
             <button type="submit" class="submit-event-btn">Save Officer</button>

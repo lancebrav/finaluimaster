@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Archived Residents | Barangay 663</title>
+    <title>Archived Records | Barangay 663</title>
     <link rel="stylesheet" href="../css/home.css">
     <link rel="stylesheet" href="../css/admin-dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -16,7 +16,6 @@
             .then(response => response.json())
             .then(data => {
                 if (!data.logged_in) {
-                    // Not logged in, redirect to login
                     window.location.href = '../pages/login.html';
                 }
             })
@@ -26,42 +25,42 @@
             });
     </script>
 
-<aside class="sidebar" id="sidebar"> 
-    <div class="menu-toggle" id="menuBtn">
-        <i class="fas fa-bars"></i>
-    </div>
-
-    <nav class="sidebar-nav">
-        <div class="sidebar-logo-container">
-            <img src="../logo.png" alt="Barangay Seal" class="sidebar-logo">
+    <aside class="sidebar" id="sidebar"> 
+        <div class="menu-toggle" id="menuBtn">
+            <i class="fas fa-bars"></i>
         </div>
 
-        <div class="nav-links-top">
-            <a href="admin-dashboard.php" class="nav-item">
-                <i class="fas fa-chart-line"></i> <span>Dashboard</span>
-            </a>
-            <a href="edit-announcements.html" class="nav-item">
-                <i class="fas fa-bullhorn"></i> <span>Announcements</span>
-            </a>
-            <a href="document-requests.html" class="nav-item">
-                <i class="fas fa-file-invoice"></i> <span>Documents</span>
-            </a>
-            <a href="manage-residents.html" class="nav-item">
-                <i class="fas fa-users-cog"></i> <span>Residents List</span>
-            </a>
-            <a href="office-roles.html" class="nav-item">
-                <i class="fas fa-laptop-house"></i> <span>Office Roles</span>
-            </a>
-            <a href="archives.html" class="nav-item active" style="background: rgba(255,255,255,0.1); color: white;">
-                <i class="fas fa-archive"></i> <span>Archives</span>
-            </a>
-        </div>
+        <nav class="sidebar-nav">
+            <div class="sidebar-logo-container">
+                <img src="../logo.png" alt="Barangay Seal" class="sidebar-logo">
+            </div>
 
-        <a href="../pages/home.html" class="nav-item logout-item">
-            <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
-        </a>
-    </nav>
-</aside>
+            <div class="nav-links-top">
+                <a href="admin-dashboard.php" class="nav-item">
+                    <i class="fas fa-chart-line"></i> <span>Dashboard</span>
+                </a>
+                <a href="edit-announcements.html" class="nav-item">
+                    <i class="fas fa-bullhorn"></i> <span>Announcements</span>
+                </a>
+                <a href="document-requests.html" class="nav-item">
+                    <i class="fas fa-file-invoice"></i> <span>Documents</span>
+                </a>
+                <a href="manage-residents.html" class="nav-item">
+                    <i class="fas fa-users-cog"></i> <span>Residents List</span>
+                </a>
+                <a href="office-roles.html" class="nav-item">
+                    <i class="fas fa-laptop-house"></i> <span>Office Roles</span>
+                </a>
+                <a href="archives.html" class="nav-item active" style="background: rgba(255,255,255,0.1); color: white;">
+                    <i class="fas fa-archive"></i> <span>Archives</span>
+                </a>
+            </div>
+
+            <a href="../pages/home.html" class="nav-item logout-item">
+                <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+            </a>
+        </nav>
+    </aside>
 
     <main class="main-dashboard">
         <header class="admin-header">
@@ -74,9 +73,9 @@
             </div>
         </header>
 
-        <div class="residents-page-container">
+        <div class="requests-container">
             
-            <div class="page-actions" style="justify-content: space-between; align-items: center;">
+            <div class="page-actions" style="justify-content: space-between; align-items: center; margin-bottom: 25px;">
                 <h2 style="color: var(--sidebar-bg); margin: 0; font-weight: 800;">Archived Records</h2>
                 
                 <div class="search-container">
@@ -85,22 +84,93 @@
                 </div>
             </div>
 
-            <div class="table-card">
-                <table class="resident-table" id="archiveTable">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Age</th>
-                            <th>Sex</th>
-                            <th>Status</th>
-                            <th>Address</th>
-                            <th>Date Archived</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+            <div class="tab-navigation">
+                <button class="tab-btn active" data-target="section-announcements">Announcements</button>
+                <button class="tab-btn" data-target="section-documents">Documents</button>
+                <button class="tab-btn" data-target="section-residents">Residents</button>
+                <button class="tab-btn" data-target="section-officers">Officers</button>
+            </div>
+
+            <div id="section-announcements" class="request-section active-section">
+                <div class="table-card">
+                    <table class="request-table" id="archiveAnnouncementsTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px; text-align: center;">#</th>
+                                <th>Title</th>
+                                <th>Date Posted</th>
+                                <th>Date Archived</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                         </tbody>
-                </table>
+                    </table>
+                </div>
+            </div>
+
+            <div id="section-documents" class="request-section hidden-section">
+                <div class="table-card">
+                    <table class="request-table" id="archiveDocumentsTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px; text-align: center;">#</th>
+                                <th>Name</th>
+                                <th>Document Type</th>
+                                <th>Date Archived</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="section-residents" class="request-section hidden-section">
+    <div class="table-card">
+        <table class="request-table" id="archiveResidentsTable">
+            <thead>
+                <tr>
+                    <th style="width: 60px; text-align: center;">#</th>
+                    <th>Name</th>
+                    <th>Age</th>
+                    <th>Sex</th>
+                    <th>Status</th>
+                    <th>Address</th>
+                    <th>Date Archived</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <div class="pagination-container">
+        <span class="page-info" id="archivePageInfo">Page 1</span>
+        <div class="pagination-controls">
+            <button class="page-btn" onclick="changeArchivePage(-1)">Previous</button>
+            <button class="page-btn" onclick="changeArchivePage(1)">Next</button>
+        </div>
+    </div>
+</div>
+
+            <div id="section-officers" class="request-section hidden-section">
+                <div class="table-card">
+                    <table class="request-table" id="archiveOfficersTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px; text-align: center;">#</th>
+                                <th>Name</th>
+                                <th>Position</th>
+                                <th>Term Ended</th>
+                                <th>Date Archived</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
         </div>
@@ -113,5 +183,220 @@
     <script src="../js/admin-dashboard/documents.js"></script>
     <script src="../js/admin-dashboard/officers.js"></script>
     <script src="../js/admin-dashboard/dashboard.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+    // Tab Logic
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const sections = document.querySelectorAll('.request-section');
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            tabBtns.forEach(b => b.classList.remove('active'));
+            sections.forEach(s => {
+                s.classList.remove('active-section');
+                s.classList.add('hidden-section');
+            });
+            btn.classList.add('active');
+            const targetId = btn.getAttribute('data-target');
+            const targetSection = document.getElementById(targetId);
+            if (targetSection) {
+                targetSection.classList.remove('hidden-section');
+                targetSection.classList.add('active-section');
+            }
+        });
+    });
+
+    // Initial Renders (Residents is removed here since residents.js triggers window.loadAndRenderArchives automatically)
+    loadArchivedAnnouncements();
+    loadArchivedDocuments();
+    loadArchivedOfficers();
+});
+
+/* ========================================================
+   ANNOUNCEMENTS ARCHIVE
+   ======================================================== */
+function loadArchivedAnnouncements() {
+    const tbody = document.querySelector('#archiveAnnouncementsTable tbody');
+    if (!tbody) return;
+    
+    let archivedEvents = JSON.parse(localStorage.getItem('brgyArchivedEvents')) || [];
+    tbody.innerHTML = '';
+    
+    if (archivedEvents.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 30px; color: #7f8c8d; font-weight: 600;">No archived announcements found.</td></tr>`;
+        return;
+    }
+    
+    archivedEvents.forEach((event, index) => {
+        const tr = document.createElement('tr');
+        let postedDate = event.startDate || event.date || 'Unknown';
+        let archivedDate = event.dateArchived || 'Unknown';
+
+        tr.innerHTML = `
+            <td style="text-align: center; font-weight: bold; color: #7f8c8d;">${index + 1}</td>
+            <td style="color: #1a1a4b; font-weight: 600;">${event.title}</td>
+            <td>${postedDate}</td>
+            <td style="font-weight: bold; color: #a93226;">${archivedDate}</td>
+            <td class="action-icons">
+                <i class="fas fa-undo edit-icon" title="Restore to Announcements" onclick="restoreAnnouncement('${event.id}')"></i>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+window.restoreAnnouncement = function(id) {
+    if(!confirm('Restore this announcement back to the main list?')) return;
+
+    let archivedEvents = JSON.parse(localStorage.getItem('brgyArchivedEvents')) || [];
+    const index = archivedEvents.findIndex(e => e.id == id);
+    
+    if (index !== -1) {
+        let events = JSON.parse(localStorage.getItem('brgyEvents')) || [];
+        const eventToRestore = archivedEvents[index];
+        
+        delete eventToRestore.dateArchived;
+        events.push(eventToRestore);
+        
+        localStorage.setItem('brgyEvents', JSON.stringify(events));
+        archivedEvents.splice(index, 1);
+        localStorage.setItem('brgyArchivedEvents', JSON.stringify(archivedEvents));
+        
+        loadArchivedAnnouncements();
+    }
+};
+
+/* ========================================================
+   DOCUMENTS ARCHIVE
+   ======================================================== */
+function loadArchivedDocuments() {
+    const tbody = document.querySelector('#archiveDocumentsTable tbody');
+    if (!tbody) return;
+    
+    let archivedDocs = JSON.parse(localStorage.getItem('brgyArchivedDocuments')) || [];
+    tbody.innerHTML = '';
+    
+    if (archivedDocs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 30px; color: #7f8c8d; font-weight: 600;">No archived documents found.</td></tr>`;
+        return;
+    }
+    
+    archivedDocs.forEach((doc, index) => {
+        const tr = document.createElement('tr');
+        
+        const initials = ((doc.residentFirstName?.[0] || '') + (doc.residentLastName?.[0] || '')).toUpperCase();
+        const fullName = `${doc.residentFirstName || ''} ${doc.residentLastName || ''}`.trim() || 'Unknown';
+        let archivedDate = doc.dateArchived || 'Unknown';
+
+        tr.innerHTML = `
+            <td style="text-align: center; font-weight: bold; color: #7f8c8d;">${index + 1}</td>
+            <td class="name-cell">
+                <div class="profile-pic pic-blue" style="display:inline-flex; margin-right:15px; vertical-align:middle;">${initials || '?'}</div>
+                <span style="display:inline-block; vertical-align:middle;">${fullName}</span>
+            </td>
+            <td>${doc.documentType || 'N/A'}</td>
+            <td style="font-weight: bold; color: #a93226;">${archivedDate}</td>
+            <td class="action-icons">
+                <i class="fas fa-undo edit-icon" title="Restore Document Request" onclick="restoreDocument('${doc.id}')"></i>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+window.restoreDocument = function(id) {
+    if(!confirm('Restore this document request back to the main list?')) return;
+
+    let archivedDocs = JSON.parse(localStorage.getItem('brgyArchivedDocuments')) || [];
+    const index = archivedDocs.findIndex(d => d.id == id);
+    
+    if (index !== -1) {
+        let requests = JSON.parse(localStorage.getItem('brgyDocumentRequests')) || [];
+        const docToRestore = archivedDocs[index];
+        
+        delete docToRestore.dateArchived;
+        requests.push(docToRestore);
+        
+        localStorage.setItem('brgyDocumentRequests', JSON.stringify(requests));
+        archivedDocs.splice(index, 1);
+        localStorage.setItem('brgyArchivedDocuments', JSON.stringify(archivedDocs));
+        
+        loadArchivedDocuments();
+    }
+};
+
+/* ========================================================
+   OFFICERS ARCHIVE
+   ======================================================== */
+function loadArchivedOfficers() {
+    const tbody = document.querySelector('#archiveOfficersTable tbody');
+    if (!tbody) return;
+
+    let archivedOfficers = JSON.parse(localStorage.getItem('brgyArchivedOfficers')) || [];
+    tbody.innerHTML = '';
+
+    if (archivedOfficers.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 30px; color: #7f8c8d; font-weight: 600;">No archived officers found.</td></tr>`;
+        return;
+    }
+
+    archivedOfficers.forEach((off, index) => {
+        const tr = document.createElement('tr');
+        let archivedDate = off.dateArchived || 'Unknown';
+        const initials = off.name ? off.name.substring(0, 2).toUpperCase() : '?';
+        
+        const profileDisplay = off.photo
+            ? `<img src="${off.photo}" alt="${off.name}" class="profile-image" style="display:inline-flex; margin-right:15px; vertical-align:middle; width: 35px; height: 35px; border-radius: 50%; object-fit: cover;">`
+            : `<div class="profile-pic pic-red" style="display:inline-flex; margin-right:15px; vertical-align:middle;">${initials}</div>`;
+
+        tr.innerHTML = `
+            <td style="text-align: center; font-weight: bold; color: #7f8c8d;">${index + 1}</td>
+            <td class="name-cell">
+                ${profileDisplay}
+                <span style="display:inline-block; vertical-align:middle;">${off.name}</span>
+            </td>
+            <td>${off.position || 'N/A'}</td>
+            <td>${off.term || 'N/A'}</td>
+            <td style="font-weight: bold; color: #a93226;">${archivedDate}</td>
+            <td class="action-icons">
+                <i class="fas fa-undo edit-icon" title="Restore Officer" onclick="restoreOfficer('${off.id}')"></i>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+window.restoreOfficer = function(id) {
+    if(!confirm('Restore this officer back to the active list?')) return;
+
+    let archivedOfficers = JSON.parse(localStorage.getItem('brgyArchivedOfficers')) || [];
+    const index = archivedOfficers.findIndex(o => o.id == id);
+    
+    if (index !== -1) {
+        let officers = JSON.parse(localStorage.getItem('brgyOfficers')) || [];
+        const offToRestore = archivedOfficers[index];
+        
+        delete offToRestore.dateArchived;
+        officers.push(offToRestore);
+        
+        localStorage.setItem('brgyOfficers', JSON.stringify(officers));
+        archivedOfficers.splice(index, 1);
+        localStorage.setItem('brgyArchivedOfficers', JSON.stringify(archivedOfficers));
+        
+        loadArchivedOfficers();
+    }
+};
+window.changeArchivePage = function(direction) {
+    const totalPages = Math.ceil(window.cachedArchivedResidents.length / window.archiveRowsPerPage);
+    const newPage = window.archiveCurrentPage + direction;
+    
+    if (newPage >= 1 && newPage <= totalPages) {
+        window.archiveCurrentPage = newPage;
+        window.renderArchivedTable();
+    }
+};
+    </script>
 </body>
 </html>

@@ -1,36 +1,72 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- Pagination State ---
     let currentPage = 1;
-    const itemsPerPage = 5; 
+    const itemsPerPage = 8; 
 
-    // Auto-detect ongoing vs upcoming based on start and end dates
+    // Auto-detect ongoing vs upcoming and AUTO-ARCHIVE past events
     window.updateEventStatuses = function() {
         let events = JSON.parse(localStorage.getItem('brgyEvents')) || [];
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        let archivedEvents = JSON.parse(localStorage.getItem('brgyArchivedEvents')) || [];
+        const now = new Date(); 
+        
+        let activeEvents = [];
+        let newlyArchived = false;
 
         events.forEach(event => {
-            if (event.startDate && event.endDate) {
+            if (event.endDate) {
+                // Safely parse Start Date & Time
                 const sDate = new Date(event.startDate);
+                if (event.startTime && event.startTime.includes(':')) {
+                    let [h, m] = event.startTime.split(':');
+                    sDate.setHours(h, m, 0, 0);
+                } else {
+                    sDate.setHours(0, 0, 0, 0);
+                }
+
+                // Safely parse End Date & Time
                 const eDate = new Date(event.endDate);
+                if (event.endTime && event.endTime.includes(':')) {
+                    let [h, m] = event.endTime.split(':');
+                    eDate.setHours(h, m, 59, 999);
+                } else {
+                    eDate.setHours(23, 59, 59, 999);
+                }
                 
-                if (today >= sDate && today <= eDate) {
+                if (now > eDate) {
+                    event.type = 'past';
+                    event.dateArchived = now.toLocaleDateString();
+                    archivedEvents.push(event);
+                    newlyArchived = true;
+                } else if (now >= sDate && now <= eDate) {
                     event.type = 'ongoing';
-                } else if (today < sDate) {
+                    activeEvents.push(event);
+                } else if (now < sDate) {
                     event.type = 'upcoming';
-                } else if (today > eDate) {
-                    event.type = 'past'; // Event is finished
+                    activeEvents.push(event);
                 }
             } else if (event.date) {
-                // Fallback for old data structure
+                // Fallback for old data
                 const eventDate = new Date(event.date);
-                if (eventDate <= today) {
+                eventDate.setHours(23, 59, 59); 
+                
+                if (now > eventDate && !event.isBirthday) {
+                    event.type = 'past';
+                    event.dateArchived = now.toLocaleDateString();
+                    archivedEvents.push(event);
+                    newlyArchived = true;
+                } else {
                     event.type = 'ongoing';
+                    activeEvents.push(event);
                 }
+            } else {
+                activeEvents.push(event); 
             }
         });
 
-        localStorage.setItem('brgyEvents', JSON.stringify(events));
+        localStorage.setItem('brgyEvents', JSON.stringify(activeEvents));
+        if (newlyArchived) {
+            localStorage.setItem('brgyArchivedEvents', JSON.stringify(archivedEvents));
+        }
     };
 
     window.generateBirthdayAnnouncements = function() {
@@ -126,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const paginatedEvents = events.slice(startIndex, endIndex);
 
         if (paginatedEvents.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" style="padding: 30px; text-align: center; color: #7f8c8d; font-weight: 600;">No announcements found matching this filter.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" style="padding: 30px; text-align: center; color: #7f8c8d; font-weight: 600;">No announcements found.</td></tr>`;
             updatePaginationUI(totalPages);
             return;
         }
@@ -167,7 +203,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if(event.type === 'upcoming') typeBadge = '<span style="background: #3498db; color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">Upcoming</span>';
             if(event.type === 'past') typeBadge = '<span style="background: #95a5a6; color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">Past</span>';
 
-            // REMOVED: Checkbox <td> column to properly expand table items to edge boundaries
             tr.innerHTML = `
                 <td style="padding: 15px 20px; border-bottom: 1px solid #f0f0f0; color: #1a1a4b; font-weight: 600;">
                     ${event.title}
@@ -193,6 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </td>
             `;
 
+            // Edit Event Listener
             if (!event.isBirthday) {
                 const editBtn = tr.querySelector('.edit-icon');
                 if (editBtn) {
@@ -202,6 +238,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
             }
+
+            // Archive Event Listener
+            const archiveBtn = tr.querySelector('.archive-icon');
+            if (archiveBtn) {
+                archiveBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    window.archiveEvent(event.id);
+                });
+            }
+
             return tr;
         }
 
@@ -303,25 +349,29 @@ document.addEventListener('DOMContentLoaded', () => {
             const endTime = document.getElementById('eventEndTime').value; 
             const visibility = document.getElementById('eventVisibility').value;
 
-            // Date validation
+            // Safer Date validation for form submission
             const sDate = new Date(startDate);
-            sDate.setHours(0, 0, 0, 0);
+            if (startTime) {
+                let [sh, sm] = startTime.split(':');
+                sDate.setHours(sh, sm, 0, 0);
+            }
+
             const eDate = new Date(endDate);
-            eDate.setHours(0, 0, 0, 0);
+            if (endTime) {
+                let [eh, em] = endTime.split(':');
+                eDate.setHours(eh, em, 0, 0);
+            }
 
             if (sDate > eDate) {
-                alert('End Date cannot be earlier than the Start Date.');
+                alert('End Date and Time cannot be earlier than the Start Date and Time.');
                 return;
             }
 
-            // Auto-detect initial category
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            
+            const now = new Date();
             let autoType = 'upcoming';
-            if (today >= sDate && today <= eDate) {
+            if (now >= sDate && now <= eDate) {
                 autoType = 'ongoing';
-            } else if (today > eDate) {
+            } else if (now > eDate) {
                 autoType = 'past';
             }
 
@@ -387,6 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// Edit functionality
 window.editEvent = function(id) {
     const events = JSON.parse(localStorage.getItem('brgyEvents')) || [];
     const ev = events.find(e => e.id == id);
@@ -424,5 +475,34 @@ window.editEvent = function(id) {
 
         const modalElement = document.getElementById('eventModal');
         if (modalElement) modalElement.classList.add('active');
+    }
+};
+
+// Archive Functionality
+window.archiveEvent = function(id) {
+    if(!confirm('Are you sure you want to archive this announcement?')) return;
+    
+    let events = JSON.parse(localStorage.getItem('brgyEvents')) || [];
+    const index = events.findIndex(e => e.id == id);
+    
+    if (index !== -1) {
+        let archivedEvents = JSON.parse(localStorage.getItem('brgyArchivedEvents')) || [];
+        const eventToArchive = events[index];
+        
+        // Add timestamp for when it was archived
+        eventToArchive.dateArchived = new Date().toLocaleDateString();
+        
+        // Push to archive storage
+        archivedEvents.push(eventToArchive);
+        localStorage.setItem('brgyArchivedEvents', JSON.stringify(archivedEvents));
+        
+        // Remove from main storage
+        events.splice(index, 1);
+        localStorage.setItem('brgyEvents', JSON.stringify(events));
+        
+        // Re-render table
+        if (typeof window.displayAdminAnnouncements === 'function') {
+            window.displayAdminAnnouncements();
+        }
     }
 };

@@ -121,9 +121,17 @@ html { overflow-y: scroll; }
 .add-event-btn { background-color: var(--sidebar-bg) !important; color: white !important; }
 .add-event-btn:hover { background-color: #0a146e !important; }
 
+.search-and-export-group {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+    max-width: 530px;
+}
+
 .search-container {
     display: flex; align-items: center; background: white; padding: 10px 20px;
-    border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.05); width: 100%; max-width: 350px;
+    border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.05); flex: 1;
 }
 .search-container i { color: var(--sidebar-bg); margin-right: 12px; }
 .search-container input { border: none; outline: none; width: 100%; font-size: 0.95rem; }
@@ -208,26 +216,31 @@ html { overflow-y: scroll; }
 .group-title { font-size: 2.5rem; font-weight: 900; color: #000; margin-bottom: 20px; letter-spacing: -1px; }
 
 /* =========================================
-   9. MODALS & FORMS
+   9. MODALS & FORMS (ADAPTIVE BOX SIZES)
    ========================================= */
 .modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center;
+    background: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center;
     z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
 }
 .modal-overlay.active { opacity: 1; pointer-events: auto; }
+
 .event-form-modal {
     background: white; width: 700px; max-width: 95%; border-radius: 12px;
     display: flex; flex-direction: column; max-height: 90vh; overflow: hidden;
     transform: translateY(-20px); transition: transform 0.3s ease;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
 }
 .modal-overlay.active .event-form-modal { transform: translateY(0); }
+
 .modal-header {
-    background: var(--maroon-top); color: white; padding: 20px 25px;
+    background: var(--maroon-top); color: white; padding: 18px 25px;
     display: flex; justify-content: space-between; align-items: center;
 }
+.modal-header h3 { font-size: 1.2rem; font-weight: 700; letter-spacing: 0.3px; }
 .close-modal { cursor: pointer; font-size: 1.4rem; transition: color 0.2s; }
 .close-modal:hover { color: #ffcccc; }
+
 form { padding: 20px 30px; overflow-y: auto; flex-grow: 1; }
 .form-group { margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px; }
 .form-group label { font-weight: 700; color: var(--sidebar-bg); font-size: 0.85rem; text-transform: uppercase; }
@@ -237,15 +250,115 @@ form { padding: 20px 30px; overflow-y: auto; flex-grow: 1; }
 }
 .form-group input:focus { border-color: var(--sidebar-bg); }
 
-/* Document Modal Grid */
-.doc-modal-wide { max-width: 1100px; width: 95%; }
-.doc-details-content { display: grid; grid-template-columns: 1.5fr 1fr; gap: 25px; padding: 20px; }
-.doc-info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-.info-group p { font-size: 0.95rem; background: #f8f9fa; padding: 8px 12px; border-radius: 4px; border: 1px solid #eee; }
-.info-group:nth-child(4) { grid-column: span 2; }
-.id-photo-container { width: 100%; height: 200px; background: #eee; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.id-photo-container img { width: 100%; height: 100%; object-fit: contain; }
+/* Document Modal Clean Master Layout */
+.doc-modal-wide { max-width: 850px; width: 95%; }
 
+.doc-details-content { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 20px; 
+    padding: 25px; 
+    overflow-y: auto;
+    max-height: calc(90vh - 65px);
+}
+
+/* Top Section: Form Info Fields (Now Fluid/Adaptive) */
+.doc-info-grid { 
+    display: flex; 
+    flex-wrap: wrap; /* Allows fields to wrap like text */
+    gap: 14px 18px; /* Vertical gap 14px, Horizontal gap 18px */
+}
+
+.info-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-grow: 1; /* Allows it to gently stretch to keep the right margin clean */
+    flex-shrink: 1;
+    flex-basis: fit-content; /* Automatically sizes to the length of the text */
+    min-width: 130px; /* Ensures very short answers (like "N/A") don't look completely crushed */
+    max-width: 100%;
+}
+
+.info-group label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--sidebar-bg);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap; /* Prevents labels from breaking onto two lines */
+}
+
+.info-group p { 
+    font-size: 0.95rem; 
+    background: #f8fafc; 
+    color: #334155;
+    padding: 10px 14px; 
+    border-radius: 6px; 
+    border: 1px solid #e2e8f0; 
+    font-weight: 500;
+    min-height: 41px;
+    display: flex;
+    align-items: center;
+    word-break: break-word;
+}
+
+/* Converts your HTML inline grid styles to work with the new flex layout */
+.info-group[style*="grid-column: span 2"] { 
+    flex-basis: 100% !important; /* Forces fields like Email/Purpose to span the entire row */
+}
+
+.info-group[style*="grid-column: span 1"] { 
+    flex-basis: fit-content !important; 
+}
+
+/* Bottom Section: Uploaded Graphics Panel */
+.doc-details-content > div:last-child {
+    margin-top: 10px !important; 
+    padding-top: 25px;
+    border-top: 2px dashed #e2e8f0; 
+}
+
+.doc-id-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.doc-id-section label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--sidebar-bg);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.id-photo-container { 
+    width: 100%; 
+    height: 210px; 
+    background: #f1f5f9; 
+    border: 2px dashed #cbd5e1;
+    border-radius: 8px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    overflow: hidden; 
+}
+
+.id-photo-container img { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: contain; 
+    background: #f8fafc;
+}
+
+.id-hint {
+    font-size: 0.75rem;
+    color: #64748b;
+    text-align: center;
+    font-style: italic;
+    margin-top: 4px;
+}
 /* =========================================
    10. RESPONSIVENESS (MEDIA QUERIES)
    ========================================= */
@@ -259,16 +372,20 @@ form { padding: 20px 30px; overflow-y: auto; flex-grow: 1; }
     .admin-label { display: none; } 
     .residents-page-container, .requests-container, .announcements-container { padding: 20px; }
     .page-actions { flex-direction: column; align-items: stretch; }
+    .search-and-export-group { flex-direction: column; align-items: stretch; max-width: 100%; }
     .search-container { max-width: 100%; }
+    .export-excel-btn { justify-content: center; width: 100%; }
     .add-resident-btn, .add-event-btn { justify-content: center; }
     .filter-bar { align-items: stretch; }
     .filter-actions { margin-left: 0; width: 100%; }
     .filter-actions .filter-btn { flex: 1; }
     .checkbox-menu { width: 100%; }
     .name-grid { grid-template-columns: 1fr !important; }
-    .doc-details-content { grid-template-columns: 1fr; }
+    
+    .doc-details-content { grid-template-columns: 1fr; max-height: 80vh; }
     .doc-info-grid { grid-template-columns: 1fr; }
-    .info-group:nth-child(4) { grid-column: span 1; }
+    #residentPlaceOfBirth, #residentEmailAddress, #residentPurposeOfRequest, #residentIsResident { grid-column: span 1 !important; }
+    
     .group-title { font-size: 2rem; }
     .main-dashboard { margin-left: var(--side-collapsed); width: calc(100% - var(--side-collapsed)); }
     .sidebar { position: fixed; width: var(--side-collapsed); height: 100vh; }
@@ -282,45 +399,170 @@ form { padding: 20px 30px; overflow-y: auto; flex-grow: 1; }
 }
 
 /* =========================================
-   11. TABLE ALIGNMENT FIXES (UPDATED)
+   11. TABLE ALIGNMENT FIXES (BALANCED LAYOUT)
    ========================================= */
+.request-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed; /* Forces columns to strictly respect percentage widths */
+}
 
-/* Center all table headers and cells by default */
+/* Base formatting for all cells to ensure uniform vertical alignment */
 .request-table th, 
 .request-table td {
-    text-align: center !important;
+    padding: 18px 15px;
     vertical-align: middle;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Gracefully truncates text if it overflows its designated width */
 }
 
-/* Make the checkbox column narrow so it doesn't waste space */
-.request-table th:first-child,
-.request-table td:first-child {
-    width: 45px;
-    padding-right: 10px;
-}
+/* --- COLUMN WIDTH ALLOCATIONS (Ongoing Tab) --- */
+#section-ongoing .request-table th:nth-child(1),
+#section-ongoing .request-table td:nth-child(1) { width: 28%; text-align: left; padding-left: 25px; } /* Name */
 
-/* Force the Name cells (containing the profile pic) to align left */
-.request-table td.name-cell {
-    text-align: left !important;
-    padding-left: 15px !important;
-}
+#section-ongoing .request-table th:nth-child(2),
+#section-ongoing .request-table td:nth-child(2) { width: 25%; text-align: left; } /* Document Type */
 
-/* Force the "Name" Headers to align left. 
-   (It is the 2nd column in Approved/Rejected, but the 1st column in Ongoing) */
+#section-ongoing .request-table th:nth-child(3),
+#section-ongoing .request-table td:nth-child(3) { width: 17%; text-align: center; } /* Date Requested */
+
+#section-ongoing .request-table th:nth-child(4),
+#section-ongoing .request-table td:nth-child(4) { width: 17%; text-align: center; } /* Residency Badge */
+
+#section-ongoing .request-table th:nth-child(5),
+#section-ongoing .request-table td:nth-child(5) { width: 13%; text-align: center; padding-right: 25px; } /* Actions */
+
+
+/* --- COLUMN WIDTH ALLOCATIONS (Approved & Rejected Tabs) --- */
+#section-approved .request-table th:nth-child(1),
+#section-approved .request-table td:nth-child(1),
+#section-rejected .request-table th:nth-child(1),
+#section-rejected .request-table td:nth-child(1) { width: 5%; text-align: center; } /* Checkbox */
+
 #section-approved .request-table th:nth-child(2),
+#section-approved .request-table td:nth-child(2),
 #section-rejected .request-table th:nth-child(2),
-#section-ongoing .request-table th:first-child {
-    text-align: left !important;
-    padding-left: 15px !important;
+#section-rejected .request-table td:nth-child(2) { width: 25%; text-align: left; } /* Name */
+
+#section-approved .request-table th:nth-child(3),
+#section-approved .request-table td:nth-child(3),
+#section-rejected .request-table th:nth-child(3),
+#section-rejected .request-table td:nth-child(3) { width: 20%; text-align: left; } /* Document Type */
+
+#section-approved .request-table th:nth-child(4),
+#section-approved .request-table td:nth-child(4),
+#section-rejected .request-table th:nth-child(4),
+#section-rejected .request-table td:nth-child(4) { width: 13%; text-align: center; } /* Date */
+
+#section-approved .request-table th:nth-child(5),
+#section-approved .request-table td:nth-child(5),
+#section-rejected .request-table th:nth-child(5),
+#section-rejected .request-table td:nth-child(5) { width: 15%; text-align: center; } /* Residency */
+
+#section-approved .request-table th:nth-child(6),
+#section-approved .request-table td:nth-child(6),
+#section-rejected .request-table th:nth-child(6),
+#section-rejected .request-table td:nth-child(6) { width: 10%; text-align: center; } /* Status */
+
+#section-approved .request-table th:nth-child(7),
+#section-approved .request-table td:nth-child(7),
+#section-rejected .request-table th:nth-child(7),
+#section-rejected .request-table td:nth-child(7) { width: 12%; text-align: center; padding-right: 15px; } /* Actions */
+
+
+/* --- COLUMN WIDTH ALLOCATIONS (Announcements Archive Tab) --- */
+/* nth-child(1) is the '#' column */
+#section-announcements .request-table th:nth-child(2),
+#section-announcements .request-table td:nth-child(2) { width: 45%; text-align: left; padding-left: 25px; } /* Title */
+
+#section-announcements .request-table th:nth-child(3),
+#section-announcements .request-table td:nth-child(3) { width: 20%; text-align: left; } /* Date Posted */
+
+#section-announcements .request-table th:nth-child(4),
+#section-announcements .request-table td:nth-child(4) { width: 20%; text-align: center; } /* Date Archived */
+
+#section-announcements .request-table th:nth-child(5),
+#section-announcements .request-table td:nth-child(5) { width: 15%; text-align: center; padding-right: 25px; } /* Actions */
+
+
+/* --- COLUMN WIDTH ALLOCATIONS (Documents Archive Tab) --- */
+#section-documents .request-table th:nth-child(2),
+#section-documents .request-table td:nth-child(2) { width: 40%; text-align: left; padding-left: 25px; } /* Name */
+
+#section-documents .request-table th:nth-child(3),
+#section-documents .request-table td:nth-child(3) { width: 25%; text-align: left; } /* Document Type */
+
+#section-documents .request-table th:nth-child(4),
+#section-documents .request-table td:nth-child(4) { width: 20%; text-align: center; } /* Date Archived */
+
+#section-documents .request-table th:nth-child(5),
+#section-documents .request-table td:nth-child(5) { width: 15%; text-align: center; padding-right: 25px; } /* Actions */
+
+
+/* --- COLUMN WIDTH ALLOCATIONS (Residents Archive Tab) --- */
+#section-residents .request-table th:nth-child(2),
+#section-residents .request-table td:nth-child(2) { width: 25%; text-align: left; padding-left: 25px; } /* Name */
+
+#section-residents .request-table th:nth-child(3),
+#section-residents .request-table td:nth-child(3) { width: 8%; text-align: center; } /* Age */
+
+#section-residents .request-table th:nth-child(4),
+#section-residents .request-table td:nth-child(4) { width: 8%; text-align: center; } /* Sex */
+
+#section-residents .request-table th:nth-child(5),
+#section-residents .request-table td:nth-child(5) { width: 12%; text-align: center; } /* Status */
+
+#section-residents .request-table th:nth-child(6),
+#section-residents .request-table td:nth-child(6) { width: 27%; text-align: left; } /* Address */
+
+#section-residents .request-table th:nth-child(7),
+#section-residents .request-table td:nth-child(7) { width: 12%; text-align: center; } /* Date Archived */
+
+#section-residents .request-table th:nth-child(8),
+#section-residents .request-table td:nth-child(8) { width: 8%; text-align: center; padding-right: 25px; } /* Actions */
+
+
+/* --- COLUMN WIDTH ALLOCATIONS (Officers Archive Tab) --- */
+#section-officers .request-table th:nth-child(2),
+#section-officers .request-table td:nth-child(2) { width: 35%; text-align: left; padding-left: 25px; } /* Name */
+
+#section-officers .request-table th:nth-child(3),
+#section-officers .request-table td:nth-child(3) { width: 25%; text-align: left; } /* Position */
+
+#section-officers .request-table th:nth-child(4),
+#section-officers .request-table td:nth-child(4) { width: 15%; text-align: left; } /* Term Ended */
+
+#section-officers .request-table th:nth-child(5),
+#section-officers .request-table td:nth-child(5) { width: 15%; text-align: center; } /* Date Archived */
+
+#section-officers .request-table th:nth-child(6),
+#section-officers .request-table td:nth-child(6) { width: 10%; text-align: center; padding-right: 25px; } /* Actions */
+
+/* Style configurations for interactive document hyperlinks */
+.request-table td a.doc-link {
+    color: #070e50;
+    text-decoration: none;
+    font-weight: 600;
+}
+.request-table td a.doc-link:hover {
+    text-decoration: underline;
 }
 
-/* Keep action buttons centered */
-.request-table .action-icons { 
-    justify-content: center; 
-    display: flex;
-    gap: 10px;
+/* Unified Action Icons configuration */
+.request-table .action-icons {
+    text-align: center;
 }
-
+.request-table .action-icons i {
+    font-size: 1.25rem;
+    cursor: pointer;
+    margin: 0 auto;
+    transition: transform 0.1s ease;
+    display: inline-block;
+}
+.request-table .action-icons i:hover {
+    transform: scale(1.2);
+}
 /* =========================================
    TAB NAVIGATION (Document Requests)
    ========================================= */
@@ -331,8 +573,8 @@ form { padding: 20px 30px; overflow-y: auto; flex-grow: 1; }
     border-bottom: 2px solid #ddd;
     padding-bottom: 15px;
     flex-wrap: wrap;
-    position: relative; /* Fixes overlap blocking clicks */
-    z-index: 10;        /* Brings buttons to the front */
+    position: relative; 
+    z-index: 10;        
 }
 
 .tab-btn {
@@ -356,12 +598,11 @@ form { padding: 20px 30px; overflow-y: auto; flex-grow: 1; }
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
-/* Added !important to force the browser to obey these rules */
 .request-section.hidden-section { display: none !important; }
 .request-section.active-section { display: block !important; }
 
 /* =========================================
-   12. DASHBOARD STATS CARDS (Restored)
+   12. DASHBOARD STATS CARDS
    ========================================= */
 .stats-overview {
     display: grid;
@@ -415,18 +656,17 @@ form { padding: 20px 30px; overflow-y: auto; flex-grow: 1; }
     color: #e2e8f0;
 }
 
-/* Colored borders for the 4 cards */
 .stat-card:nth-child(1) { border-left-color: #3498db; }
 .stat-card:nth-child(2) { border-left-color: #1abc9c; }
 .stat-card:nth-child(3) { border-left-color: #e67e22; }
 .stat-card:nth-child(4) { border-left-color: #f1c40f; }
 
 /* =========================================
-   13. CHARTS SECTION (Restored)
+   13. CHARTS SECTION
    ========================================= */
 .charts-container {
     display: grid;
-    grid-template-columns: 2fr 1fr; /* Makes the line chart wider than the pie chart */
+    grid-template-columns: 2fr 1fr; 
     gap: 25px;
     padding: 20px 40px 40px 40px;
     width: 100%;
@@ -453,9 +693,186 @@ form { padding: 20px 30px; overflow-y: auto; flex-grow: 1; }
     padding-bottom: 10px;
 }
 
-/* Make charts stack on top of each other on smaller screens */
-@media (max-width: 1024px) {
-    .charts-container {
-        grid-template-columns: 1fr;
-    }
+/* =========================================
+   14. RESIDENCY BADGES
+   ========================================= */
+.badge-resident {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    padding: 6px 12px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+.badge-non-resident {
+    background-color: #fff3e0;
+    color: #e65100;
+    padding: 6px 12px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+/* =========================================
+   15. PAGINATION CONTROLS
+   ========================================= */
+.pagination-container {
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    padding: 20px 5px;
+    width: 100%;
+}
+
+.page-info {
+    font-size: 0.85rem;
+    color: #555;
+    font-weight: 600;
+}
+
+.pagination-controls {
+    display: flex;
+    gap: 8px; 
+}
+
+.page-btn {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--sidebar-bg); 
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.page-btn:hover:not(:disabled) {
+    background: #f8f9fa;
+    border-color: #bbb;
+}
+
+.page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    color: #999;
+    border-color: #eee;
+}
+
+/* =========================================
+   16. PRINT DROPDOWN STYLES
+   ========================================= */
+.print-dropdown .dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: #ffffff;
+    min-width: 220px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    z-index: 100; 
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    margin-top: 8px;
+    text-align: left;
+}
+
+.print-dropdown .dropdown-menu a {
+    color: var(--sidebar-bg);
+    padding: 12px 18px;
+    text-decoration: none;
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: background 0.2s;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.print-dropdown .dropdown-menu a:last-child {
+    border-bottom: none;
+}
+
+.print-dropdown .dropdown-menu a:hover {
+    background-color: #f8fafc;
+    color: #000;
+}
+
+.print-dropdown .dropdown-menu.show {
+    display: block;
+}
+
+/* =========================================
+   17. EVENT MODAL BUTTONS & PHOTO UPLOAD
+   ========================================= */
+
+/* Photo Preview Box */
+.photo-preview-container {
+    width: 100%;
+    height: 250px;
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.default-photo-icon {
+    font-size: 4rem;
+    color: #cbd5e1;
+}
+
+/* Upload Photo Button */
+.upload-photo-btn {
+    width: 100%;
+    background-color: #f1f5f9;
+    color: var(--sidebar-bg);
+    border: 1px solid #cbd5e1;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.upload-photo-btn:hover {
+    background-color: #e2e8f0;
+    border-color: var(--sidebar-bg);
+    color: #000;
+}
+
+/* Main Save Announcement Button */
+.submit-event-btn {
+    width: 100%;
+    background-color: var(--sidebar-bg);
+    color: white;
+    border: none;
+    padding: 16px 20px;
+    border-radius: 8px;
+    font-size: 1.05rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s;
+    margin-top: 10px;
+}
+
+.submit-event-btn:hover {
+    background-color: #0a146e; /* Slightly brighter navy blue */
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
 }

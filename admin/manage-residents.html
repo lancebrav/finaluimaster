@@ -109,13 +109,6 @@
             <i class="fas fa-file-excel"></i> Export to Excel
         </button>
 
-        <div class="table-zoom-controls" id="tableZoomControls">
-            <button type="button" class="zoom-btn" id="zoomOutBtn">-</button>
-            <span class="zoom-value" id="tableZoomValue">100%</span>
-            <button type="button" class="zoom-btn" id="zoomInBtn">+</button>
-            <button type="button" class="zoom-btn" id="zoomResetBtn">Reset</button>
-        </div>
-
         <div class="search-container">
             <i class="fas fa-search"></i>
             <input type="text" id="residentSearch" placeholder="Search by name or address...">
@@ -192,6 +185,8 @@
         <table class="resident-table" id="residentTable">
             <thead>
                 <tr>
+                    <th><input type="checkbox" id="selectAllResidents"></th>
+                    <th>#</th>
                     <th>Full Name</th>
                     <th>House No.</th>
                     <th>Street Name</th>

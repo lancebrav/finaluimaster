@@ -380,10 +380,12 @@ img { max-width: 100%; height: auto; }
 }
 
 /* Fixes the 4-column layout in the request form for small screens */
-.input-group[style*="grid-column: span 2"],
-.input-group[style*="grid-column: span 3"],
-.input-group[style*="grid-column: span 4"] {
-    grid-column: span 1 !important;
+@media (max-width: 580px) {
+    .input-group[style*="grid-column: span 2"],
+    .input-group[style*="grid-column: span 3"],
+    .input-group[style*="grid-column: span 4"] {
+        grid-column: span 1 !important;
+    }
 }
 
 /* ==========================================================================
@@ -679,3 +681,4 @@ nav ul li a.active-link { color: var(--orange) !important; border-bottom: 2px so
         padding-bottom: 75%; /* 4:3 Aspect Ratio */
     }
 }
+

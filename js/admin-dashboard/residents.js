@@ -281,43 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.loadAndRenderDocumentRequests();
     }
 
-    const zoomControls = document.getElementById('tableZoomControls');
-    const residentTable = document.getElementById('residentTable');
-    const zoomValue = document.getElementById('tableZoomValue');
-    const zoomOutBtn = document.getElementById('zoomOutBtn');
-    const zoomInBtn = document.getElementById('zoomInBtn');
-    const zoomResetBtn = document.getElementById('zoomResetBtn');
-
-    if (zoomControls && residentTable && zoomValue && zoomOutBtn && zoomInBtn && zoomResetBtn) {
-        let zoom = 1;
-        const minZoom = 0.7;
-        const maxZoom = 1.3;
-        const step = 0.1;
-
-        const applyZoom = () => {
-            residentTable.style.transformOrigin = 'top left';
-            residentTable.style.transform = `scale(${zoom})`;
-            residentTable.style.width = `${100 / zoom}%`;
-            zoomValue.textContent = `${Math.round(zoom * 100)}%`;
-        };
-
-        zoomOutBtn.addEventListener('click', () => {
-            zoom = Math.max(minZoom, parseFloat((zoom - step).toFixed(2)));
-            applyZoom();
-        });
-
-        zoomInBtn.addEventListener('click', () => {
-            zoom = Math.min(maxZoom, parseFloat((zoom + step).toFixed(2)));
-            applyZoom();
-        });
-
-        zoomResetBtn.addEventListener('click', () => {
-            zoom = 1;
-            applyZoom();
-        });
-
-        applyZoom();
-    }
+    // ZOOM IN / ZOOM OUT INITIALIZERS REMOVED FROM HERE
 });
 
 window.currentPage = 1;
@@ -382,9 +346,9 @@ window.getResidentFieldValue = function(res, field) {
     }
 };
 
-window.buildResidentRowHTML = function(res) {
+window.buildResidentRowHTML = function(res, index) {
     const cols = window.selectedColumns || ['fullName', 'houseNum', 'streetName', 'birthday', 'gender', 'age', 'status'];
-    let html = `<td><input type="checkbox" class="resident-checkbox" data-id="${res.resident_id}"></td>`;
+    let html = `<td><input type="checkbox" class="resident-checkbox" data-id="${res.resident_id}"></td><td>${index}</td>`;
     
     cols.forEach(col => {
         const value = window.getResidentFieldValue(res, col);
@@ -395,7 +359,6 @@ window.buildResidentRowHTML = function(res) {
         }
     });
     
-    // Always add Actions column
     html += `<td class="action-icons">
         <i class="fas fa-pencil-alt edit-icon" onclick="editResident(${res.resident_id})" title="Edit"></i>
         <i class="fas fa-archive archive-icon" onclick="archiveResident(${res.resident_id})" title="Archive"></i>
@@ -410,18 +373,15 @@ window.updateTableHeader = function() {
     if (!thead) return;
     
     const cols = window.selectedColumns || ['fullName', 'houseNum', 'streetName', 'birthday', 'gender', 'age', 'status'];
-    let html = '<th><input type="checkbox" id="selectAllResidents"></th>';
+    let html = '<th><input type="checkbox" id="selectAllResidents"></th><th>#</th>';
     
     cols.forEach(col => {
         html += `<th>${window.getColumnLabel(col)}</th>`;
     });
     
-    // Always add Actions column header
     html += '<th>Actions</th>';
-    
     thead.innerHTML = html;
 
-    // Add select all functionality
     const selectAll = document.getElementById('selectAllResidents');
     if (selectAll) {
         selectAll.addEventListener('change', function() {
@@ -539,9 +499,8 @@ window.loadAndRenderResidents = function() {
         }
 
         window.filteredResidentsTotal = residents.length;
-        window.filteredResidents = residents; // Store filtered residents for export
+        window.filteredResidents = residents; 
 
-        // Update table header
         window.updateTableHeader();
 
         tbody.innerHTML = '';
@@ -549,9 +508,10 @@ window.loadAndRenderResidents = function() {
         const end = start + window.rowsPerPage;
         const paginatedItems = residents.slice(start, end);
 
-        paginatedItems.forEach(res => {
+        paginatedItems.forEach((res, index) => {
             const row = document.createElement('tr');
-            row.innerHTML = window.buildResidentRowHTML(res);
+            const itemSequentialNumber = start + index + 1;
+            row.innerHTML = window.buildResidentRowHTML(res, itemSequentialNumber);
             tbody.appendChild(row);
         });
     });
@@ -564,7 +524,6 @@ window.exportResidentsToExcel = function() {
         return;
     }
 
-    // Check if any checkboxes are checked
     const checkedBoxes = document.querySelectorAll('#residentTable tbody .resident-checkbox:checked');
     const exportAll = checkedBoxes.length === 0;
 

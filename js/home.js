@@ -26,6 +26,14 @@ function openModal(documentType) {
         // 1. Reset the form fields so previous inputs don't reflect here
         form.reset();
         
+        // Ensure the "Others" container is hidden upon opening
+        const otherPurposeContainer = document.getElementById("otherPurposeContainer");
+        const otherPurposeText = document.getElementById("otherPurposeText");
+        if (otherPurposeContainer && otherPurposeText) {
+            otherPurposeContainer.style.display = "none";
+            otherPurposeText.removeAttribute("required");
+        }
+        
         // 2. Clear out the "Upload" text and colors
         resetUploadUI();
 
@@ -229,7 +237,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const birthDateInput = this.querySelector('input[type="date"]');
             const emailAddressInput = this.querySelector('input[type="email"]');
             const contactNumberInput = this.querySelector('input[type="tel"]');
-            const purposeOfRequestInput = this.querySelector('textarea');
+            
+            const purposeDropdown = document.getElementById('purposeDropdown');
+            const otherPurposeText = document.getElementById('otherPurposeText');
+
+            // Determine final purpose: if "Others", grab the text box value instead
+            let finalPurpose = purposeDropdown ? purposeDropdown.value : "";
+            if (finalPurpose === 'Others' && otherPurposeText) {
+                finalPurpose = otherPurposeText.value;
+            }
 
             // 3. Update Button State
             const submitBtn = this.querySelector('.submit-full');
@@ -259,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 residentVoterStatus: allDropdownMenusList[2].value,
                 residentPrecinctNumber: allTextInputsList[6].value,
                 residentFullAddress: `${allTextInputsList[7].value} ${allDropdownMenusList[3].value}, Barangay 663, Manila`,
-                residentPurposeOfRequest: purposeOfRequestInput.value
+                residentPurposeOfRequest: finalPurpose
             };
 
             // 5. SAVE TO A PERMANENT ARRAY IN LOCALSTORAGE
@@ -315,6 +331,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 menuIcon.classList.replace('fa-bars', 'fa-times');
             } else {
                 menuIcon.classList.replace('fa-times', 'fa-bars');
+            }
+        });
+    }
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    const purposeDropdown = document.getElementById("purposeDropdown");
+    const otherPurposeContainer = document.getElementById("otherPurposeContainer");
+    const otherPurposeText = document.getElementById("otherPurposeText");
+
+    if (purposeDropdown && otherPurposeContainer && otherPurposeText) {
+        purposeDropdown.addEventListener("change", function () {
+            if (this.value === "Others") {
+                // Show text box and make it required
+                otherPurposeContainer.style.display = "flex";
+                otherPurposeText.setAttribute("required", "required");
+            } else {
+                // Hide text box and remove validation rule
+                otherPurposeContainer.style.display = "none";
+                otherPurposeText.removeAttribute("required");
+                otherPurposeText.value = ""; // Clear contents
             }
         });
     }

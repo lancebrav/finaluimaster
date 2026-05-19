@@ -54,107 +54,122 @@
         
         <form id="residentForm">
             <div class="form-section-title">Personal Information</div>
-            <div class="form-grid">
-                <div class="input-group">
-                    <label>First Name *</label>
-                    <input type="text" placeholder="Juan" required>
-                </div>
-                <div class="input-group">
-                    <label>Middle Name *</label>
-                    <input type="text" placeholder="Romualdez" required>
-                </div>
-                <div class="input-group">
-                    <label>Last Name *</label>
-                    <input type="text" placeholder="Santos" required>
-                </div>
-                <div class="input-group">
-                    <label>Suffix</label>
-                    <input type="text" placeholder="e.g. Jr., III">
-                </div>
-            </div>
 
-            <div class="form-grid">
-                <div class="input-group">
-                    <label>Gender *</label>
-                    <select required>
-                        <option value="">-- Select --</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label>Nationality *</label>
-                    <input type="text" placeholder="e.g. Filipino" required>
-                </div>
-                <div class="input-group">
-                    <label>Civil Status *</label>
-                    <select required>
-                        <option value="">-- Select --</option>
-                        <option value="Single">Single</option>
-                        <option value="Married">Married</option>
-                        <option value="Widowed">Widowed</option>
-                        <option value="Separated">Separated</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label>Birth Date *</label>
-                    <input type="date" required>
-                </div>
-            </div>
+<div class="form-grid">
+    <div class="input-group" style="grid-column: span 1;">
+        <label>First Name *</label>
+        <input type="text" placeholder="Juan" required>
+    </div>
+    <div class="input-group" style="grid-column: span 1;">
+        <label>Middle Name *</label>
+        <input type="text" placeholder="Romualdez" required>
+    </div>
+    <div class="input-group" style="grid-column: span 1;">
+        <label>Last Name *</label>
+        <input type="text" placeholder="Santos" required>
+    </div>
+    <div class="input-group" style="grid-column: span 1;">
+        <label>Suffix</label>
+        <input type="text" placeholder="e.g. Jr., III">
+    </div>
+</div>
 
-            <div class="form-grid">
-                <div class="input-group" style="grid-column: span 4;">
-                    <label>Place of Birth *</label>
-                    <input type="text" placeholder="City/Municipality, Province" required>
-                </div>
-                <div class="input-group" style="grid-column: span 2;">
-                    <label>Email Address *</label>
-                    <input type="email" placeholder="example@email.com" required>
-                </div>
-                <div class="input-group" style="grid-column: span 2;">
-                    <label>Contact Number *</label>
-                    <input type="tel" placeholder="09XX-XXX-XXXX" pattern="09[0-9]{2}[0-9]{3}[0-9]{4}" required>
-                </div>
-                <div class="input-group">
-                    <label>Voter Status *</label>
-                    <select required>
-                        <option value="">-- Select --</option>
-                        <option value="Registered">Registered Voter</option>
-                        <option value="Not Registered">Not Registered</option>
-                    </select>
-                </div>
-            </div>
+<div class="form-grid">
+    <div class="input-group" style="grid-column: span 1;">
+        <label>Gender *</label>
+        <select required>
+            <option value="">-- Select --</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+        </select>
+    </div>
+    <div class="input-group" style="grid-column: span 1;">
+        <label>Nationality *</label>
+        <input type="text" placeholder="e.g. Filipino" required>
+    </div>
+    <div class="input-group" style="grid-column: span 1;">
+        <label>Civil Status *</label>
+        <select required>
+            <option value="">-- Select --</option>
+            <option value="Single">Single</option>
+            <option value="Married">Married</option>
+            <option value="Widowed">Widowed</option>
+            <option value="Separated">Separated</option>
+        </select>
+    </div>
+    <div class="input-group" style="grid-column: span 1;">
+        <label>Birth Date *</label>
+        <input type="date" required>
+    </div>
+</div>
 
-            <div class="form-grid">
+<div class="form-grid">
+    <div class="input-group" style="grid-column: span 2;">
+        <label>Place of Birth *</label>
+        <input type="text" placeholder="City/Municipality, Province" required>
+    </div>
+    
+    <div class="input-group" style="grid-column: span 2;">
+        <label>Email Address *</label>
+        <input type="email" placeholder="example@gmail.com" pattern="^[a-zA-Z0-9._%+-]+@gmail\.com$" title="Please enter a valid Gmail address (ending in @gmail.com)" required>
+    </div>
+</div>
 
-                <div class="input-group">
-                    <label>Precinct Number</label>
-                    <input type="text" placeholder="e.g. 0542B">
-                </div>
-                <div class="input-group" style="grid-column: span 1;">
-                    <label>House/Unit No. *</label>
-                    <input type="text" placeholder="e.g. 123" required>
-                </div>
-                <div class="input-group" style="grid-column: span 3;">
-                    <label>Street *</label>
-                    <select required>
-                        <option value="">-- Select Your Street --</option>
-                        <option value="Paco">Paco</option>
-                        <option value="Ermita">Ermita</option>
-                        <option value="Ayala Blvd">Ayala Blvd</option>
-                        <option value="Trinidad">Trinidad</option>
-                        <option value="Mercedes">Mercedes</option>
-                        <option value="Romualdez">Romualdez</option>
-                        <option value="Isla de Provacion">Isla de Provacion</option>
-                    </select>
-                </div>
-            </div>
+<div class="form-grid">
+    <div class="input-group" style="grid-column: span 2;">
+        <label>Contact Number *</label>
+        <input type="tel" placeholder="09XX-XXX-XXXX" pattern="09[0-9]{2}[0-9]{3}[0-9]{4}" required>
+    </div>
+    <div class="input-group" style="grid-column: span 1;">
+        <label>Voter Status *</label>
+        <select required>
+            <option value="">-- Select --</option>
+            <option value="Registered">Registered Voter</option>
+            <option value="Not Registered">Not Registered</option>
+        </select>
+    </div>
+    <div class="input-group" style="grid-column: span 1;">
+        <label>Precinct Number</label>
+        <input type="text" placeholder="e.g. 0542B">
+    </div>
+</div>
 
-        
+<div class="form-grid">
+    <div class="input-group" style="grid-column: span 1;">
+        <label>House/Unit No. *</label>
+        <input type="text" placeholder="e.g. 123" required>
+    </div>
+    <div class="input-group" style="grid-column: span 3;">
+        <label>Street *</label>
+        <select required>
+            <option value="">-- Select Your Street --</option>
+            <option value="Paco">Paco</option>
+            <option value="Ermita">Ermita</option>
+            <option value="Ayala Blvd">Ayala Blvd</option>
+            <option value="Trinidad">Trinidad</option>
+            <option value="Mercedes">Mercedes</option>
+            <option value="Romualdez">Romualdez</option>
+            <option value="Isla de Provacion">Isla de Provacion</option>
+        </select>
+    </div>
+</div>
 
             <div class="input-group" style="width: 100%;">
                 <label>Purpose of Request *</label>
-                <textarea rows="2" placeholder="e.g., Employment, Scholarship, ID application" required></textarea>
+                <select id="purposeDropdown" required>
+                    <option value="">-- Select Purpose --</option>
+                    <option value="Employment">Employment</option>
+                    <option value="NBI/Police Clearance Application">NBI/Police Clearance Application</option>
+                    <option value="Voter's Registration">Voter's Registration</option>
+                    <option value="Scholarship">Scholarship</option>
+                    <option value="Proof of Address">Proof of Address</option>
+                    <option value="Others">Others</option>
+                </select>
+            </div>
+            
+            <div class="input-group" id="otherPurposeContainer" style="width: 100%; display: none; margin-top: 15px;">
+                <label>Please Specify *</label>
+                <input type="text" id="otherPurposeText" placeholder="Specify your purpose here...">
             </div>
 
             <div class="form-section-title">Supporting Documents</div>
@@ -177,7 +192,7 @@
 
             <div class="privacy-box">
                 <h4>Data Privacy Consent</h4>
-                <p>"By checking the boxes below, I agree to the collection and processing of my personal data as outlined in our Privacy Policy, in compliance with the Data Privacy Act of 2012. We will use your information solely to fulfull the documents being requested."</p>
+                <p>"In compliance with Republic Act No. 10173 (Data Privacy Act of 2012), Barangay 663 collects, processes, and stores your personal information (such as your full name, complete address, date of birth, civil status, and valid identification) solely for the following purposes: Verifying your identity and official residency within this barangay. Processing, verifying, and issuing your requested barangay-issued certificate, clearance, or document. Maintaining an accurate, secure, and updated Barangay Resident Information Management System." <br><br>"By checking the box below, I explicitly give my free, specific, and informed consent to Barangay 663 to collect, process, and store my personal information for the processing and issuance of my requested document, in accordance with the Data Privacy Act of 2012."</p>
             </div>
 
             <div class="checkbox-group">

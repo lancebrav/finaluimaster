@@ -125,10 +125,9 @@
             color: #555;
             line-height: 1.6;
             font-size: 0.95rem;
-            white-space: pre-wrap; /* Preserves line breaks from textarea */
+            white-space: pre-wrap;
         }
 
-        /* Add cursor pointer to cards to indicate clickability */
         .news-card {
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
@@ -189,11 +188,20 @@
                 <div class="meta-item">
                     <i class="far fa-calendar-alt"></i>
                     <div>
-                        <strong style="display:block; font-size:0.8rem; color:#888;">WHEN</strong>
-                        <span id="modalDate">2026-05-22</span>
+                        <strong style="display:block; font-size:0.8rem; color:#888;">START</strong>
+                        <span id="modalDate">Schedule</span>
                     </div>
                 </div>
-                <div class="meta-item">
+                
+                <div class="meta-item" id="endMetaItem" style="display: none;">
+                    <i class="far fa-calendar-check"></i>
+                    <div>
+                        <strong style="display:block; font-size:0.8rem; color:#888;">END</strong>
+                        <span id="modalEndDate">Schedule</span>
+                    </div>
+                </div>
+
+                <div class="meta-item" id="whereMetaItem">
                     <i class="fas fa-map-marker-alt"></i>
                     <div>
                         <strong style="display:block; font-size:0.8rem; color:#888;">WHERE</strong>
@@ -241,6 +249,12 @@
         const modalTag = document.getElementById('modalTag');
         const modalTitle = document.getElementById('modalTitle');
         const modalDate = document.getElementById('modalDate');
+        
+        // Grab the extra meta items for the layout logic
+        const modalEndDate = document.getElementById('modalEndDate');
+        const endMetaItem = document.getElementById('endMetaItem');
+        const whereMetaItem = document.getElementById('whereMetaItem');
+        
         const modalLocation = document.getElementById('modalLocation');
         const modalDetails = document.getElementById('modalDetails');
 
@@ -273,12 +287,45 @@
             const photoSrc = event.photo ? event.photo : 'brgy-hall.png'; 
             const typeLabel = event.type ? event.type.charAt(0).toUpperCase() + event.type.slice(1) : 'Update';
             
-            // Format readable date
-            let displayDate = event.date || 'No Date Specified';
-            if (event.date) {
-                const parsed = new Date(event.date);
-                if (!isNaN(parsed)) {
-                    displayDate = parsed.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            // Format readable dates
+            let displayStartDate = 'No Date Specified';
+            let displayEndDate = '';
+            let hasEndDate = false;
+            
+            if (event.startDate || event.date) {
+                const parsedStart = new Date(event.startDate || event.date);
+                if (!isNaN(parsedStart)) {
+                    displayStartDate = parsedStart.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                    
+                    // Add Time to Start Schedule if it exists
+                    if (event.startTime) {
+                        let [h, m] = event.startTime.split(':');
+                        let suffix = h >= 12 ? 'PM' : 'AM';
+                        h = h % 12 || 12; // convert to 12hr
+                        displayStartDate += ` at ${h}:${m} ${suffix}`;
+                    }
+
+                    // --- FULLY UPDATED: Process End Date AND End Time ---
+                    if (event.endDate) {
+                        const parsedEnd = new Date(event.endDate);
+                        if (!isNaN(parsedEnd)) {
+                            let endString = parsedEnd.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                            
+                            // Add Time to End Schedule if it exists
+                            if (event.endTime) {
+                                let [eh, em] = event.endTime.split(':');
+                                let esuffix = eh >= 12 ? 'PM' : 'AM';
+                                eh = eh % 12 || 12; // convert to 12hr
+                                endString += ` at ${eh}:${em} ${esuffix}`;
+                            }
+
+                            // Show the END block if the date is different OR if an end time is explicitly provided
+                            if (event.endDate !== event.startDate || event.endTime) {
+                                displayEndDate = endString;
+                                hasEndDate = true;
+                            }
+                        }
+                    }
                 }
             }
 
@@ -291,7 +338,7 @@
                 </div>
                 <div class="news-body">
                     <span class="news-date">
-                        <i class="far fa-calendar-alt"></i> ${displayDate}
+                        <i class="far fa-calendar-alt"></i> ${displayStartDate}
                     </span>
                     <h3 style="color: #070e50; margin-bottom: 10px; font-size: 1.3rem;">${event.title}</h3>
                     <p style="color: #555; line-height: 1.6; font-size: 0.95rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${event.details}</p>
@@ -303,11 +350,21 @@
                 modalImg.src = photoSrc;
                 modalTag.textContent = typeLabel;
                 modalTitle.textContent = event.title;
-                modalDate.textContent = displayDate;
                 
-                // Assuming standard events happen at the Brgy Hall unless specified otherwise.
-                // If you add a 'location' input to your admin form later, use `event.location || 'Barangay 663 Hall'`
-                modalLocation.textContent = event.location ? event.location : 'Barangay 663 Hall'; 
+                // Assign START date
+                modalDate.textContent = displayStartDate; 
+                
+                // Conditional UI changes based on if an END date/time exists
+                if (hasEndDate) {
+                    modalEndDate.textContent = displayEndDate;
+                    endMetaItem.style.display = 'flex'; // Show End block
+                    whereMetaItem.style.gridColumn = '1 / -1'; // Pushes "WHERE" to a full-width row underneath them
+                } else {
+                    endMetaItem.style.display = 'none'; // Hide End block
+                    whereMetaItem.style.gridColumn = 'auto'; // Pulls "WHERE" up next to the Start Date
+                }
+
+                modalLocation.textContent = event.location || 'Barangay 663 Hall'; 
                 modalDetails.textContent = event.details || 'No additional details provided.';
                 
                 modalOverlay.classList.add('active');

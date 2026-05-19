@@ -1,12 +1,28 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Function to update event statuses based on date
+    // --- Pagination State ---
+    let currentPage = 1;
+    const itemsPerPage = 5; 
+
+    // Auto-detect ongoing vs upcoming based on start and end dates
     window.updateEventStatuses = function() {
         let events = JSON.parse(localStorage.getItem('brgyEvents')) || [];
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
         events.forEach(event => {
-            if (event.type === 'upcoming' && event.date) {
+            if (event.startDate && event.endDate) {
+                const sDate = new Date(event.startDate);
+                const eDate = new Date(event.endDate);
+                
+                if (today >= sDate && today <= eDate) {
+                    event.type = 'ongoing';
+                } else if (today < sDate) {
+                    event.type = 'upcoming';
+                } else if (today > eDate) {
+                    event.type = 'past'; // Event is finished
+                }
+            } else if (event.date) {
+                // Fallback for old data structure
                 const eventDate = new Date(event.date);
                 if (eventDate <= today) {
                     event.type = 'ongoing';
@@ -17,7 +33,6 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('brgyEvents', JSON.stringify(events));
     };
 
-    // Function to generate birthday announcements
     window.generateBirthdayAnnouncements = function() {
         const officers = JSON.parse(localStorage.getItem('brgyOfficers')) || [];
         let events = JSON.parse(localStorage.getItem('brgyEvents')) || [];
@@ -47,6 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             details: `Celebrating ${officer.position} on their special day. Join us in wishing them well!`,
                             type: 'upcoming',
                             date: nextBirthday.toISOString().split('T')[0],
+                            startDate: nextBirthday.toISOString().split('T')[0],
+                            endDate: nextBirthday.toISOString().split('T')[0],
                             photo: officer.photo || '',
                             isBirthday: true,
                             visibility: 'admin'
@@ -55,71 +72,129 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
-
         localStorage.setItem('brgyEvents', JSON.stringify(events));
     };
 
-    // Call updates on load
     updateEventStatuses();
     generateBirthdayAnnouncements();
 
-    // 1. Unified Display Function
-    window.displayEvents = function() {
-        const events = JSON.parse(localStorage.getItem('brgyEvents')) || [];
+    // Event listener for the Status Filter
+    const statusFilter = document.getElementById('statusFilter');
+    if (statusFilter) {
+        statusFilter.addEventListener('change', () => {
+            currentPage = 1; // Snap back to page 1 on filter change
+            displayAdminAnnouncements();
+        });
+    }
 
-        const ongoingEvents = events.filter(event => event.type === 'ongoing');
-        const upcomingEvents = events.filter(event => event.type === 'upcoming' || !event.type);
+    window.displayAdminAnnouncements = function() {
+        let events = JSON.parse(localStorage.getItem('brgyEvents'));
+        if (!Array.isArray(events)) events = []; 
+        
+        // Apply the Filter
+        if (statusFilter && statusFilter.value !== 'all') {
+            events = events.filter(ev => ev.type === statusFilter.value);
+        }
+        
+        // Sort by Category Priority (Ongoing -> Upcoming -> Past)
+        events.sort((a, b) => {
+            const statusWeight = { 'ongoing': 1, 'upcoming': 2, 'past': 3 };
+            const weightA = statusWeight[a.type] || 4;
+            const weightB = statusWeight[b.type] || 4;
 
-        const ongoingEventsList = document.getElementById('ongoingEventsList');
-        const upcomingEventsList = document.getElementById('upcomingEventsList');
+            if (weightA !== weightB) {
+                return weightA - weightB;
+            }
 
-        function createEventCard(event) {
-            const card = document.createElement('div');
-            card.className = event.isBirthday ? 'event-card birthday-card' : 'event-card';
+            const dateA = new Date(a.startDate || a.date || 0);
+            const dateB = new Date(b.startDate || b.date || 0);
+            return dateA - dateB;
+        });
+        
+        const tbody = document.querySelector('#announcementsTable tbody');
+        
+        if (!tbody) return;
+        tbody.innerHTML = '';
 
-            const photoSrc = event.photo ? event.photo : 'https://via.placeholder.com/400x200?text=No+Photo';
+        const totalPages = Math.ceil(events.length / itemsPerPage) || 1;
+        
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const paginatedEvents = events.slice(startIndex, endIndex);
+
+        if (paginatedEvents.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="padding: 30px; text-align: center; color: #7f8c8d; font-weight: 600;">No announcements found matching this filter.</td></tr>`;
+            updatePaginationUI(totalPages);
+            return;
+        }
+
+        function createEventRow(event) {
+            const tr = document.createElement('tr');
             
-            let formattedDate = event.date || 'No Date';
-            if (event.date) {
-                const parsed = new Date(event.date);
-                if (!isNaN(parsed)) {
-                    formattedDate = parsed.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            // Map the new values, fallback to old values if missing
+            let formattedDate = event.startDate || event.date || 'No Date';
+            let author = event.author || 'Admin';
+            let dueDate = event.endDate || event.dueDate || 'N/A';
+            
+            // Format military time to standard 12-hour AM/PM (Start Time)
+            let formattedTime = event.startTime || event.time || 'TBA';
+            if (formattedTime && formattedTime !== 'TBA' && formattedTime.includes(':')) {
+                let [h, m] = formattedTime.split(':');
+                let suffix = h >= 12 ? 'PM' : 'AM';
+                h = h % 12 || 12; // Convert 0 (midnight) or 13+ to 12-hour format
+                formattedTime = `${h}:${m} ${suffix}`;
+            }
+
+            // Format military time to standard 12-hour AM/PM (End Time)
+            let formattedEndTime = event.endTime || '';
+            if (formattedEndTime && formattedEndTime.includes(':')) {
+                let [eh, em] = formattedEndTime.split(':');
+                let esuffix = eh >= 12 ? 'PM' : 'AM';
+                eh = eh % 12 || 12; 
+                formattedEndTime = ` ${eh}:${em} ${esuffix}`;
+                
+                if (dueDate !== 'N/A') {
+                    dueDate += formattedEndTime;
                 }
             }
 
-            const detailsText = event.details || 'No additional details provided.';
+            // Status Badge
+            let typeBadge = '';
+            if(event.type === 'ongoing') typeBadge = '<span style="background: #27ae60; color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">Ongoing</span>';
+            if(event.type === 'upcoming') typeBadge = '<span style="background: #3498db; color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">Upcoming</span>';
+            if(event.type === 'past') typeBadge = '<span style="background: #95a5a6; color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">Past</span>';
 
-            card.innerHTML = ` 
-                <img src="${photoSrc}" alt="Event Picture" class="event-pic">
-                <div class="event-content">
-                    <div class="event-date"><i class="far fa-calendar-alt"></i> ${formattedDate}</div>
-                    <div class="event-title">${event.title}</div>
-                    <div class="event-desc">${detailsText}</div>
-
-                    <div class="event-actions">
-                        <div class="view-details" style="visibility:hidden;"></div>
-                        <div class="card-icons">
-                            ${event.isBirthday ? '' : '<i class="fas fa-pencil-alt edit-icon" title="Edit"></i>'}
-                            ${event.isBirthday ? '' : '<i class="fas fa-trash-alt delete-icon" title="Delete"></i>'}
-                        </div>
-                    </div>
-                </div>
+            // REMOVED: Checkbox <td> column to properly expand table items to edge boundaries
+            tr.innerHTML = `
+                <td style="padding: 15px 20px; border-bottom: 1px solid #f0f0f0; color: #1a1a4b; font-weight: 600;">
+                    ${event.title}
+                </td>
+                <td style="padding: 15px 20px; border-bottom: 1px solid #f0f0f0;">
+                    ${typeBadge}
+                </td>
+                <td style="padding: 15px 20px; border-bottom: 1px solid #f0f0f0;">
+                    ${formattedDate}
+                </td>
+                <td style="padding: 15px 20px; border-bottom: 1px solid #f0f0f0;">
+                    ${author}
+                </td>
+                <td style="padding: 15px 20px; border-bottom: 1px solid #f0f0f0;">
+                    ${formattedTime}
+                </td>
+                <td style="padding: 15px 20px; border-bottom: 1px solid #f0f0f0;">
+                    ${dueDate}
+                </td>
+                <td class="action-icons" style="padding: 15px 20px; border-bottom: 1px solid #f0f0f0; text-align: center; white-space: nowrap;">
+                    ${event.isBirthday ? '<i class="fas fa-pencil-alt" style="visibility: hidden; margin-right: 15px;"></i>' : '<i class="fas fa-pencil-alt edit-icon" title="Edit" style="color: #1a1a4b; margin-right: 15px; cursor: pointer;"></i>'}
+                    <i class="fas fa-archive archive-icon" title="Archive" style="color: #f39c12; cursor: pointer;"></i>
+                </td>
             `;
 
-            // Only add edit/delete if not birthday
             if (!event.isBirthday) {
-                const deleteBtn = card.querySelector('.delete-icon');
-                deleteBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    if (confirm(`Are you sure you want to delete "${event.title}"?`)) {
-                        let currentEvents = JSON.parse(localStorage.getItem('brgyEvents')) || [];
-                        currentEvents = currentEvents.filter(ev => ev.id !== event.id);
-                        localStorage.setItem('brgyEvents', JSON.stringify(currentEvents));
-                        displayEvents();
-                    }
-                });
-
-                const editBtn = card.querySelector('.edit-icon');
+                const editBtn = tr.querySelector('.edit-icon');
                 if (editBtn) {
                     editBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
@@ -127,33 +202,61 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
             }
-
-            return card;
+            return tr;
         }
 
-        // Render Ongoing List safely
-        if (ongoingEventsList) {
-            ongoingEventsList.innerHTML = '';
-            ongoingEvents.forEach(event => {
-                ongoingEventsList.appendChild(createEventCard(event));
-            });
-        }
+        paginatedEvents.forEach(event => {
+            tbody.appendChild(createEventRow(event));
+        });
 
-        // Render Upcoming List safely
-        if (upcomingEventsList) {
-            upcomingEventsList.innerHTML = '';
-            upcomingEvents.forEach(event => {
-                upcomingEventsList.appendChild(createEventCard(event));
-            });
-        }
+        updatePaginationUI(totalPages);
     };
 
-    // Initial load trigger
-    if (document.getElementById('ongoingEventsList') || document.getElementById('upcomingEventsList')) {
-        displayEvents();
+    function updatePaginationUI(totalPages) {
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const pageIndicator = document.getElementById('pageIndicator');
+
+        if (pageIndicator) {
+            pageIndicator.textContent = `Page ${currentPage} of ${totalPages}`;
+        }
+
+        if (prevBtn) {
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.style.opacity = currentPage === 1 ? '0.5' : '1';
+            prevBtn.style.cursor = currentPage === 1 ? 'not-allowed' : 'pointer';
+        }
+
+        if (nextBtn) {
+            nextBtn.disabled = currentPage === totalPages;
+            nextBtn.style.opacity = currentPage === totalPages ? '0.5' : '1';
+            nextBtn.style.cursor = currentPage === totalPages ? 'not-allowed' : 'pointer';
+        }
     }
 
-    // 2. Photo Handling logic
+    document.getElementById('prevBtn')?.addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            displayAdminAnnouncements();
+        }
+    });
+
+    document.getElementById('nextBtn')?.addEventListener('click', () => {
+        let events = JSON.parse(localStorage.getItem('brgyEvents')) || [];
+        const statusFilter = document.getElementById('statusFilter');
+        if (statusFilter && statusFilter.value !== 'all') {
+            events = events.filter(ev => ev.type === statusFilter.value);
+        }
+        
+        const totalPages = Math.ceil(events.length / itemsPerPage) || 1;
+        if (currentPage < totalPages) {
+            currentPage++;
+            displayAdminAnnouncements();
+        }
+    });
+
+    displayAdminAnnouncements();
+
     const eventPhotoInput = document.getElementById('eventPhotoInput');
     const uploadPhotoBtn = document.getElementById('uploadPhotoBtn');
     const loadedPhoto = document.getElementById('loadedPhoto');
@@ -176,7 +279,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Helper: File to Base64 Converter if not globally mapped
     if (typeof window.getBase64 !== 'function') {
         window.getBase64 = (file) => new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -186,7 +288,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 3. Form Submission Handling
     const eventForm = document.getElementById('addEventForm');
     if (eventForm) {
         eventForm.addEventListener('submit', async (e) => {
@@ -195,19 +296,33 @@ document.addEventListener('DOMContentLoaded', () => {
             const editId = document.getElementById('editEventId')?.value;
             const title = document.getElementById('eventTitle').value;
             const details = document.getElementById('eventDetails').value;
-            const type = document.getElementById('eventType').value;
+            const location = document.getElementById('eventLocation').value;
+            const startDate = document.getElementById('eventStartDate').value;
+            const startTime = document.getElementById('eventStartTime').value;
+            const endDate = document.getElementById('eventEndDate').value;
+            const endTime = document.getElementById('eventEndTime').value; 
             const visibility = document.getElementById('eventVisibility').value;
-            const date = document.getElementById('eventDate').value;
 
             // Date validation
-            if (type === 'upcoming' && date) {
-                const selectedDate = new Date(date);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                if (selectedDate < today) {
-                    alert('Upcoming events cannot be set to a past date.');
-                    return;
-                }
+            const sDate = new Date(startDate);
+            sDate.setHours(0, 0, 0, 0);
+            const eDate = new Date(endDate);
+            eDate.setHours(0, 0, 0, 0);
+
+            if (sDate > eDate) {
+                alert('End Date cannot be earlier than the Start Date.');
+                return;
+            }
+
+            // Auto-detect initial category
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            let autoType = 'upcoming';
+            if (today >= sDate && today <= eDate) {
+                autoType = 'ongoing';
+            } else if (today > eDate) {
+                autoType = 'past';
             }
 
             let photoBase64 = "";
@@ -225,18 +340,34 @@ document.addEventListener('DOMContentLoaded', () => {
             if (editId) {
                 const index = events.findIndex(ev => ev.id == editId);
                 if (index !== -1) {
-                    events[index] = { ...events[index], title, details, type, visibility, date, photo: photoBase64 };
+                    events[index] = { 
+                        ...events[index], 
+                        title, 
+                        details, 
+                        location, 
+                        startDate, 
+                        startTime, 
+                        endDate, 
+                        endTime, 
+                        type: autoType, 
+                        visibility, 
+                        photo: photoBase64,
+                        date: startDate 
+                    };
                 }
             } else {
-                events.push({ id: Date.now(), title, details, type, visibility, date, photo: photoBase64 });
+                events.unshift({ 
+                    id: Date.now(), 
+                    title, details, location, startDate, startTime, endDate, endTime,
+                    type: autoType, visibility, photo: photoBase64,
+                    author: 'Admin',
+                    date: startDate
+                });
             }
 
             localStorage.setItem('brgyEvents', JSON.stringify(events));
-
-            // Update statuses automatically
             updateEventStatuses();
 
-            // Clean up state
             eventForm.reset();
             if (document.getElementById('editEventId')) document.getElementById('editEventId').value = "";
 
@@ -250,13 +381,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const modalElement = document.getElementById('eventModal');
             if (modalElement) modalElement.classList.remove('active');
 
-            // Refresh UI directly
-            displayEvents();
+            currentPage = 1;
+            displayAdminAnnouncements();
         });
     }
 });
 
-// Global Trigger to Open Edit view
 window.editEvent = function(id) {
     const events = JSON.parse(localStorage.getItem('brgyEvents')) || [];
     const ev = events.find(e => e.id == id);
@@ -267,9 +397,12 @@ window.editEvent = function(id) {
 
         document.getElementById('eventTitle').value = ev.title || '';
         document.getElementById('eventDetails').value = ev.details || '';
-        document.getElementById('eventType').value = ev.type || 'upcoming';
+        document.getElementById('eventLocation').value = ev.location || '';
+        document.getElementById('eventStartDate').value = ev.startDate || ev.date || '';
+        document.getElementById('eventStartTime').value = ev.startTime || '';
+        document.getElementById('eventEndDate').value = ev.endDate || '';
+        document.getElementById('eventEndTime').value = ev.endTime || ''; 
         document.getElementById('eventVisibility').value = ev.visibility || 'both';
-        document.getElementById('eventDate').value = ev.date || '';
 
         const loadedPhoto = document.getElementById('loadedPhoto');
         const defaultIcon = document.querySelector('.default-photo-icon');

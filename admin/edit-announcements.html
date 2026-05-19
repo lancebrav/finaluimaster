@@ -75,23 +75,48 @@
         </header>
 
         <div class="announcements-container">
-            <div class="page-actions">
+            <div class="page-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
                 <button class="add-event-btn" id="addEventBtn">
                     <i class="fas fa-plus"></i> Add New Event
                 </button>
+
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label for="statusFilter" style="font-weight: 700; color: #070e50; font-size: 0.85rem;">STATUS:</label>
+                    <select id="statusFilter" style="padding: 8px 15px; border-radius: 6px; border: 1px solid #ddd; outline: none; font-weight: 600; color: #333; cursor: pointer;">
+                        <option value="all">All Events</option>
+                        <option value="ongoing">Ongoing</option>
+                        <option value="upcoming">Upcoming</option>
+                        <option value="past">Past</option>
+                    </select>
+                </div>
             </div>
 
-            <div class="announcement-group">
-                <h1 class="group-title">On-Going:</h1>
-                <div id="ongoingEventsList" class="events-grid-container"></div>
+            <div class="table-card">
+                <table id="announcementsTable" class="resident-table" style="width: 100%; border-collapse: collapse; min-width: 700px;">
+                    <thead>
+                        <tr style="background-color: #1a1a4b; color: white; text-align: left;">
+                            <th style="padding: 15px 20px;">Event Title</th>
+                            <th style="padding: 15px 20px;">Status</th>
+                            <th style="padding: 15px 20px;">Date</th>
+                            <th style="padding: 15px 20px;">Author</th>
+                            <th style="padding: 15px 20px;">Time</th>
+                            <th style="padding: 15px 20px;">Due Date</th>
+                            <th style="padding: 15px 20px; text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
             </div>
 
-            <hr style="border: 1px solid #eee; width: 100%; margin: 20px 0;">
-
-            <div class="announcement-group">
-                <h1 class="group-title">Upcoming:</h1>
-                <div id="upcomingEventsList" class="events-grid-container"></div>
+            <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding: 10px 5px;">
+                <div style="font-size: 0.9rem; color: #666; font-weight: 600;" id="pageIndicator">Page 1 of 1</div>
+                <div style="display: flex; gap: 10px;">
+                    <button id="prevBtn" class="p-btn" style="background: white; border: 1px solid #ddd; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-weight: 700; color: #070e50; transition: 0.2s;">&lt; Previous</button>
+                    <button id="nextBtn" class="p-btn" style="background: white; border: 1px solid #ddd; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-weight: 700; color: #070e50; transition: 0.2s;">Next &gt;</button>
+                </div>
             </div>
+            
         </div>
     </main>
 
@@ -110,30 +135,44 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Event Details</label>
+                    <label>What Event (Details)</label>
                     <textarea id="eventDetails" placeholder="Enter brief details about the event..." rows="3" required></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label>Category</label>
-                    <select id="eventType" required>
-                        <option value="ongoing">On-Going</option>
-                        <option value="upcoming" selected>Upcoming</option>
-                    </select>
+                    <label>Where (Location)</label>
+                    <input type="text" id="eventLocation" placeholder="Enter event location..." required>
+                </div>
+
+                <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label>Start Date</label>
+                        <input type="date" id="eventStartDate" required style="width: 100%;">
+                    </div>
+                    <div>
+                        <label>Start Time</label>
+                        <input type="time" id="eventStartTime" required style="width: 100%;">
+                    </div>
+                </div>
+
+                <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label>End Date</label>
+                        <input type="date" id="eventEndDate" required style="width: 100%;">
+                    </div>
+                    <div>
+                        <label>End Time</label>
+                        <input type="time" id="eventEndTime" required style="width: 100%;">
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label>Visibility</label>
-                    <select id="eventVisibility" required>
+                    <select id="eventVisibility" required style="width: 100%;">
                         <option value="both" selected>Both (Public & Admin)</option>
                         <option value="admin">Admin Only</option>
                         <option value="public">Public Only</option>
                     </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Event Date</label>
-                    <input type="date" id="eventDate" required>
                 </div>
 
                 <div class="form-group photo-upload-group">
@@ -159,4 +198,5 @@
     <script src="../js/admin-dashboard/documents.js"></script>
     <script src="../js/admin-dashboard/officers.js"></script>
     <script src="../js/admin-dashboard/dashboard.js"></script>
+</body>
 </html>

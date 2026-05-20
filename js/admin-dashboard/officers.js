@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Set up real-time filter execution when typing in the search bar
     const searchInput = document.getElementById('officerSearchInput');
     if (searchInput) {
         searchInput.addEventListener('input', () => {
@@ -20,19 +19,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-window.loadAndRenderOfficers = function() {
+let cachedOfficers = [];
+
+window.loadAndRenderOfficers = async function() {
     const tbody = document.querySelector('#officerTable tbody');
     if (!tbody) return;
 
-    // Fetch the filter criteria
+    try {
+        const response = await fetch('../php/get_officials.php');
+        const data = await response.json();
+        cachedOfficers = Array.isArray(data.officials) ? data.officials : [];
+    } catch (err) {
+        console.error('Error fetching officers:', err);
+        cachedOfficers = [];
+    }
+
     const searchInput = document.getElementById('officerSearchInput');
     const filterText = searchInput ? searchInput.value.toLowerCase().trim() : '';
 
-    const officers = JSON.parse(localStorage.getItem('brgyOfficers')) || [];
     tbody.innerHTML = '';
 
-    // Filter officers array conditionally
-    const filteredOfficers = officers.filter(off => {
+    const filteredOfficers = cachedOfficers.filter(off => {
         const matchesName = off.name ? off.name.toLowerCase().includes(filterText) : false;
         const matchesPosition = off.position ? off.position.toLowerCase().includes(filterText) : false;
         return matchesName || matchesPosition;
@@ -58,23 +65,20 @@ window.loadAndRenderOfficers = function() {
                 <span style="font-size: 0.85rem; color: #666;">Term: ${off.term || 'Active'}</span>
             </td>
             <td class="action-icons">
-                <i class="fas fa-pencil-alt edit-icon" title="Edit" style="cursor: pointer;" onclick="window.editOfficer(${off.id})"></i>
-                <i class="fas fa-archive archive-icon" title="Archive" style="cursor: pointer; color: #f39c12;" onclick="window.archiveOfficer(${off.id})"></i>
+                <i class="fas fa-pencil-alt edit-icon" title="Edit" style="cursor: pointer;" onclick="window.editOfficer(${off.official_id})"></i>
+                <i class="fas fa-archive archive-icon" title="Archive" style="cursor: pointer; color: #f39c12;" onclick="window.archiveOfficer(${off.official_id})"></i>
             </td>
         `;
         tbody.appendChild(row);
     });
 };
 
-// Populate term options based on selected position
 window.populateOfficerTermOptions = function(position) {
     const termSelect = document.getElementById('offTerm');
     if (!termSelect) return;
 
-    // Clear existing options
     termSelect.innerHTML = '';
 
-    // Basic term options - can be customized per position later
     const defaultOptions = [
         { value: '', text: 'Select Term...', disabled: true, selected: true },
         { value: '2024-2027', text: '2024 - 2027' },
@@ -83,7 +87,6 @@ window.populateOfficerTermOptions = function(position) {
         { value: 'Custom', text: 'Custom / Other' }
     ];
 
-    // Example: SK positions commonly have separate term cycles
     const skPositions = ['SK Chairman', 'SK Kagawad', 'SK Secretary', 'SK Treasurer'];
     if (skPositions.includes(position)) {
         termSelect.appendChild(new Option('Select Term...', '', true, true));
@@ -91,7 +94,6 @@ window.populateOfficerTermOptions = function(position) {
         return;
     }
 
-    // Default population
     defaultOptions.forEach(opt => {
         const option = document.createElement('option');
         option.value = opt.value;
@@ -110,7 +112,6 @@ if (offForm) {
         const confirmed = confirm(editId ? 'Are you sure you want to save changes to this officer?' : 'Are you sure you want to add this officer?');
         if (!confirmed) return;
 
-        // (editId already read above when confirming)
         const name = document.getElementById('offName').value;
         const birthday = document.getElementById('offBirthday').value;
         const computedAge = window.calculateAge(birthday);
@@ -127,8 +128,7 @@ if (offForm) {
             'SK Treasurer'
         ];
 
-        let officers = JSON.parse(localStorage.getItem('brgyOfficers')) || [];
-        const existingSameRoleCount = officers.filter(o => o.position === position && o.id != editId).length;
+        const existingSameRoleCount = cachedOfficers.filter(o => o.position === position && String(o.official_id) !== String(editId)).length;
 
         if (uniquePositions.includes(position) && existingSameRoleCount >= 1) {
             alert(`Only one ${position} may be added at a time.`);
@@ -141,17 +141,15 @@ if (offForm) {
         }
 
         const photoInput = document.getElementById('offPhoto');
-        let photoBase64 = "";
+        let photoBase64 = '';
 
         if (photoInput && photoInput.files[0]) {
             photoBase64 = await window.getBase64(photoInput.files[0]);
         } else if (editId) {
-            const officersForPhoto = JSON.parse(localStorage.getItem('brgyOfficers')) || [];
-            const existingOff = officersForPhoto.find(o => o.id == editId);
-            photoBase64 = existingOff ? existingOff.photo : "";
+            const existingOff = cachedOfficers.find(o => String(o.official_id) === String(editId));
+            photoBase64 = existingOff ? (existingOff.photo || '') : '';
         }
 
-        // If user selected 'Custom' show/require custom input value
         let finalTerm = term;
         if (term === 'Custom') {
             const customInput = document.getElementById('offTermCustom');
@@ -163,31 +161,40 @@ if (offForm) {
             finalTerm = customVal;
         }
 
-        if (editId) {
-            const index = officers.findIndex(o => o.id == editId);
-                if (index !== -1) {
-                officers[index] = { ...officers[index], name, birthday, age: computedAge, position, term: finalTerm, photo: photoBase64 };
-            }
-        } else {
-            officers.push({
-                id: Date.now(),
-                name,
-                birthday: birthday,
-                age: computedAge,
-                position,
-                term: finalTerm,
-                photo: photoBase64
-            });
-        }
+        const payload = {
+            official_id: editId || undefined,
+            name,
+            birthday,
+            age: computedAge,
+            position,
+            term: finalTerm,
+            photo: photoBase64
+        };
 
-        localStorage.setItem('brgyOfficers', JSON.stringify(officers));
+        const endpoint = editId ? '../php/edit_official.php' : '../php/add_official.php';
+
+        try {
+            const resp = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await resp.json();
+            if (!result.success) {
+                throw new Error(result.message || 'Failed to save officer');
+            }
+        } catch (err) {
+            console.error('Officer save error:', err);
+            alert('Failed to save officer.');
+            return;
+        }
 
         offForm.reset();
         const offPreview = document.getElementById('offImagePreview');
-        if (offPreview) offPreview.innerHTML = "?";
+        if (offPreview) offPreview.innerHTML = '?';
 
-        document.getElementById('editOfficerId').value = "";
-        document.getElementById('officerModalTitle').innerText = "Add New Officer";
+        document.getElementById('editOfficerId').value = '';
+        document.getElementById('officerModalTitle').innerText = 'Add New Officer';
         document.getElementById('officerModal').classList.remove('active');
         window.loadAndRenderOfficers();
     });
@@ -195,16 +202,14 @@ if (offForm) {
 
 window.editOfficer = function(id) {
     if (!confirm('Open officer editor for this record?')) return;
-    const officers = JSON.parse(localStorage.getItem('brgyOfficers')) || [];
-    const off = officers.find(o => o.id == id);
+    const off = cachedOfficers.find(o => String(o.official_id) === String(id));
 
     if (off) {
-        document.getElementById('officerModalTitle').innerText = "Edit Officer Details";
-        document.getElementById('editOfficerId').value = off.id;
+        document.getElementById('officerModalTitle').innerText = 'Edit Officer Details';
+        document.getElementById('editOfficerId').value = off.official_id;
         document.getElementById('offName').value = off.name;
         document.getElementById('offBirthday').value = off.birthday || '';
         document.getElementById('offPosition').value = off.position;
-        // ensure term options exist for this position before setting value
         window.populateOfficerTermOptions(off.position);
         const offTermEl = document.getElementById('offTerm');
         if (offTermEl) {
@@ -221,8 +226,30 @@ window.editOfficer = function(id) {
     }
 };
 
-// Attach change listeners for position and term selects, and helper functions
-document.addEventListener('DOMContentLoaded', () => {
+window.archiveOfficer = async function(id) {
+    if (!confirm('Are you sure you want to archive this officer?')) return;
+
+    try {
+        const resp = await fetch('../php/archive_official.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ official_id: id })
+        });
+        const result = await resp.json();
+        if (!result.success) {
+            throw new Error(result.message || 'Failed to archive officer');
+        }
+    } catch (err) {
+        console.error('Archive officer error:', err);
+        alert('Failed to archive officer.');
+        return;
+    }
+
+    window.loadAndRenderOfficers();
+};
+
+// Attach change listeners for position and term selects
+ document.addEventListener('DOMContentLoaded', () => {
     const posSelect = document.getElementById('offPosition');
     const termSelect = document.getElementById('offTerm');
     const termContainer = document.getElementById('termInputContainer');
@@ -252,7 +279,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (posSelect) {
         posSelect.addEventListener('change', (e) => {
             window.populateOfficerTermOptions(e.target.value);
-            // remove any custom input when changing position
             window.hideCustomTermInput();
         });
     }
@@ -266,28 +292,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-});
+ });
 
-window.archiveOfficer = function(id) {
-    if (confirm("Are you sure you want to archive this officer?")) {
-        let officers = JSON.parse(localStorage.getItem('brgyOfficers')) || [];
-        let archivedOfficers = JSON.parse(localStorage.getItem('brgyArchivedOfficers')) || [];
-        
-        const index = officers.findIndex(o => o.id == id);
-        
-        if (index !== -1) {
-            const offToArchive = officers[index];
-            offToArchive.dateArchived = new Date().toLocaleDateString();
-            
-            // Push to archives
-            archivedOfficers.push(offToArchive);
-            localStorage.setItem('brgyArchivedOfficers', JSON.stringify(archivedOfficers));
-            
-            // Remove from active list
-            officers.splice(index, 1);
-            localStorage.setItem('brgyOfficers', JSON.stringify(officers));
-            
-            window.loadAndRenderOfficers();
-        }
-    }
-};
+window.loadAndRenderOfficers();

@@ -220,22 +220,30 @@
 /* ========================================================
    ANNOUNCEMENTS ARCHIVE
    ======================================================== */
-function loadArchivedAnnouncements() {
+async function loadArchivedAnnouncements() {
     const tbody = document.querySelector('#archiveAnnouncementsTable tbody');
     if (!tbody) return;
-    
-    let archivedEvents = JSON.parse(localStorage.getItem('brgyArchivedEvents')) || [];
+
+    let archivedEvents = [];
+    try {
+        const resp = await fetch('../php/get_archived_announcements.php');
+        const data = await resp.json();
+        archivedEvents = Array.isArray(data.announcements) ? data.announcements : [];
+    } catch (err) {
+        console.error('Archived announcements fetch error:', err);
+    }
+
     tbody.innerHTML = '';
-    
+
     if (archivedEvents.length === 0) {
         tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 30px; color: #7f8c8d; font-weight: 600;">No archived announcements found.</td></tr>`;
         return;
     }
-    
+
     archivedEvents.forEach((event, index) => {
         const tr = document.createElement('tr');
-        let postedDate = event.startDate || event.date || 'Unknown';
-        let archivedDate = event.dateArchived || 'Unknown';
+        let postedDate = event.start_date || 'Unknown';
+        let archivedDate = event.archived_date || 'Unknown';
 
         tr.innerHTML = `
             <td style="text-align: center; font-weight: bold; color: #7f8c8d;">${index + 1}</td>
@@ -243,55 +251,63 @@ function loadArchivedAnnouncements() {
             <td>${postedDate}</td>
             <td style="font-weight: bold; color: #a93226;">${archivedDate}</td>
             <td class="action-icons">
-                <i class="fas fa-undo edit-icon" title="Restore to Announcements" onclick="restoreAnnouncement('${event.id}')"></i>
+                <i class="fas fa-undo edit-icon" title="Restore to Announcements" onclick="restoreAnnouncement('${event.announcement_id}')"></i>
             </td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-window.restoreAnnouncement = function(id) {
+window.restoreAnnouncement = async function(id) {
     if(!confirm('Restore this announcement back to the main list?')) return;
 
-    let archivedEvents = JSON.parse(localStorage.getItem('brgyArchivedEvents')) || [];
-    const index = archivedEvents.findIndex(e => e.id == id);
-    
-    if (index !== -1) {
-        let events = JSON.parse(localStorage.getItem('brgyEvents')) || [];
-        const eventToRestore = archivedEvents[index];
-        
-        delete eventToRestore.dateArchived;
-        events.push(eventToRestore);
-        
-        localStorage.setItem('brgyEvents', JSON.stringify(events));
-        archivedEvents.splice(index, 1);
-        localStorage.setItem('brgyArchivedEvents', JSON.stringify(archivedEvents));
-        
-        loadArchivedAnnouncements();
+    try {
+        const resp = await fetch('../php/restore_announcement.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ announcement_id: id })
+        });
+        const result = await resp.json();
+        if (!result.success) {
+            throw new Error(result.message || 'Restore failed');
+        }
+    } catch (err) {
+        console.error('Restore announcement error:', err);
+        alert('Failed to restore announcement.');
+        return;
     }
+
+    loadArchivedAnnouncements();
 };
 
 /* ========================================================
    DOCUMENTS ARCHIVE
    ======================================================== */
-function loadArchivedDocuments() {
+async function loadArchivedDocuments() {
     const tbody = document.querySelector('#archiveDocumentsTable tbody');
     if (!tbody) return;
-    
-    let archivedDocs = JSON.parse(localStorage.getItem('brgyArchivedDocuments')) || [];
+
+    let archivedDocs = [];
+    try {
+        const resp = await fetch('../php/get_archived_document_requests.php');
+        const data = await resp.json();
+        archivedDocs = Array.isArray(data.requests) ? data.requests : [];
+    } catch (err) {
+        console.error('Archived documents fetch error:', err);
+    }
+
     tbody.innerHTML = '';
-    
+
     if (archivedDocs.length === 0) {
         tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 30px; color: #7f8c8d; font-weight: 600;">No archived documents found.</td></tr>`;
         return;
     }
-    
+
     archivedDocs.forEach((doc, index) => {
         const tr = document.createElement('tr');
-        
         const initials = ((doc.residentFirstName?.[0] || '') + (doc.residentLastName?.[0] || '')).toUpperCase();
         const fullName = `${doc.residentFirstName || ''} ${doc.residentLastName || ''}`.trim() || 'Unknown';
-        let archivedDate = doc.dateArchived || 'Unknown';
+        let archivedDate = doc.date_archived || 'Unknown';
 
         tr.innerHTML = `
             <td style="text-align: center; font-weight: bold; color: #7f8c8d;">${index + 1}</td>
@@ -299,45 +315,54 @@ function loadArchivedDocuments() {
                 <div class="profile-pic pic-blue" style="display:inline-flex; margin-right:15px; vertical-align:middle;">${initials || '?'}</div>
                 <span style="display:inline-block; vertical-align:middle;">${fullName}</span>
             </td>
-            <td>${doc.documentType || 'N/A'}</td>
+            <td>${doc.document_type || 'N/A'}</td>
             <td style="font-weight: bold; color: #a93226;">${archivedDate}</td>
             <td class="action-icons">
-                <i class="fas fa-undo edit-icon" title="Restore Document Request" onclick="restoreDocument('${doc.id}')"></i>
+                <i class="fas fa-undo edit-icon" title="Restore Document Request" onclick="restoreDocument('${doc.request_id}')"></i>
             </td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-window.restoreDocument = function(id) {
+window.restoreDocument = async function(id) {
     if(!confirm('Restore this document request back to the main list?')) return;
 
-    let archivedDocs = JSON.parse(localStorage.getItem('brgyArchivedDocuments')) || [];
-    const index = archivedDocs.findIndex(d => d.id == id);
-    
-    if (index !== -1) {
-        let requests = JSON.parse(localStorage.getItem('brgyDocumentRequests')) || [];
-        const docToRestore = archivedDocs[index];
-        
-        delete docToRestore.dateArchived;
-        requests.push(docToRestore);
-        
-        localStorage.setItem('brgyDocumentRequests', JSON.stringify(requests));
-        archivedDocs.splice(index, 1);
-        localStorage.setItem('brgyArchivedDocuments', JSON.stringify(archivedDocs));
-        
-        loadArchivedDocuments();
+    try {
+        const resp = await fetch('../php/restore_document_request.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ request_id: id })
+        });
+        const result = await resp.json();
+        if (!result.success) {
+            throw new Error(result.message || 'Restore failed');
+        }
+    } catch (err) {
+        console.error('Restore document error:', err);
+        alert('Failed to restore document.');
+        return;
     }
+
+    loadArchivedDocuments();
 };
 
 /* ========================================================
    OFFICERS ARCHIVE
    ======================================================== */
-function loadArchivedOfficers() {
+async function loadArchivedOfficers() {
     const tbody = document.querySelector('#archiveOfficersTable tbody');
     if (!tbody) return;
 
-    let archivedOfficers = JSON.parse(localStorage.getItem('brgyArchivedOfficers')) || [];
+    let archivedOfficers = [];
+    try {
+        const resp = await fetch('../php/get_archived_officials.php');
+        const data = await resp.json();
+        archivedOfficers = Array.isArray(data.officials) ? data.officials : [];
+    } catch (err) {
+        console.error('Archived officers fetch error:', err);
+    }
+
     tbody.innerHTML = '';
 
     if (archivedOfficers.length === 0) {
@@ -347,9 +372,9 @@ function loadArchivedOfficers() {
 
     archivedOfficers.forEach((off, index) => {
         const tr = document.createElement('tr');
-        let archivedDate = off.dateArchived || 'Unknown';
+        let archivedDate = off.archived_date || 'Unknown';
         const initials = off.name ? off.name.substring(0, 2).toUpperCase() : '?';
-        
+
         const profileDisplay = off.photo
             ? `<img src="${off.photo}" alt="${off.name}" class="profile-image" style="display:inline-flex; margin-right:15px; vertical-align:middle; width: 35px; height: 35px; border-radius: 50%; object-fit: cover;">`
             : `<div class="profile-pic pic-red" style="display:inline-flex; margin-right:15px; vertical-align:middle;">${initials}</div>`;
@@ -364,32 +389,33 @@ function loadArchivedOfficers() {
             <td>${off.term || 'N/A'}</td>
             <td style="font-weight: bold; color: #a93226;">${archivedDate}</td>
             <td class="action-icons">
-                <i class="fas fa-undo edit-icon" title="Restore Officer" onclick="restoreOfficer('${off.id}')"></i>
+                <i class="fas fa-undo edit-icon" title="Restore Officer" onclick="restoreOfficer('${off.official_id}')"></i>
             </td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-window.restoreOfficer = function(id) {
+window.restoreOfficer = async function(id) {
     if(!confirm('Restore this officer back to the active list?')) return;
 
-    let archivedOfficers = JSON.parse(localStorage.getItem('brgyArchivedOfficers')) || [];
-    const index = archivedOfficers.findIndex(o => o.id == id);
-    
-    if (index !== -1) {
-        let officers = JSON.parse(localStorage.getItem('brgyOfficers')) || [];
-        const offToRestore = archivedOfficers[index];
-        
-        delete offToRestore.dateArchived;
-        officers.push(offToRestore);
-        
-        localStorage.setItem('brgyOfficers', JSON.stringify(officers));
-        archivedOfficers.splice(index, 1);
-        localStorage.setItem('brgyArchivedOfficers', JSON.stringify(archivedOfficers));
-        
-        loadArchivedOfficers();
+    try {
+        const resp = await fetch('../php/restore_official.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ official_id: id })
+        });
+        const result = await resp.json();
+        if (!result.success) {
+            throw new Error(result.message || 'Restore failed');
+        }
+    } catch (err) {
+        console.error('Restore officer error:', err);
+        alert('Failed to restore officer.');
+        return;
     }
+
+    loadArchivedOfficers();
 };
 window.changeArchivePage = function(direction) {
     const totalPages = Math.ceil(window.cachedArchivedResidents.length / window.archiveRowsPerPage);

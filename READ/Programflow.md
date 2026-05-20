@@ -209,8 +209,8 @@ Data is still local to the browser..and does not sync to toher environemtns
 
 `database_setup.sql` initializes:
 
-1. Database: `FINALUI2`
-2. Core tables: `admin_users`, `residents`
+1. Database: `FINALUI3`
+2. Core tables: `admin_users`, `residents`, `service_types`, `barangay_officials`, `announcements`, `document_requests`
 3. Default admin account for initial login
 
 ### 4.2 Shared DB Connector

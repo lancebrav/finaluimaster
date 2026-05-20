@@ -1,31 +1,39 @@
 /* DOCUMENT REQUESTS */
 
-// Pagination State
 const ROWS_PER_PAGE = 6;
 let currentPages = {
-    'Ongoing': 1,
-    'Approved': 1,
-    'Rejected': 1
+    Ongoing: 1,
+    Approved: 1,
+    Rejected: 1
 };
 
-// Helper function to ensure consistent date display format (M/D/YYYY)
+let cachedDocumentRequests = [];
+
 function formatDateForDisplay(dateString) {
     if (!dateString) return 'Unknown';
     const d = new Date(dateString);
-    if (isNaN(d.getTime())) return dateString; 
+    if (isNaN(d.getTime())) return dateString;
     return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
 }
 
+async function fetchDocumentRequests() {
+    try {
+        const response = await fetch('../php/get_document_requests.php');
+        const data = await response.json();
+        cachedDocumentRequests = Array.isArray(data.requests) ? data.requests : [];
+    } catch (err) {
+        console.error('Error fetching document requests:', err);
+        cachedDocumentRequests = [];
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // --- 1. TAB SWITCHING LOGIC ---
     const tabBtns = document.querySelectorAll('.tab-btn');
     const sections = document.querySelectorAll('.request-section');
 
     tabBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
-
             tabBtns.forEach(b => b.classList.remove('active'));
             sections.forEach(s => {
                 s.classList.remove('active-section');
@@ -43,23 +51,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- 2. TABLE RENDERING WITH PAGINATION ---
-    window.loadAndRenderDocumentRequests = function() {
-        let requests = JSON.parse(localStorage.getItem('brgyDocumentRequests')) || [];
+    window.loadAndRenderDocumentRequests = async function() {
+        await fetchDocumentRequests();
 
+        const requests = cachedDocumentRequests.slice();
         requests.sort((a, b) => {
-            const dateA = new Date(a.dateRequested).getTime();
-            const dateB = new Date(b.dateRequested).getTime();
-            
-            if (dateA !== dateB) {
-                return dateA - dateB; 
-            }
-            return parseInt(a.id) - parseInt(b.id);
+            const dateA = new Date(a.date_requested || a.dateRequested || '').getTime();
+            const dateB = new Date(b.date_requested || b.dateRequested || '').getTime();
+            if (dateA !== dateB) return dateA - dateB;
+            return parseInt(a.request_id || a.id || 0, 10) - parseInt(b.request_id || b.id || 0, 10);
         });
 
-        const ongoingReqs = requests.filter(r => r.status === 'Ongoing');
-        const approvedReqs = requests.filter(r => r.status === 'Approved');
-        const rejectedReqs = requests.filter(r => r.status === 'Rejected');
+        const ongoingReqs = requests.filter(r => (r.request_status || r.status) === 'Ongoing');
+        const approvedReqs = requests.filter(r => (r.request_status || r.status) === 'Approved');
+        const rejectedReqs = requests.filter(r => (r.request_status || r.status) === 'Rejected');
 
         renderTableSection('Ongoing', ongoingReqs, 'ongoingRequestsBody', 'pageInfoOngoing', 'prevOngoing', 'nextOngoing');
         renderTableSection('Approved', approvedReqs, 'approvedRequestsBody', 'pageInfoApproved', 'prevApproved', 'nextApproved');
@@ -75,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!tbody) return;
 
         const totalPages = Math.ceil(data.length / ROWS_PER_PAGE) || 1;
-        
+
         if (currentPages[status] > totalPages) currentPages[status] = totalPages;
         if (currentPages[status] < 1) currentPages[status] = 1;
 
@@ -86,16 +91,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         paginatedData.forEach(req => {
             const tr = document.createElement('tr');
-            tr.setAttribute('data-id', req.id);
+            const requestId = req.request_id || req.id;
+            tr.setAttribute('data-id', requestId);
 
             const initials = ((req.residentFirstName?.[0] || '') + (req.residentLastName?.[0] || '')).toUpperCase();
             const fullName = `${req.residentFirstName || ''} ${req.residentLastName || ''}`.trim();
-            const displayDate = formatDateForDisplay(req.dateRequested); 
+            const displayDate = formatDateForDisplay(req.date_requested || req.dateRequested);
 
             let residencyBadge = '<span class="badge-non-resident" style="background:#f1f1f1; color:#555;">Unknown</span>';
-            if (req.residentIsResident === 'Yes') {
+            if ((req.residentIsResident || '').toLowerCase() === 'yes') {
                 residencyBadge = '<span class="badge-resident">Resident</span>';
-            } else if (req.residentIsResident === 'No') {
+            } else if ((req.residentIsResident || '').toLowerCase() === 'no') {
                 residencyBadge = '<span class="badge-non-resident">Non-Resident</span>';
             }
 
@@ -105,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="profile-pic pic-blue">${initials || '?'}</div>
                         <span>${fullName || 'Unknown'}</span>
                     </td>
-                    <td><a href="#" class="doc-link" onclick="window.viewDocDetails(${req.id})">${req.documentType}</a></td>
+                    <td><a href="#" class="doc-link" onclick="window.viewDocDetails(${requestId})">${req.document_type || req.documentType}</a></td>
                     <td>${displayDate}</td>
                     <td>${residencyBadge}</td>
                     <td class="action-icons">
@@ -115,32 +121,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             } else if (status === 'Approved') {
                 tr.innerHTML = `
-                    <td><input type="checkbox" class="request-checkbox" data-id="${req.id}"></td>
+                    <td><input type="checkbox" class="request-checkbox" data-id="${requestId}"></td>
                     <td class="name-cell">
                         <div class="profile-pic pic-red">${initials || '?'}</div>
                         <span>${fullName || 'Unknown'}</span>
                     </td>
-                    <td><a href="#" class="doc-link" onclick="window.viewDocDetails(${req.id})">${req.documentType}</a></td>
+                    <td><a href="#" class="doc-link" onclick="window.viewDocDetails(${requestId})">${req.document_type || req.documentType}</a></td>
                     <td>${displayDate}</td>
                     <td>${residencyBadge}</td>
                     <td class="status-ready">READY</td>
                     <td class="action-icons">
-                        <button class="archive-icon" onclick="window.archiveRequest('${req.id}')" title="Archive" style="background: #070e50; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.8rem;">Archive</button>
+                        <button class="archive-icon" onclick="window.archiveRequest('${requestId}')" title="Archive" style="background: #070e50; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.8rem;">Archive</button>
                     </td>
                 `;
             } else if (status === 'Rejected') {
                 tr.innerHTML = `
-                    <td><input type="checkbox" class="request-checkbox" data-id="${req.id}"></td>
+                    <td><input type="checkbox" class="request-checkbox" data-id="${requestId}"></td>
                     <td class="name-cell">
                         <div class="profile-pic pic-purple">${initials || '?'}</div>
                         <span>${fullName || 'Unknown'}</span>
                     </td>
-                    <td><a href="#" class="doc-link" onclick="window.viewDocDetails(${req.id})">${req.documentType}</a></td>
+                    <td><a href="#" class="doc-link" onclick="window.viewDocDetails(${requestId})">${req.document_type || req.documentType}</a></td>
                     <td>${displayDate}</td>
                     <td>${residencyBadge}</td>
                     <td class="status-rejected">REJECTED</td>
                     <td class="action-icons">
-                        <button class="archive-icon" onclick="window.archiveRequest('${req.id}')" title="Archive" style="background: #070e50; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.8rem;">Archive</button>
+                        <button class="archive-icon" onclick="window.archiveRequest('${requestId}')" title="Archive" style="background: #070e50; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.8rem;">Archive</button>
                     </td>
                 `;
             }
@@ -148,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (info) info.textContent = `Page ${currentPages[status]} of ${totalPages}`;
-        
+
         if (prevBtn) {
             prevBtn.disabled = currentPages[status] === 1;
             prevBtn.onclick = () => {
@@ -158,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
         }
-        
+
         if (nextBtn) {
             nextBtn.disabled = currentPages[status] === totalPages || totalPages === 0;
             nextBtn.onclick = () => {
@@ -170,18 +176,49 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- 3. MODAL POPULATION LOGIC ---
     window.viewDocDetails = function(id) {
-        const requests = JSON.parse(localStorage.getItem('brgyDocumentRequests')) || [];
-        const req = requests.find(r => r.id == id);
+        const req = cachedDocumentRequests.find(r => String(r.request_id || r.id) === String(id));
         if (!req) return;
+
+        const photoEl = document.getElementById('residentSubmittedPhoto');
+        const idEl = document.getElementById('residentSubmittedId');
+        const fallbackPhoto = photoEl ? photoEl.getAttribute('src') : '';
+        const fallbackId = idEl ? idEl.getAttribute('src') : '';
+
+        let supporting = req.supporting_documents || req.supportingDocuments || null;
+        if (typeof supporting === 'string') {
+            try {
+                supporting = JSON.parse(supporting);
+            } catch (err) {
+                supporting = null;
+            }
+        }
+
+        let photoData = '';
+        let idData = '';
+
+        if (supporting && typeof supporting === 'object') {
+            photoData = supporting.photo || '';
+            if (Array.isArray(supporting.id)) {
+                idData = supporting.id[0] || '';
+            } else {
+                idData = supporting.id || '';
+            }
+        }
+
+        if (photoEl) {
+            photoEl.src = photoData || fallbackPhoto || '';
+        }
+        if (idEl) {
+            idEl.src = idData || fallbackId || '';
+        }
 
         const fields = [
             'residentFirstName', 'residentMiddleName', 'residentLastName',
             'residentSuffix', 'residentGender', 'residentNationality',
             'residentCivilStatus', 'residentBirthDate', 'residentPlaceOfBirth',
             'residentEmailAddress', 'residentContactNumber', 'residentVoterStatus',
-            'residentPhilSysNumber', 'residentHouseNo', 'residentStreet', 
+            'residentPhilSysNumber', 'residentHouseNo', 'residentStreet',
             'residentPurposeOfRequest', 'residentIsResident'
         ];
 
@@ -190,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (el) {
                 let rawValue = req[field];
                 let value = rawValue && String(rawValue).trim() !== '' ? String(rawValue) : 'N/A';
-                
+
                 if (field === 'residentIsResident' && value !== 'N/A') {
                     if (value.toLowerCase() === 'yes') {
                         value = 'Resident';
@@ -216,10 +253,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- 4. APPROVE/REJECT ACTIONS ---
     const ongoingBody = document.getElementById('ongoingRequestsBody');
     if (ongoingBody) {
-        ongoingBody.addEventListener('click', (event) => {
+        ongoingBody.addEventListener('click', async (event) => {
             const icon = event.target;
             const row = icon.closest('tr');
             if (!row) return;
@@ -227,16 +263,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const id = row.getAttribute('data-id');
 
             if (icon.classList.contains('edit-icon')) {
-                window.changeRequestStatus(id, 'Approved');
+                await window.changeRequestStatus(id, 'Approved');
                 window.loadAndRenderDocumentRequests();
             } else if (icon.classList.contains('delete-icon')) {
-                window.changeRequestStatus(id, 'Rejected');
+                await window.changeRequestStatus(id, 'Rejected');
                 window.loadAndRenderDocumentRequests();
             }
         });
     }
 
-    // --- 5. BULK DELETE & ARCHIVE ACTIONS ---
     const deleteApprovedBtn = document.getElementById('deleteApprovedBtn');
     const deleteRejectedBtn = document.getElementById('deleteRejectedBtn');
     const archiveApprovedBtn = document.getElementById('archiveApprovedBtn');
@@ -261,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const deleteSelectedRequests = (status) => {
+    const deleteSelectedRequests = async (status) => {
         const bodyId = status === 'Approved' ? 'approvedRequestsBody' : 'rejectedRequestsBody';
         const selectedIds = Array.from(document.querySelectorAll(`#${bodyId} .request-checkbox:checked`)).map(cb => cb.dataset.id);
         if (!selectedIds.length) {
@@ -271,14 +306,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!confirm(`Permanently delete ${selectedIds.length} selected ${status.toLowerCase()} request(s)?`)) return;
 
-        let requests = JSON.parse(localStorage.getItem('brgyDocumentRequests')) || [];
-        requests = requests.filter(req => !(selectedIds.includes(String(req.id)) && req.status === status));
-        localStorage.setItem('brgyDocumentRequests', JSON.stringify(requests));
+        try {
+            const resp = await fetch('../php/delete_document_request.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ request_ids: selectedIds })
+            });
+            const result = await resp.json();
+            if (!result.success) {
+                throw new Error(result.message || 'Delete failed');
+            }
+        } catch (err) {
+            console.error('Delete request error:', err);
+            alert('Failed to delete request(s).');
+            return;
+        }
+
         window.loadAndRenderDocumentRequests();
         resetSelectionButtons();
     };
 
-    const archiveSelectedRequests = (status) => {
+    const archiveSelectedRequests = async (status) => {
         const bodyId = status === 'Approved' ? 'approvedRequestsBody' : 'rejectedRequestsBody';
         const selectedIds = Array.from(document.querySelectorAll(`#${bodyId} .request-checkbox:checked`)).map(cb => cb.dataset.id);
         if (!selectedIds.length) {
@@ -288,42 +336,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!confirm(`Archive ${selectedIds.length} selected ${status.toLowerCase()} request(s)?`)) return;
 
-        let requests = JSON.parse(localStorage.getItem('brgyDocumentRequests')) || [];
-        let archivedDocs = JSON.parse(localStorage.getItem('brgyArchivedDocuments')) || [];
+        try {
+            const resp = await fetch('../php/archive_document_request.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ request_ids: selectedIds })
+            });
+            const result = await resp.json();
+            if (!result.success) {
+                throw new Error(result.message || 'Archive failed');
+            }
+        } catch (err) {
+            console.error('Archive request error:', err);
+            alert('Failed to archive request(s).');
+            return;
+        }
 
-        const toArchive = requests.filter(req => selectedIds.includes(String(req.id)) && req.status === status);
-        toArchive.forEach(req => {
-            req.dateArchived = new Date().toLocaleDateString();
-            archivedDocs.push(req);
-        });
-
-        requests = requests.filter(req => !(selectedIds.includes(String(req.id)) && req.status === status));
-        
-        localStorage.setItem('brgyDocumentRequests', JSON.stringify(requests));
-        localStorage.setItem('brgyArchivedDocuments', JSON.stringify(archivedDocs));
         window.loadAndRenderDocumentRequests();
         resetSelectionButtons();
     };
 
     if (selectApprovedAllBtn) selectApprovedAllBtn.addEventListener('click', () => toggleSectionSelection(selectApprovedAllBtn, 'approvedRequestsBody'));
     if (selectRejectedAllBtn) selectRejectedAllBtn.addEventListener('click', () => toggleSectionSelection(selectRejectedAllBtn, 'rejectedRequestsBody'));
-    
+
     if (deleteApprovedBtn) deleteApprovedBtn.addEventListener('click', () => deleteSelectedRequests('Approved'));
     if (deleteRejectedBtn) deleteRejectedBtn.addEventListener('click', () => deleteSelectedRequests('Rejected'));
 
     if (archiveApprovedBtn) archiveApprovedBtn.addEventListener('click', () => archiveSelectedRequests('Approved'));
     if (archiveRejectedBtn) archiveRejectedBtn.addEventListener('click', () => archiveSelectedRequests('Rejected'));
 
-    // --- 6. PRINT DROPDOWN LOGIC ---
     const printBtn = document.getElementById('printDropdownBtn');
     const printMenu = document.getElementById('printDropdownMenu');
 
     if (printBtn && printMenu) {
         printBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); 
+            e.stopPropagation();
             printMenu.classList.toggle('show');
         });
-        
+
         document.addEventListener('click', (e) => {
             if (!printBtn.contains(e.target) && !printMenu.contains(e.target)) {
                 printMenu.classList.remove('show');
@@ -332,48 +382,51 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-window.changeRequestStatus = function(requestId, newStatus) {
-    let requests = JSON.parse(localStorage.getItem('brgyDocumentRequests')) || [];
-    let index = requests.findIndex(req => req.id == requestId);
-
-    if (index !== -1) {
-        requests[index].status = newStatus;
-        localStorage.setItem('brgyDocumentRequests', JSON.stringify(requests));
-
-        const req = requests[index];
-        const emailPayload = {
-            email: req.residentEmailAddress,
-            name: (req.residentFirstName + ' ' + (req.residentLastName || '')).trim(),
-            docType: req.documentType,
-            requestId: req.id
-        };
-
-        // Send approval email
-        if (newStatus === 'Approved') {
-            emailPayload.subject = req.documentType + ' - Approved for Pickup';
-            emailPayload.action = 'approved';
-
-            fetch('../php/send_submission_email.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(emailPayload)
-            })
-            .then(r => r.json())
-            .catch(err => console.error('Email send error:', err));
+window.changeRequestStatus = async function(requestId, newStatus) {
+    try {
+        const resp = await fetch('../php/update_document_request_status.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ request_id: requestId, request_status: newStatus })
+        });
+        const result = await resp.json();
+        if (!result.success) {
+            throw new Error(result.message || 'Status update failed');
         }
-        // Send rejection email
-        else if (newStatus === 'Rejected') {
-            emailPayload.subject = req.documentType + ' - Request Rejected';
-            emailPayload.action = 'rejected';
+    } catch (err) {
+        console.error('Status update error:', err);
+        alert('Failed to update request status.');
+        return;
+    }
 
-            fetch('../php/send_submission_email.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(emailPayload)
-            })
-            .then(r => r.json())
-            .catch(err => console.error('Email send error:', err));
-        }
+    const req = cachedDocumentRequests.find(r => String(r.request_id || r.id) === String(requestId));
+    if (!req) return;
+
+    const emailPayload = {
+        email: req.residentEmailAddress,
+        name: (req.residentFirstName + ' ' + (req.residentLastName || '')).trim(),
+        docType: req.document_type || req.documentType,
+        requestId: req.request_id || req.id
+    };
+
+    if (newStatus === 'Approved') {
+        emailPayload.subject = (req.document_type || req.documentType) + ' - Approved for Pickup';
+        emailPayload.action = 'approved';
+
+        fetch('../php/send_submission_email.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(emailPayload)
+        }).then(r => r.json()).catch(err => console.error('Email send error:', err));
+    } else if (newStatus === 'Rejected') {
+        emailPayload.subject = (req.document_type || req.documentType) + ' - Request Rejected';
+        emailPayload.action = 'rejected';
+
+        fetch('../php/send_submission_email.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(emailPayload)
+        }).then(r => r.json()).catch(err => console.error('Email send error:', err));
     }
 };
 
@@ -382,7 +435,7 @@ window.sendCustomEmail = function() {
     if (!customSubject) return;
 
     const customMessage = prompt('Enter email message/body:');
-    if (!customMessage === null) return;
+    if (customMessage === null) return;
 
     const modal = document.getElementById('docDetailsModal');
     if (!modal) return;
@@ -430,41 +483,37 @@ window.sendCustomEmail = function() {
     });
 };
 
-window.archiveRequest = function(id) {
+window.archiveRequest = async function(id) {
     if (!confirm('Are you sure you want to archive this request?')) return;
 
-    let requests = JSON.parse(localStorage.getItem('brgyDocumentRequests')) || [];
-    let archivedDocs = JSON.parse(localStorage.getItem('brgyArchivedDocuments')) || [];
-
-    const index = requests.findIndex(r => r.id == id);
-    if (index !== -1) {
-        const req = requests[index];
-        req.dateArchived = new Date().toLocaleDateString();
-        archivedDocs.push(req);
-        
-        requests.splice(index, 1);
-        
-        localStorage.setItem('brgyDocumentRequests', JSON.stringify(requests));
-        localStorage.setItem('brgyArchivedDocuments', JSON.stringify(archivedDocs));
-        
-        window.loadAndRenderDocumentRequests();
+    try {
+        const resp = await fetch('../php/archive_document_request.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ request_id: id })
+        });
+        const result = await resp.json();
+        if (!result.success) {
+            throw new Error(result.message || 'Archive failed');
+        }
+    } catch (err) {
+        console.error('Archive request error:', err);
+        alert('Failed to archive request.');
+        return;
     }
+
+    window.loadAndRenderDocumentRequests();
 };
 
-// ==========================================
 // DOCXTEMPLATER - WORD DOC GENERATION ENGINE
-// ==========================================
-
-// Helper to append "st", "nd", "rd", "th" to the date
 function getOrdinalSuffix(i) {
     let j = i % 10, k = i % 100;
-    if (j == 1 && k != 11) return i + "st";
-    if (j == 2 && k != 12) return i + "nd";
-    if (j == 3 && k != 13) return i + "rd";
-    return i + "th";
+    if (j == 1 && k != 11) return i + 'st';
+    if (j == 2 && k != 12) return i + 'nd';
+    if (j == 3 && k != 13) return i + 'rd';
+    return i + 'th';
 }
 
-// Helper to load binary files (your docx templates)
 function loadFile(url, callback) {
     PizZipUtils.getBinaryContent(url, callback);
 }
@@ -472,22 +521,21 @@ function loadFile(url, callback) {
 window.printDocument = function(docType) {
     const printMenu = document.getElementById('printDropdownMenu');
     if (printMenu) printMenu.classList.remove('show');
-    
+
     const selectedCheckboxes = document.querySelectorAll('#approvedRequestsBody .request-checkbox:checked');
     if (selectedCheckboxes.length === 0) {
         alert('Please check the box next to a resident to generate their document.');
         return;
     }
-    
+
     if (selectedCheckboxes.length > 1) {
         alert('Please select only ONE resident at a time for document generation.');
         return;
     }
-    
+
     const selectedId = selectedCheckboxes[0].dataset.id;
-    const requests = JSON.parse(localStorage.getItem('brgyDocumentRequests')) || [];
-    const req = requests.find(r => r.id == selectedId);
-    
+    const req = cachedDocumentRequests.find(r => String(r.request_id || r.id) === String(selectedId));
+
     if (!req) {
         alert('Could not locate resident data.');
         return;
@@ -497,7 +545,7 @@ window.printDocument = function(docType) {
     let outputFileName = '';
     const safeLastName = (req.residentLastName || 'Resident').replace(/[^a-z0-9]/gi, '_');
 
-    switch(docType) {
+    switch (docType) {
         case 'Barangay Clearance':
             templatePath = '../templates/clearance_template.docx';
             outputFileName = `${safeLastName}_Clearance.docx`;
@@ -519,33 +567,29 @@ window.printDocument = function(docType) {
             return;
     }
 
-    // Attempt to load and map the Word Template
     loadFile(templatePath, function(error, content) {
         if (error) {
-            console.error("Error loading template:", error);
-            alert("Could not load the document template. Ensure the template exists at: " + templatePath);
+            console.error('Error loading template:', error);
+            alert('Could not load the document template. Ensure the template exists at: ' + templatePath);
             return;
         }
-        
+
         try {
             const zip = new PizZip(content);
             const doc = new window.docxtemplater(zip, {
                 paragraphLoop: true,
-                linebreaks: true,
+                linebreaks: true
             });
 
-            // Set up the formal date string format you requested
             const today = new Date();
             const dayWithSuffix = getOrdinalSuffix(today.getDate());
             const month = today.toLocaleString('default', { month: 'long' });
             const year = today.getFullYear();
             const formattedDate = `${dayWithSuffix} day of ${month} ${year}`;
 
-            // Combine the house number and street into a single address string
             let combinedAddress = `${req.residentHouseNo || ''} ${req.residentStreet || ''}`.trim();
-            if(combinedAddress === "") combinedAddress = "N/A";
+            if (combinedAddress === '') combinedAddress = 'N/A';
 
-            // Make sure these match the curly bracket tags { } in your Word Doc exactly!
             doc.render({
                 firstName: req.residentFirstName || '',
                 middleName: req.residentMiddleName || '',
@@ -556,19 +600,14 @@ window.printDocument = function(docType) {
             });
 
             const out = doc.getZip().generate({
-                type: "blob",
-                mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                type: 'blob',
+                mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
             });
-            
-            // Automatically prompt the user to download the completed document
-            saveAs(out, outputFileName);
-            
-            // Uncheck the box in the UI
-            selectedCheckboxes[0].checked = false;
 
+            saveAs(out, outputFileName);
         } catch (error) {
-            console.error("Error generating document:", error);
-            alert("An error occurred while filling out the document.");
+            console.error('Error generating document:', error);
+            alert('Document generation failed.');
         }
     });
 };

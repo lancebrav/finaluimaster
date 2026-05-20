@@ -69,6 +69,17 @@ function resetUploadUI() {
             // Restore default text based on the icon inside
             p.innerText = area.querySelector('.fa-camera') ? "Upload Photo" : "Upload IDs";
         }
+        const preview = area.querySelector('.upload-preview');
+        if (preview) {
+            preview.removeAttribute('src');
+            preview.style.display = 'none';
+        }
+        const icon = area.querySelector('i');
+        if (icon) {
+            icon.style.display = '';
+        }
+        delete area.dataset.fileData;
+        delete area.dataset.uploadType;
     });
 }
 
@@ -103,6 +114,17 @@ function startAutoScroll() {
 }
 
 // --- 4. FILE UPLOAD UI LOGIC ---
+if (typeof window.getBase64 !== 'function') {
+    window.getBase64 = function(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    };
+}
+
 // Initialize triggers for all upload areas
 document.querySelectorAll('.upload-area').forEach((area, index) => {
     const input = document.createElement('input');
@@ -114,6 +136,11 @@ document.querySelectorAll('.upload-area').forEach((area, index) => {
     if (index === 1) input.multiple = true; 
 
     area.appendChild(input);
+    const previewImg = document.createElement('img');
+    previewImg.className = 'upload-preview';
+    previewImg.alt = 'Upload preview';
+    previewImg.style.cssText = 'display:none; width:100%; height:100%; object-fit:cover; border-radius:8px;';
+    area.appendChild(previewImg);
     area.addEventListener('click', () => input.click());
 
     input.addEventListener('change', () => {
@@ -121,6 +148,27 @@ document.querySelectorAll('.upload-area').forEach((area, index) => {
             const fileName = input.files.length > 1 
                 ? `${input.files.length} files selected` 
                 : input.files[0].name;
+
+            if (index === 0) {
+                window.getBase64(input.files[0]).then((dataUrl) => {
+                    area.dataset.uploadType = 'photo';
+                    area.dataset.fileData = dataUrl;
+                    previewImg.src = dataUrl;
+                    previewImg.style.display = 'block';
+                    const icon = area.querySelector('i');
+                    if (icon) icon.style.display = 'none';
+                });
+            } else if (index === 1) {
+                const files = Array.from(input.files);
+                Promise.all(files.map(file => window.getBase64(file))).then((dataUrls) => {
+                    area.dataset.uploadType = 'id';
+                    area.dataset.fileData = JSON.stringify(dataUrls);
+                    previewImg.src = dataUrls[0] || '';
+                    previewImg.style.display = dataUrls[0] ? 'block' : 'none';
+                    const icon = area.querySelector('i');
+                    if (icon) icon.style.display = dataUrls[0] ? 'none' : '';
+                });
+            }
             
             const p = area.querySelector('p');
             if (p) p.innerText = fileName;
@@ -368,14 +416,30 @@ document.addEventListener('DOMContentLoaded', () => {
             const number = document.getElementById('contactNumber')?.value || '';
             const fullContactNumber = prefix + number;
 
+            const uploadAreas = Array.from(document.querySelectorAll('.upload-area'));
+            const photoData = uploadAreas.find(area => area.dataset.uploadType === 'photo')?.dataset.fileData || '';
+            const idDataRaw = uploadAreas.find(area => area.dataset.uploadType === 'id')?.dataset.fileData || '';
+            let idData = '';
+            if (idDataRaw) {
+                try {
+                    idData = JSON.parse(idDataRaw);
+                } catch (err) {
+                    idData = idDataRaw;
+                }
+            }
+
+            const supportingDocuments = {
+                photo: photoData,
+                id: idData
+            };
+
             const originalText = submitBtn.innerText;
             submitBtn.innerText = "Processing Request...";
             submitBtn.disabled = true;
 
             const newRequest = {
-                id: Date.now(), 
-                status: 'Ongoing', 
-                dateRequested: new Date().toISOString().split('T')[0], 
+                status: 'Ongoing',
+                dateRequested: new Date().toISOString().split('T')[0],
                 documentType: docType,
                 
                 residentFirstName: document.getElementById('firstName')?.value || '',
@@ -395,45 +459,55 @@ document.addEventListener('DOMContentLoaded', () => {
                 residentStreet: document.getElementById('street')?.value || '',
                 
                 residentPurposeOfRequest: finalPurpose,
-                residentIsResident: isResidentValue 
+                residentIsResident: isResidentValue,
+                supporting_documents: supportingDocuments
             };
 
-            let existingRequests = JSON.parse(localStorage.getItem('brgyDocumentRequests')) || [];
-            existingRequests.unshift(newRequest);
-            localStorage.setItem('brgyDocumentRequests', JSON.stringify(existingRequests));
+            let savedOk = false;
+            fetch('../php/add_document_request.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newRequest)
+            })
+            .then(resp => resp.json())
+            .then(result => {
+                if (!result.success) {
+                    throw new Error(result.message || 'Submission failed');
+                }
+                savedOk = true;
 
-            setTimeout(() => {
-                // Attempt to send confirmation email (best-effort)
-                fetch('../php/send_submission_email.php', {
+                return fetch('../php/send_submission_email.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         email: newRequest.residentEmailAddress,
                         name: (newRequest.residentFirstName + ' ' + (newRequest.residentLastName || '')).trim(),
                         docType: newRequest.documentType,
-                        requestId: newRequest.id,
+                        requestId: result.id,
                         subject: newRequest.documentType + ' Submission Received'
                     })
                 })
-                .then(resp => resp.json())
-                .then(result => {
-                    if (!result.success) {
-                        showNotification('Submitted but email failed: ' + (result.message || ''), 'warning');
+                .then(r => r.json())
+                .then(emailResult => {
+                    if (!emailResult.success) {
+                        showNotification('Submitted but email failed: ' + (emailResult.message || ''), 'warning');
                     }
-                })
-                .catch(err => {
-                    console.error('Email send error:', err);
-                    showNotification('Submitted but email failed to send.', 'warning');
-                })
-                .finally(() => {
+                });
+            })
+            .catch(err => {
+                console.error('Submission error:', err);
+                showNotification('Request submission failed. Please try again.', 'error');
+            })
+            .finally(() => {
+                if (savedOk) {
                     showNotification(docType + " Submitted Successfully!", "success");
                     this.reset();
                     if(typeof closeModal === 'function') closeModal(); 
                     if(typeof resetUploadUI === 'function') resetUploadUI();
-                    submitBtn.innerText = originalText;
-                    submitBtn.disabled = false;
-                });
-            }, 1500);
+                }
+                submitBtn.innerText = originalText;
+                submitBtn.disabled = false;
+            });
         });
     }
 });

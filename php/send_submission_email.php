@@ -54,7 +54,6 @@ if ($customBody) {
     $bodyHtml = "<p>Dear " . htmlspecialchars($name) . ",</p>" .
       "<p>Good news! Your request for <strong>" . htmlspecialchars($docType) . "</strong> has been <strong style='color: green;'>APPROVED</strong>.</p>" .
       "<p>Your document is now ready for pickup. Please visit the Barangay Office to collect your document.</p>" .
-      "<p><strong>Reference:</strong> " . htmlspecialchars($input['requestId'] ?? 'N/A') . "</p>" .
       "<p>Thank you!</p>" .
       "<p>Regards,<br>Barangay 663</p>";
 } elseif ($action === 'rejected') {
@@ -62,14 +61,12 @@ if ($customBody) {
     $bodyHtml = "<p>Dear " . htmlspecialchars($name) . ",</p>" .
       "<p>We regret to inform you that your request for <strong>" . htmlspecialchars($docType) . "</strong> has been <strong style='color: red;'>REJECTED</strong>.</p>" .
       "<p>Please contact the Barangay Office for more information or to resubmit your request.</p>" .
-      "<p><strong>Reference:</strong> " . htmlspecialchars($input['requestId'] ?? 'N/A') . "</p>" .
       "<p>Regards,<br>Barangay 663</p>";
 } else {
     //SUBMISSION 
     $bodyHtml = "<p>Dear " . htmlspecialchars($name) . ",</p>" .
       "<p>Your request for <strong>" . htmlspecialchars($docType) . "</strong> has been received successfully.</p>" .
       "<p>Please wait for approval. We will notify you once your document is ready for pickup.</p>" .
-      "<p><strong>Reference:</strong> " . htmlspecialchars($input['requestId'] ?? 'N/A') . "</p>" .
       "<p>Regards,<br>Barangay 663</p>";
 }
 

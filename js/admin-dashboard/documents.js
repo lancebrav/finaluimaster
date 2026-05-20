@@ -9,6 +9,57 @@ let currentPages = {
 
 let cachedDocumentRequests = [];
 
+function formatGenderDisplay(gender) {
+    const g = String(gender || '').trim().toUpperCase();
+    if (g === 'M') return 'Male';
+    if (g === 'F') return 'Female';
+    return gender || 'N/A';
+}
+
+function getRequestResidentName(req) {
+    const first = req.firstName || req.residentFirstName || '';
+    const last = req.lastName || req.residentLastName || '';
+    if (req.fullName && String(req.fullName).trim() !== '') {
+        return String(req.fullName).trim();
+    }
+    return `${first} ${last}`.trim();
+}
+
+function getRequestResidentInitials(req) {
+    const first = req.firstName || req.residentFirstName || '';
+    const last = req.lastName || req.residentLastName || '';
+    return ((first[0] || '') + (last[0] || '')).toUpperCase();
+}
+
+function getRequestResidencyBadge(req) {
+    if (req.resident_id) {
+        return '<span class="badge-resident">Resident</span>';
+    }
+    return '<span class="badge-non-resident" style="background:#f1f1f1; color:#555;">Unknown</span>';
+}
+
+function getRequestDetailValues(req) {
+    return {
+        residentFirstName: req.firstName || req.residentFirstName || 'N/A',
+        residentMiddleName: req.middleName || req.residentMiddleName || 'N/A',
+        residentLastName: req.lastName || req.residentLastName || 'N/A',
+        residentSuffix: req.suffix || req.residentSuffix || 'N/A',
+        residentGender: formatGenderDisplay(req.gender || req.residentGender),
+        residentNationality: req.citizenship || req.residentNationality || 'N/A',
+        residentCivilStatus: req.civilStatus || req.residentCivilStatus || 'N/A',
+        residentBirthDate: req.birthday || req.residentBirthDate || 'N/A',
+        residentPlaceOfBirth: req.placeOfBirth || req.residentPlaceOfBirth || 'N/A',
+        residentEmailAddress: req.notification_email || req.residentEmailAddress || 'N/A',
+        residentContactNumber: req.contact_number || req.residentContactNumber || 'N/A',
+        residentVoterStatus: req.voterStatus || req.residentVoterStatus || 'N/A',
+        residentPhilSysNumber: req.residentPhilSysNumber || 'N/A',
+        residentHouseNo: req.houseNum || req.residentHouseNo || 'N/A',
+        residentStreet: req.streetName || req.residentStreet || 'N/A',
+        residentPurposeOfRequest: req.purpose_of_request || req.residentPurposeOfRequest || 'N/A',
+        residentIsResident: req.resident_id ? 'Resident' : 'N/A'
+    };
+}
+
 function formatDateForDisplay(dateString) {
     if (!dateString) return 'Unknown';
     const d = new Date(dateString);
@@ -94,16 +145,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const requestId = req.request_id || req.id;
             tr.setAttribute('data-id', requestId);
 
-            const initials = ((req.residentFirstName?.[0] || '') + (req.residentLastName?.[0] || '')).toUpperCase();
-            const fullName = `${req.residentFirstName || ''} ${req.residentLastName || ''}`.trim();
+            const initials = getRequestResidentInitials(req);
+            const fullName = getRequestResidentName(req);
             const displayDate = formatDateForDisplay(req.date_requested || req.dateRequested);
-
-            let residencyBadge = '<span class="badge-non-resident" style="background:#f1f1f1; color:#555;">Unknown</span>';
-            if ((req.residentIsResident || '').toLowerCase() === 'yes') {
-                residencyBadge = '<span class="badge-resident">Resident</span>';
-            } else if ((req.residentIsResident || '').toLowerCase() === 'no') {
-                residencyBadge = '<span class="badge-non-resident">Non-Resident</span>';
-            }
+            const residencyBadge = getRequestResidencyBadge(req);
 
             if (status === 'Ongoing') {
                 tr.innerHTML = `
@@ -213,30 +258,11 @@ document.addEventListener('DOMContentLoaded', () => {
             idEl.src = idData || fallbackId || '';
         }
 
-        const fields = [
-            'residentFirstName', 'residentMiddleName', 'residentLastName',
-            'residentSuffix', 'residentGender', 'residentNationality',
-            'residentCivilStatus', 'residentBirthDate', 'residentPlaceOfBirth',
-            'residentEmailAddress', 'residentContactNumber', 'residentVoterStatus',
-            'residentPhilSysNumber', 'residentHouseNo', 'residentStreet',
-            'residentPurposeOfRequest', 'residentIsResident'
-        ];
-
-        fields.forEach(field => {
+        const detailValues = getRequestDetailValues(req);
+        Object.keys(detailValues).forEach(field => {
             const el = document.getElementById(field);
             if (el) {
-                let rawValue = req[field];
-                let value = rawValue && String(rawValue).trim() !== '' ? String(rawValue) : 'N/A';
-
-                if (field === 'residentIsResident' && value !== 'N/A') {
-                    if (value.toLowerCase() === 'yes') {
-                        value = 'Resident';
-                    } else if (value.toLowerCase() === 'no') {
-                        value = 'Non-Resident';
-                    }
-                }
-
-                el.textContent = value;
+                el.textContent = detailValues[field];
             }
         });
 
@@ -403,8 +429,8 @@ window.changeRequestStatus = async function(requestId, newStatus) {
     if (!req) return;
 
     const emailPayload = {
-        email: req.residentEmailAddress,
-        name: (req.residentFirstName + ' ' + (req.residentLastName || '')).trim(),
+        email: req.notification_email || req.residentEmailAddress,
+        name: getRequestResidentName(req),
         docType: req.document_type || req.documentType,
         requestId: req.request_id || req.id
     };
@@ -543,7 +569,7 @@ window.printDocument = function(docType) {
 
     let templatePath = '';
     let outputFileName = '';
-    const safeLastName = (req.residentLastName || 'Resident').replace(/[^a-z0-9]/gi, '_');
+    const safeLastName = (req.lastName || req.residentLastName || 'Resident').replace(/[^a-z0-9]/gi, '_');
 
     switch (docType) {
         case 'Barangay Clearance':
@@ -587,15 +613,17 @@ window.printDocument = function(docType) {
             const year = today.getFullYear();
             const formattedDate = `${dayWithSuffix} day of ${month} ${year}`;
 
-            let combinedAddress = `${req.residentHouseNo || ''} ${req.residentStreet || ''}`.trim();
-            if (combinedAddress === '') combinedAddress = 'N/A';
+            let combinedAddress = `${req.houseNum || req.residentHouseNo || ''} ${req.streetName || req.residentStreet || ''}`.trim();
+            if (combinedAddress === '') {
+                combinedAddress = req.address || 'N/A';
+            }
 
             doc.render({
-                firstName: req.residentFirstName || '',
-                middleName: req.residentMiddleName || '',
-                lastName: req.residentLastName || '',
+                firstName: req.firstName || req.residentFirstName || '',
+                middleName: req.middleName || req.residentMiddleName || '',
+                lastName: req.lastName || req.residentLastName || '',
                 address: combinedAddress,
-                purposeOfRequest: req.residentPurposeOfRequest || 'General Purpose',
+                purposeOfRequest: req.purpose_of_request || req.residentPurposeOfRequest || 'General Purpose',
                 currentDate: formattedDate
             });
 

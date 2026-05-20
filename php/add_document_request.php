@@ -4,16 +4,20 @@ mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 try {
     require_once 'db.php';
+    require_once 'resident_request_validation.php';
 
     $data = json_decode(file_get_contents('php://input'), true);
     if (!is_array($data)) {
         throw new Exception('No data received');
     }
 
-    $residentId = $data['resident_id'] ?? null;
-    if ($residentId === '') {
-        $residentId = null;
+    $matchedResident = find_matching_resident($conn, $data);
+    if (!$matchedResident) {
+        http_response_code(403);
+        throw new Exception('Only registered barangay residents may request documents. Your details do not match our resident records.');
     }
+
+    $residentId = (int) $matchedResident['resident_id'];
 
     $serviceTypeId = $data['service_type_id'] ?? null;
     if ($serviceTypeId === '') {
@@ -32,35 +36,30 @@ try {
         $dateRequested = date('Y-m-d');
     }
 
-    $residentFirstName = trim($data['residentFirstName'] ?? '');
-    $residentMiddleName = trim($data['residentMiddleName'] ?? '');
-    $residentLastName = trim($data['residentLastName'] ?? '');
-    $residentSuffix = trim($data['residentSuffix'] ?? '');
-    $residentGender = trim($data['residentGender'] ?? '');
-    $residentNationality = trim($data['residentNationality'] ?? '');
-    $residentCivilStatus = trim($data['residentCivilStatus'] ?? '');
-    $residentBirthDate = trim($data['residentBirthDate'] ?? '');
-    $residentPlaceOfBirth = trim($data['residentPlaceOfBirth'] ?? '');
-    $residentEmailAddress = trim($data['residentEmailAddress'] ?? '');
-    $residentContactNumber = trim($data['residentContactNumber'] ?? '');
-    $residentVoterStatus = trim($data['residentVoterStatus'] ?? '');
-    $residentPhilSysNumber = trim($data['residentPhilSysNumber'] ?? '');
-    $residentHouseNo = trim($data['residentHouseNo'] ?? '');
-    $residentStreet = trim($data['residentStreet'] ?? '');
-    $residentPurposeOfRequest = trim($data['residentPurposeOfRequest'] ?? '');
-    $residentIsResident = trim($data['residentIsResident'] ?? '');
+    $purposeOfRequest = trim(
+        $data['purpose_of_request']
+        ?? $data['residentPurposeOfRequest']
+        ?? ''
+    );
+
+    $notificationEmail = trim($data['notification_email'] ?? $data['residentEmailAddress'] ?? '');
+    $contactNumber = trim($data['contact_number'] ?? $data['residentContactNumber'] ?? '');
 
     $supportingDocuments = $data['supporting_documents'] ?? '';
     if (is_array($supportingDocuments)) {
         $supportingDocuments = json_encode($supportingDocuments);
     }
 
-    if ($documentType === '' || $residentFirstName === '' || $residentLastName === '') {
+    if ($documentType === '' || $purposeOfRequest === '') {
         throw new Exception('Missing required document request fields');
     }
 
-    if ($residentBirthDate === '') {
-        $residentBirthDate = null;
+    if ($notificationEmail === '') {
+        $notificationEmail = null;
+    }
+
+    if ($contactNumber === '') {
+        $contactNumber = null;
     }
 
     $stmt = mysqli_prepare(
@@ -72,61 +71,39 @@ try {
             document_type,
             request_status,
             date_requested,
-            residentFirstName,
-            residentMiddleName,
-            residentLastName,
-            residentSuffix,
-            residentGender,
-            residentNationality,
-            residentCivilStatus,
-            residentBirthDate,
-            residentPlaceOfBirth,
-            residentEmailAddress,
-            residentContactNumber,
-            residentVoterStatus,
-            residentPhilSysNumber,
-            residentHouseNo,
-            residentStreet,
-            residentPurposeOfRequest,
-            residentIsResident,
+            purpose_of_request,
+            notification_email,
+            contact_number,
             supporting_documents
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
 
     mysqli_stmt_bind_param(
         $stmt,
-        "iiisssssssssssssssssssss",
+        'iiisssssss',
         $residentId,
         $serviceTypeId,
         $processedByUserId,
         $documentType,
         $status,
         $dateRequested,
-        $residentFirstName,
-        $residentMiddleName,
-        $residentLastName,
-        $residentSuffix,
-        $residentGender,
-        $residentNationality,
-        $residentCivilStatus,
-        $residentBirthDate,
-        $residentPlaceOfBirth,
-        $residentEmailAddress,
-        $residentContactNumber,
-        $residentVoterStatus,
-        $residentPhilSysNumber,
-        $residentHouseNo,
-        $residentStreet,
-        $residentPurposeOfRequest,
-        $residentIsResident,
+        $purposeOfRequest,
+        $notificationEmail,
+        $contactNumber,
         $supportingDocuments
     );
 
     mysqli_stmt_execute($stmt);
 
-    echo json_encode(['success' => true, 'id' => mysqli_insert_id($conn)]);
+    echo json_encode([
+        'success' => true,
+        'id' => mysqli_insert_id($conn),
+        'resident_id' => $residentId
+    ]);
 } catch (Throwable $e) {
-    http_response_code(500);
+    if (http_response_code() === 200) {
+        http_response_code(500);
+    }
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 } finally {
     if (isset($stmt) && $stmt) {

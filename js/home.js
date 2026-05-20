@@ -380,7 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
             element.addEventListener('change', cleanError);
         });
 
-        residentForm.addEventListener('submit', function(event) {
+        residentForm.addEventListener('submit', async function(event) {
             event.preventDefault();
 
             // --- Custom Validation check for required file uploads ---
@@ -399,6 +399,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 return; // Stop form execution completely
             }
 
+            let residentValidation = null;
+            if (typeof window.validateDocumentRequestResident === 'function') {
+                residentValidation = window.validateDocumentRequestResident();
+                if (!residentValidation.valid) {
+                    showNotification(residentValidation.message, 'error');
+                    return;
+                }
+            }
+
             const docType = this.getAttribute('data-doc-type') || "Document Request";
             
             const purposeDropdown = document.getElementById('purposeDropdown');
@@ -407,9 +416,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (finalPurpose === 'Others' && otherPurposeText) {
                 finalPurpose = otherPurposeText.value;
             }
-
-            const isResidentRadio = this.querySelector('input[name="isResident"]:checked');
-            const isResidentValue = isResidentRadio ? isResidentRadio.value : "N/A";
 
             // Combine Prefix and Contact Number
             const prefix = document.getElementById('contactPrefix')?.value || '';
@@ -437,29 +443,29 @@ document.addEventListener('DOMContentLoaded', () => {
             submitBtn.innerText = "Processing Request...";
             submitBtn.disabled = true;
 
+            const firstName = document.getElementById('firstName')?.value || '';
+            const lastName = document.getElementById('lastName')?.value || '';
+
             const newRequest = {
                 status: 'Ongoing',
                 dateRequested: new Date().toISOString().split('T')[0],
                 documentType: docType,
-                
-                residentFirstName: document.getElementById('firstName')?.value || '',
-                residentMiddleName: document.getElementById('middleName')?.value || '',
-                residentLastName: document.getElementById('lastName')?.value || '',
-                residentSuffix: document.getElementById('suffix')?.value || '',
-                residentGender: document.getElementById('gender')?.value || '',
-                residentNationality: document.getElementById('nationality')?.value || '',
-                residentCivilStatus: document.getElementById('civilStatus')?.value || '',
-                residentBirthDate: document.getElementById('birthDate')?.value || '',
-                residentPlaceOfBirth: document.getElementById('placeOfBirth')?.value || '',
-                residentEmailAddress: document.getElementById('emailAddress')?.value || '',
-                residentContactNumber: fullContactNumber,
-                residentVoterStatus: document.getElementById('voterStatus')?.value || '',
-                residentPhilSysNumber: document.getElementById('philsysNumber')?.value || '',
-                residentHouseNo: document.getElementById('houseNo')?.value || '',
-                residentStreet: document.getElementById('street')?.value || '',
-                
-                residentPurposeOfRequest: finalPurpose,
-                residentIsResident: isResidentValue,
+                resident_id: residentValidation ? residentValidation.resident_id : null,
+                firstName,
+                middleName: document.getElementById('middleName')?.value || '',
+                lastName,
+                suffix: document.getElementById('suffix')?.value || '',
+                gender: document.getElementById('gender')?.value || '',
+                nationality: document.getElementById('nationality')?.value || '',
+                civilStatus: document.getElementById('civilStatus')?.value || '',
+                birthDate: document.getElementById('birthDate')?.value || '',
+                placeOfBirth: document.getElementById('placeOfBirth')?.value || '',
+                voterStatus: document.getElementById('voterStatus')?.value || '',
+                houseNo: document.getElementById('houseNo')?.value || '',
+                street: document.getElementById('street')?.value || '',
+                purpose_of_request: finalPurpose,
+                notification_email: document.getElementById('emailAddress')?.value || '',
+                contact_number: fullContactNumber,
                 supporting_documents: supportingDocuments
             };
 
@@ -480,8 +486,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        email: newRequest.residentEmailAddress,
-                        name: (newRequest.residentFirstName + ' ' + (newRequest.residentLastName || '')).trim(),
+                        email: newRequest.notification_email,
+                        name: (firstName + ' ' + (lastName || '')).trim(),
                         docType: newRequest.documentType,
                         requestId: result.id,
                         subject: newRequest.documentType + ' Submission Received'

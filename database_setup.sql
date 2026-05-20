@@ -102,10 +102,10 @@ CREATE TABLE IF NOT EXISTS announcements (
     INDEX idx_announcement_start_date (start_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- document requests
+-- document requests (resident profile via resident_id FK)
 CREATE TABLE IF NOT EXISTS document_requests (
     request_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    resident_id INT NULL,
+    resident_id INT NOT NULL,
     service_type_id INT NULL,
     processed_by_user_id INT NULL,
     document_type VARCHAR(150) NOT NULL,
@@ -113,23 +113,9 @@ CREATE TABLE IF NOT EXISTS document_requests (
     date_requested DATE NOT NULL,
     date_archived DATE NULL,
     is_archived TINYINT(1) NOT NULL DEFAULT 0,
-    residentFirstName VARCHAR(100) NOT NULL,
-    residentMiddleName VARCHAR(100),
-    residentLastName VARCHAR(100) NOT NULL,
-    residentSuffix VARCHAR(50),
-    residentGender VARCHAR(20),
-    residentNationality VARCHAR(100),
-    residentCivilStatus VARCHAR(50),
-    residentBirthDate DATE NULL,
-    residentPlaceOfBirth VARCHAR(150),
-    residentEmailAddress VARCHAR(150),
-    residentContactNumber VARCHAR(50),
-    residentVoterStatus VARCHAR(50),
-    residentPhilSysNumber VARCHAR(50),
-    residentHouseNo VARCHAR(50),
-    residentStreet VARCHAR(150),
-    residentPurposeOfRequest TEXT,
-    residentIsResident VARCHAR(20),
+    purpose_of_request TEXT NOT NULL,
+    notification_email VARCHAR(150) NULL,
+    contact_number VARCHAR(50) NULL,
     supporting_documents LONGTEXT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -138,8 +124,7 @@ CREATE TABLE IF NOT EXISTS document_requests (
     INDEX idx_request_processed_by_user_id (processed_by_user_id),
     INDEX idx_request_status (request_status),
     INDEX idx_request_archived (is_archived),
-    INDEX idx_request_date (date_requested),
-    INDEX idx_request_email (residentEmailAddress)
+    INDEX idx_request_date (date_requested)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 ALTER TABLE barangay_officials
@@ -158,7 +143,7 @@ ALTER TABLE document_requests
     ADD CONSTRAINT fk_document_requests_resident
     FOREIGN KEY (resident_id) REFERENCES residents(resident_id)
     ON UPDATE CASCADE
-    ON DELETE SET NULL,
+    ON DELETE RESTRICT,
     ADD CONSTRAINT fk_document_requests_service_type
     FOREIGN KEY (service_type_id) REFERENCES service_types(service_type_id)
     ON UPDATE CASCADE

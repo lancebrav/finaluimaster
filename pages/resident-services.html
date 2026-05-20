@@ -188,17 +188,11 @@
                 <input type="text" id="otherPurposeText" placeholder="Specify your purpose here...">
             </div>
 
-            <div class="form-section-title">Are you a resident of Barangay 663? *</div>
-            <div style="display: flex; gap: 30px; margin-top: 10px; margin-bottom: 30px; padding: 0 5px;">
-                <div class="checkbox-group" style="margin: 0; padding: 0;">
-                    <input type="radio" id="residentYes" name="isResident" value="Yes" required>
-                    <label for="residentYes">Yes</label>
-                </div>
-                <div class="checkbox-group" style="margin: 0; padding: 0;">
-                    <input type="radio" id="residentNo" name="isResident" value="No" required>
-                    <label for="residentNo">No</label>
-                </div>
-            </div>
+            <p class="form-instruction" style="margin-bottom: 20px;">
+                Document requests are only accepted from residents registered in Barangay 663.
+                Your entered details must match our resident records.
+            </p>
+
             <div class="form-section-title">Supporting Documents</div>
             <div class="form-grid">
                 <div class="input-group">
@@ -259,6 +253,7 @@
     <div class="footer-bottom">&copy; 2026 Barangay 663. All Rights Reserved.</div>
 </footer>
 
+<script src="../js/resident-services.js"></script>
 <script src="../js/home.js"></script>
 </body>
 </html>

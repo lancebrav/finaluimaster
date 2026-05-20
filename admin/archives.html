@@ -305,8 +305,10 @@ async function loadArchivedDocuments() {
 
     archivedDocs.forEach((doc, index) => {
         const tr = document.createElement('tr');
-        const initials = ((doc.residentFirstName?.[0] || '') + (doc.residentLastName?.[0] || '')).toUpperCase();
-        const fullName = `${doc.residentFirstName || ''} ${doc.residentLastName || ''}`.trim() || 'Unknown';
+        const first = doc.firstName || doc.residentFirstName || '';
+        const last = doc.lastName || doc.residentLastName || '';
+        const initials = ((first[0] || '') + (last[0] || '')).toUpperCase();
+        const fullName = (doc.fullName || `${first} ${last}`.trim()) || 'Unknown';
         let archivedDate = doc.date_archived || 'Unknown';
 
         tr.innerHTML = `

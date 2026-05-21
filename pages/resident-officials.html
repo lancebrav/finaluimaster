@@ -40,14 +40,13 @@
 <script src="../js/home.js"></script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    function renderOfficialsGrid(rawOfficers) {
         const officialsContainer = document.getElementById('liveOfficialsGrid');
         if (!officialsContainer) return;
 
-        const rawOfficers = JSON.parse(localStorage.getItem('brgyOfficers')) || [];
-        officialsContainer.innerHTML = ''; 
+        officialsContainer.innerHTML = '';
 
-        if (rawOfficers.length === 0) {
+        if (!rawOfficers.length) {
             officialsContainer.innerHTML = '<p style="text-align:center; color:#777; width:100%; padding: 40px;">No Barangay Officials listed at this time.</p>';
             return;
         }
@@ -152,6 +151,28 @@
         
         // Inject the completed chart into the page!
         officialsContainer.innerHTML = finalHTML;
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const officialsContainer = document.getElementById('liveOfficialsGrid');
+        if (!officialsContainer) return;
+
+        officialsContainer.innerHTML = '<p style="text-align:center; color:#777; width:100%; padding: 40px;">Loading officials...</p>';
+
+        let rawOfficers = [];
+        try {
+            const response = await fetch('../php/get_officials.php');
+            const data = await response.json();
+            if (data.success && Array.isArray(data.officials)) {
+                rawOfficers = data.officials;
+            }
+        } catch (err) {
+            console.error('Failed to load officials:', err);
+            officialsContainer.innerHTML = '<p style="text-align:center; color:#777; width:100%; padding: 40px;">Unable to load officials. Please try again later.</p>';
+            return;
+        }
+
+        renderOfficialsGrid(rawOfficers);
     });
 </script>
 

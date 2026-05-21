@@ -77,6 +77,20 @@ let currentPages = {
 };
 
 let cachedDocumentRequests = [];
+let activeDocRequestId = null;
+
+const DOC_PLACEHOLDER_PHOTO =
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Crect fill='%23f4f4f4' width='240' height='240'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='14'%3ENo photo%3C/text%3E%3C/svg%3E";
+
+const DOC_PLACEHOLDER_ID =
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='200'%3E%3Crect fill='%23f4f4f4' width='320' height='200'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='14'%3ENo ID uploaded%3C/text%3E%3C/svg%3E";
+
+function getActiveDocumentRequest() {
+    if (!activeDocRequestId) return null;
+    return cachedDocumentRequests.find(
+        r => String(r.request_id || r.id) === String(activeDocRequestId)
+    ) || null;
+}
 
 function normalizeRequestStatus(req) {
     return (req.request_status || req.status || '').trim();
@@ -286,10 +300,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const req = cachedDocumentRequests.find(r => String(r.request_id || r.id) === String(id));
         if (!req) return;
 
+        activeDocRequestId = id;
+
         const photoEl = document.getElementById('residentSubmittedPhoto');
         const idEl = document.getElementById('residentSubmittedId');
-        const fallbackPhoto = photoEl ? photoEl.getAttribute('src') : '';
-        const fallbackId = idEl ? idEl.getAttribute('src') : '';
 
         let supporting = req.supporting_documents || req.supportingDocuments || null;
         if (typeof supporting === 'string') {
@@ -312,8 +326,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        if (photoEl) photoEl.src = photoData || fallbackPhoto || '';
-        if (idEl) idEl.src = idData || fallbackId || '';
+        if (photoEl) photoEl.src = photoData || DOC_PLACEHOLDER_PHOTO;
+        if (idEl) idEl.src = idData || DOC_PLACEHOLDER_ID;
 
         const detailValues = getRequestDetailValues(req);
         Object.keys(detailValues).forEach(field => {
@@ -327,11 +341,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.loadAndRenderDocumentRequests();
 
+    const photoElInit = document.getElementById('residentSubmittedPhoto');
+    const idElInit = document.getElementById('residentSubmittedId');
+    if (photoElInit) photoElInit.src = DOC_PLACEHOLDER_PHOTO;
+    if (idElInit) idElInit.src = DOC_PLACEHOLDER_ID;
+
     const closeDocumentModalIcon = document.getElementById('closeDocModal');
     if (closeDocumentModalIcon) {
         closeDocumentModalIcon.addEventListener('click', () => {
             document.getElementById('docDetailsModal').classList.remove('active');
+            activeDocRequestId = null;
         });
+    }
+
+    const sendCustomEmailBtn = document.getElementById('sendCustomEmailBtn');
+    if (sendCustomEmailBtn) {
+        sendCustomEmailBtn.addEventListener('click', () => window.sendCustomEmail());
     }
 
     const printBtn = document.getElementById('printDropdownBtn');
@@ -520,4 +545,52 @@ window.printDocument = function(docType) {
             alert('Document generation failed.');
         }
     });
+};
+
+window.sendCustomEmail = async function sendCustomEmail() {
+    const req = getActiveDocumentRequest();
+    if (!req) {
+        alert('Open a request first — click the document type link in the table.');
+        return;
+    }
+
+    const email = (req.notification_email || req.residentEmailAddress || '').trim();
+    if (!email || email === 'N/A') {
+        alert('This request has no email address on file.');
+        return;
+    }
+
+    const message = prompt('Enter the message to send to the resident:');
+    if (!message || !message.trim()) return;
+
+    try {
+        const resp = await fetch('../php/send_submission_email.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email,
+                name: getRequestResidentName(req),
+                docType: req.document_type || req.documentType || 'Document Request',
+                requestId: req.request_id || req.id,
+                subject: (req.document_type || req.documentType || 'Document Request') + ' - Message from Barangay 663',
+                customBody: message.trim(),
+                action: 'custom'
+            })
+        });
+        const raw = await resp.text();
+        let result = {};
+        try {
+            result = JSON.parse(raw);
+        } catch (parseErr) {
+            console.error('Email response (non-JSON):', raw);
+            throw new Error('Email server returned an invalid response. Check php/send_submission_email.php.');
+        }
+        if (!result.success) {
+            throw new Error(result.message || 'Email failed');
+        }
+        alert('Custom email sent successfully.');
+    } catch (err) {
+        console.error('Custom email error:', err);
+        alert(err.message || 'Failed to send email. Check php/email_config.php SMTP settings.');
+    }
 };

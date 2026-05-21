@@ -26,7 +26,7 @@
 
 ## Step 3: Verify Database Setup
 1. Go to phpMyAdmin: `http://localhost/phpmyadmin`
-2. Click on "FINALUI2" database on the left sidebar
+2. Click on "finalui3" database on the left sidebar
 3. You should see the "residents" table
 4. Check the table structure by clicking on "residents" → "Structure"
 
@@ -42,7 +42,7 @@
 
 ## Database Connection Details
 - Host: localhost
-- Database: FINALUI2
+- Database: finalui3
 - Username:root
 - Password:(null/emptuy)
 
@@ -52,7 +52,7 @@ These are configured in `php/db.php`
 
 # "Connection failed" Error
 - Make sure MySQL service is running in XAMPP
-- Verify database name is "FINALUI2" (case-sensitive)
+- Verify database name is "finalui3" (matches php/db.php)
 - Check db.php has correct credentials
 
 #  "Table residents not found"

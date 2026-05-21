@@ -1,11 +1,43 @@
 <?php
 header('Content-Type: application/json');
+ini_set('display_errors', '0');
+error_reporting(E_ALL);
+
 require_once __DIR__ . '/email_config.php';
+
+function email_json_response(bool $success, string $message, array $extra = []): void
+{
+    echo json_encode(array_merge(['success' => $success, 'message' => $message], $extra));
+    exit;
+}
+
+function load_phpmailer(): bool
+{
+    if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
+        require_once __DIR__ . '/../vendor/autoload.php';
+        return true;
+    }
+    if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+        require_once __DIR__ . '/vendor/autoload.php';
+        return true;
+    }
+    if (file_exists(__DIR__ . '/PHPMailer/src/PHPMailer.php')) {
+        require_once __DIR__ . '/PHPMailer/src/Exception.php';
+        require_once __DIR__ . '/PHPMailer/src/PHPMailer.php';
+        require_once __DIR__ . '/PHPMailer/src/SMTP.php';
+        return true;
+    }
+    return false;
+}
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+try {
 
 $input = json_decode(file_get_contents('php://input'), true);
 if (!$input || empty($input['email'])) {
-    echo json_encode(['success' => false, 'message' => 'Missing email or payload']);
-    exit;
+    email_json_response(false, 'Missing email or payload');
 }
 
 $to = filter_var($input['email'], FILTER_VALIDATE_EMAIL);
@@ -17,8 +49,7 @@ $action = $input['action'] ?? 'submitted';
 $requestId = isset($input['requestId']) ? (int) $input['requestId'] : 0;
 
 if (!$to) {
-    echo json_encode(['success' => false, 'message' => 'Invalid recipient email']);
-    exit;
+    email_json_response(false, 'Invalid recipient email');
 }
 
 function build_submission_reference(int $requestId): array
@@ -48,32 +79,13 @@ function resolve_submission_meta(int $requestId): array
 }
 
 $submissionMeta = null;
-if ($action === 'submitted' || $requestId > 0) {
+if ($action === 'submitted' || $action === 'custom' || $requestId > 0) {
     $submissionMeta = resolve_submission_meta($requestId);
 }
 
-//try load phpmailer
-$loaded = false;
-if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
-    require_once __DIR__ . '/../vendor/autoload.php';
-    $loaded = true;
-} elseif (file_exists(__DIR__ . '/vendor/autoload.php')) {
-    require_once __DIR__ . '/vendor/autoload.php';
-    $loaded = true;
-} elseif (file_exists(__DIR__ . '/PHPMailer/src/PHPMailer.php')) {
-    require_once __DIR__ . '/PHPMailer/src/Exception.php';
-    require_once __DIR__ . '/PHPMailer/src/PHPMailer.php';
-    require_once __DIR__ . '/PHPMailer/src/SMTP.php';
-    $loaded = true;
+if (!load_phpmailer()) {
+    email_json_response(false, 'PHPMailer not installed. Run: composer require phpmailer/phpmailer');
 }
-
-if (!$loaded) {
-    echo json_encode(['success' => false, 'message' => 'PHPMailer not installed. Run: composer require phpmailer/phpmailer']);
-    exit;
-}
-
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
 
 $referenceBlock = '';
 if ($submissionMeta) {
@@ -91,7 +103,10 @@ if ($submissionMeta) {
 }
 
 if ($customBody) {
-    $bodyHtml = '<p>' . nl2br(htmlspecialchars($customBody)) . '</p>';
+    $bodyHtml = '<p>Dear ' . htmlspecialchars($name) . ',</p>' .
+        '<p>' . nl2br(htmlspecialchars($customBody)) . '</p>' .
+        $referenceBlock .
+        '<p>Regards,<br>Barangay 663</p>';
 } elseif ($action === 'approved') {
     $bodyHtml = '<p>Dear ' . htmlspecialchars($name) . ',</p>' .
         '<p>Good news! Your request for <strong>' . htmlspecialchars($docType) . '</strong> has been <strong style="color: green;">APPROVED</strong>.</p>' .
@@ -132,13 +147,16 @@ try {
 
     $mail->send();
 
-    $response = ['success' => true, 'message' => 'Email sent'];
+    $extra = [];
     if ($submissionMeta) {
-        $response['reference_code'] = $submissionMeta['reference']['reference_code'];
+        $extra['reference_code'] = $submissionMeta['reference']['reference_code'];
     }
-    echo json_encode($response);
+    email_json_response(true, 'Email sent', $extra);
 } catch (Exception $e) {
-    echo json_encode(['success' => false, 'message' => 'Mailer Error: ' . $e->getMessage()]);
+    email_json_response(false, 'Mailer Error: ' . $e->getMessage());
+}
+} catch (Throwable $e) {
+    email_json_response(false, $e->getMessage());
 }
 
 ?>

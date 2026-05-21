@@ -11,8 +11,10 @@ try {
     }
 
     $residentId = $data['resident_id'] ?? null;
-    if ($residentId === '') {
+    if ($residentId === '' || $residentId === null) {
         $residentId = null;
+    } else {
+        $residentId = (int) $residentId;
     }
 
     $name = trim($data['name'] ?? '');
@@ -30,8 +32,10 @@ try {
         $birthday = null;
     }
 
-    if ($age === '') {
+    if ($age === '' || $age === null) {
         $age = null;
+    } else {
+        $age = (int) $age;
     }
 
     $stmt = mysqli_prepare(

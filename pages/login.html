@@ -44,22 +44,6 @@
         </div>
     </div>
 
-    <script src="../js/login.js?v=20260413">
-    </script>
-
-    <script>
-        // Check if user is already logged in and logout if navigating back
-        fetch('/finaluimaster/php/session_check.php')
-            .then(response => response.json())
-            .then(data => {
-                if (data.logged_in) {
-                    // User is logged in, logout them since they're back at login page
-                    window.location.href = '/finaluimaster/php/logout.php';
-                }
-            })
-            .catch(error => {
-                console.error('Session check error:', error);
-            });
-    </script>
+    <script src="../js/login.js?v=20260413"></script>
 </body>
 </html>

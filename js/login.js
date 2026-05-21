@@ -1,7 +1,43 @@
+function resolveAppBase() {
+    const path = window.location.pathname || '';
+    const pagesIndex = path.indexOf('/pages/');
+    if (pagesIndex !== -1) {
+        return path.slice(0, pagesIndex);
+    }
+    return '/finaluimaster';
+}
+
+async function enforceLoginPageSession() {
+    const appBase = resolveAppBase();
+
+    try {
+        const response = await fetch(`${appBase}/php/session_check.php`, {
+            method: 'GET',
+            credentials: 'same-origin',
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' }
+        });
+        const data = await response.json();
+
+        if (data.logged_in) {
+            window.location.replace(`${appBase}/admin/admin-dashboard.php`);
+        }
+    } catch (error) {
+        console.error('Login session check error:', error);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', enforceLoginPageSession);
+window.addEventListener('pageshow', function (event) {
+    if (event.persisted) {
+        enforceLoginPageSession();
+    }
+});
+
 function login() {
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
-    const appBase = '/finaluimaster';
+    const appBase = resolveAppBase();
 
     // Security storage keys
     const attemptsKey = 'failedAttempts';
@@ -49,7 +85,7 @@ function login() {
             localStorage.removeItem(lockKey);
 
             // Open admin dashboard
-            window.location.href = `${appBase}/admin/admin-dashboard.php`;
+            window.location.replace(`${appBase}/admin/admin-dashboard.php`);
 
         }
 

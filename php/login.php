@@ -1,58 +1,61 @@
 <?php
-session_start(); //login script validation
+require_once __DIR__ . '/session_config.php';
+
+init_secure_session();
 header('Content-Type: application/json');
-header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-header('Pragma: no-cache');
-require_once 'db.php'; //connect to database
+send_no_cache_headers();
+
+$throttleMessage = is_login_throttled();
+if ($throttleMessage !== null) {
+    http_response_code(429);
+    echo json_encode(['success' => false, 'message' => $throttleMessage]);
+    exit;
+}
+
+require_once __DIR__ . '/db.php';
 
 $raw = file_get_contents('php://input');
-$data = json_decode($raw, true); //decode json data from request body
+$data = json_decode($raw, true);
 
-if (!$data) { //if no data received, return error
+if (!is_array($data)) {
     echo json_encode(['success' => false, 'message' => 'No data received']);
     exit;
 }
 
 $username = isset($data['username']) ? trim($data['username']) : '';
-$password = isset($data['password']) ? $data['password'] : ''; 
+$password = isset($data['password']) ? (string) $data['password'] : '';
 
-if (empty($username) || empty($password)) { //if username or password is empty, return error
+if ($username === '' || $password === '') {
     echo json_encode(['success' => false, 'message' => 'Username or password empty']);
     exit;
 }
 
-//PREPARED STATEMENTS FOR SQL INJECTION PREVENTION
-$stmt = mysqli_prepare($conn, "SELECT user_id, username, password FROM admin_users WHERE username = ?");
+$stmt = mysqli_prepare($conn, 'SELECT user_id, username, password FROM admin_users WHERE username = ?');
 if (!$stmt) {
-    echo json_encode(['success' => false, 'message' => 'Database error: ' . mysqli_error($conn)]);
+    echo json_encode(['success' => false, 'message' => 'Database error']);
     exit;
 }
 
-mysqli_stmt_bind_param($stmt, "s", $username);
+mysqli_stmt_bind_param($stmt, 's', $username);
 mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt); //FOR SQL INJECTION PROTECTION
+$result = mysqli_stmt_get_result($stmt);
 
-//does the user exist? verify password using password_verify()
-if (mysqli_num_rows($result) > 0) {
-    $row = mysqli_fetch_assoc($result);
-    
+if ($row = mysqli_fetch_assoc($result)) {
     if (password_verify($password, $row['password'])) {
-        // Regenerate session ID to prevent session fixation attacks
-        session_regenerate_id(true);
-        
-        $_SESSION['admin'] = true;
-        $_SESSION['user_id'] = $row['user_id'];
-        $_SESSION['username'] = $row['username'];
-        $_SESSION['login_time'] = time();
-        
+        bind_admin_session((int) $row['user_id'], $row['username']);
+        clear_login_throttle();
+
         echo json_encode(['success' => true, 'message' => 'Login successful']);
     } else {
+        register_failed_login_attempt();
         echo json_encode(['success' => false, 'message' => 'Invalid credentials']);
     }
 } else {
-    echo json_encode(['success' => false, 'message' => 'User not found']);
+    register_failed_login_attempt();
+    echo json_encode(['success' => false, 'message' => 'Invalid credentials']);
 }
 
-mysqli_stmt_close($stmt); 
+mysqli_stmt_close($stmt);
 mysqli_close($conn);
+
 ?>

@@ -1,18 +1,32 @@
 <?php
-session_start();
+require_once __DIR__ . '/session_config.php';
 
-// Prevent caching of session data
-header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-header('Pragma: no-cache');
-header('Expires: 0');
+init_secure_session();
+send_no_cache_headers();
 header('Content-Type: application/json');
 
-// Check if admin session is active
-if (isset($_SESSION['admin']) && $_SESSION['admin'] === true) {
-    echo json_encode(['logged_in' => true, 'username' => $_SESSION['username']]);
-} else {
-    // If not logged in, ensure session is destroyed
-    session_destroy();
-    echo json_encode(['logged_in' => false]);
+if (is_admin_session_valid()) {
+    refresh_session_activity();
+
+    $remainingInactivity = ADMIN_SESSION_INACTIVITY_TIMEOUT;
+    if (isset($_SESSION['last_activity'])) {
+        $remainingInactivity = max(
+            0,
+            ADMIN_SESSION_INACTIVITY_TIMEOUT - (time() - (int) $_SESSION['last_activity'])
+        );
+    }
+
+    echo json_encode([
+        'logged_in' => true,
+        'username' => $_SESSION['username'],
+        'user_id' => (int) $_SESSION['user_id'],
+        'inactivity_timeout_seconds' => ADMIN_SESSION_INACTIVITY_TIMEOUT,
+        'inactivity_remaining_seconds' => $remainingInactivity,
+    ]);
+    exit;
 }
+
+destroy_admin_session();
+echo json_encode(['logged_in' => false]);
+
 ?>

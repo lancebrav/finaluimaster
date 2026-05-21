@@ -1,0 +1,4 @@
+/* Hide admin UI until session is verified (prevents bfcache flash of stale pages) */
+html.auth-pending .admin-body {
+    visibility: hidden;
+}

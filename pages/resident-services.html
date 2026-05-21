@@ -95,7 +95,11 @@
                 </div>
                 <div class="input-group" style="grid-column: span 1;">
                     <label>Nationality *</label>
-                    <input type="text" id="nationality" placeholder="Filipino" required>
+                    <select id="nationality" required>
+                        <option value="">-- Select --</option>
+                        <option value="Filipino">Filipino</option>
+                        <option value="Other">Others/Specify</option>
+                    </select>
                 </div>
                 <div class="input-group" style="grid-column: span 1;">
                     <label>Civil Status *</label>
@@ -111,6 +115,11 @@
                     <label>Birth Date *</label>
                     <input type="date" id="birthDate" required>
                 </div>
+            </div>
+
+            <div class="input-group" id="otherNationalityContainer" style="width: 100%; display: none; margin-top: 15px;">
+                <label>Please Specify Nationality *</label>
+                <input type="text" id="otherNationality" placeholder="Enter your nationality">
             </div>
 
             <div class="form-grid">

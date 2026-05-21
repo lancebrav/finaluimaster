@@ -295,7 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 window.currentPage = 1;
-window.rowsPerPage = 8;
+window.rowsPerPage = 10;
 window.cachedResidents = [];
 window.residentMapById = {};
 window.familyMembersByKey = {};

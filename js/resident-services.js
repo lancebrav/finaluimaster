@@ -34,6 +34,18 @@ function normalizeResidentDate(value) {
     return parsed.toISOString().split('T')[0];
 }
 
+function getSubmittedNationality() {
+    const nationalitySelect = document.getElementById('nationality');
+    const otherNationality = document.getElementById('otherNationality');
+    const selectedValue = nationalitySelect?.value || '';
+
+    if (selectedValue === 'Other') {
+        return otherNationality?.value || '';
+    }
+
+    return selectedValue;
+}
+
 function residentIdentityMatches(submitted, resident) {
     const checks = [
         ['firstName', 'firstName'],
@@ -78,7 +90,7 @@ function buildSubmittedResidentProfile() {
         lastName: document.getElementById('lastName')?.value || '',
         suffix: document.getElementById('suffix')?.value || '',
         gender: document.getElementById('gender')?.value || '',
-        nationality: document.getElementById('nationality')?.value || '',
+        nationality: getSubmittedNationality(),
         civilStatus: document.getElementById('civilStatus')?.value || '',
         birthDate: document.getElementById('birthDate')?.value || '',
         placeOfBirth: document.getElementById('placeOfBirth')?.value || '',

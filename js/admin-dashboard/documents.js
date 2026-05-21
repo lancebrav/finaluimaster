@@ -1,13 +1,86 @@
-/* DOCUMENT REQUESTS */
+/* DOCUMENT REQUESTS — 4-step workflow */
 
 const ROWS_PER_PAGE = 6;
+
+const REQUEST_STATUS = {
+    ONGOING: 'Ongoing',
+    APPROVED: 'Approved',
+    READY: 'Ready to Print',
+    RECEIVED: 'Received'
+};
+
+const WORKFLOW_STEPS = [
+    {
+        status: REQUEST_STATUS.ONGOING,
+        sectionId: 'section-ongoing',
+        tbodyId: 'ongoingRequestsBody',
+        pageInfoId: 'pageInfoOngoing',
+        prevId: 'prevOngoing',
+        nextId: 'nextOngoing',
+        dateLabel: 'Date Requested',
+        statusBadge: 'ONGOING',
+        statusClass: 'status-ongoing',
+        actionLabel: 'Approve',
+        nextStatus: REQUEST_STATUS.APPROVED,
+        picClass: 'pic-blue'
+    },
+    {
+        status: REQUEST_STATUS.APPROVED,
+        sectionId: 'section-approved',
+        tbodyId: 'approvedRequestsBody',
+        pageInfoId: 'pageInfoApproved',
+        prevId: 'prevApproved',
+        nextId: 'nextApproved',
+        dateLabel: 'Date Approved',
+        statusBadge: 'APPROVED',
+        statusClass: 'status-approved',
+        actionLabel: 'Ready to Print',
+        nextStatus: REQUEST_STATUS.READY,
+        picClass: 'pic-red'
+    },
+    {
+        status: REQUEST_STATUS.READY,
+        sectionId: 'section-ready',
+        tbodyId: 'readyToPrintRequestsBody',
+        pageInfoId: 'pageInfoReady',
+        prevId: 'prevReady',
+        nextId: 'nextReady',
+        dateLabel: 'Ready Date',
+        statusBadge: 'READY TO PRINT',
+        statusClass: 'status-ready',
+        actionLabel: 'Mark Received',
+        nextStatus: REQUEST_STATUS.RECEIVED,
+        picClass: 'pic-orange',
+        hasSelect: true
+    },
+    {
+        status: REQUEST_STATUS.RECEIVED,
+        sectionId: 'section-received',
+        tbodyId: 'receivedRequestsBody',
+        pageInfoId: 'pageInfoReceived',
+        prevId: 'prevReceived',
+        nextId: 'nextReceived',
+        dateLabel: 'Date Received',
+        statusBadge: 'RECEIVED',
+        statusClass: 'status-received',
+        actionLabel: 'Archive',
+        actionType: 'archive',
+        picClass: 'pic-green'
+    }
+];
+
 let currentPages = {
-    Ongoing: 1,
-    Approved: 1,
-    Rejected: 1
+    [REQUEST_STATUS.ONGOING]: 1,
+    [REQUEST_STATUS.APPROVED]: 1,
+    [REQUEST_STATUS.READY]: 1,
+    [REQUEST_STATUS.RECEIVED]: 1
 };
 
 let cachedDocumentRequests = [];
+
+function normalizeRequestStatus(req) {
+    return (req.request_status || req.status || '').trim();
+}
 
 function formatGenderDisplay(gender) {
     const g = String(gender || '').trim().toUpperCase();
@@ -67,6 +140,18 @@ function formatDateForDisplay(dateString) {
     return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
 }
 
+function workflowActionButton(requestId, step) {
+    const label = step.actionLabel;
+    const safeId = String(requestId).replace(/'/g, "\\'");
+
+    if (step.actionType === 'archive') {
+        return `<button type="button" class="workflow-action-btn" onclick="window.archiveRequest('${safeId}')">${label}</button>`;
+    }
+
+    const nextStatus = (step.nextStatus || '').replace(/'/g, "\\'");
+    return `<button type="button" class="workflow-action-btn" onclick="window.advanceRequest('${safeId}', '${nextStatus}')">${label}</button>`;
+}
+
 async function fetchDocumentRequests() {
     try {
         const response = await fetch('../php/get_document_requests.php');
@@ -75,6 +160,84 @@ async function fetchDocumentRequests() {
     } catch (err) {
         console.error('Error fetching document requests:', err);
         cachedDocumentRequests = [];
+    }
+}
+
+function renderWorkflowSection(step, data) {
+    const tbody = document.getElementById(step.tbodyId);
+    const info = document.getElementById(step.pageInfoId);
+    const prevBtn = document.getElementById(step.prevId);
+    const nextBtn = document.getElementById(step.nextId);
+
+    if (!tbody) return;
+
+    const totalPages = Math.ceil(data.length / ROWS_PER_PAGE) || 1;
+
+    if (currentPages[step.status] > totalPages) currentPages[step.status] = totalPages;
+    if (currentPages[step.status] < 1) currentPages[step.status] = 1;
+
+    const startIdx = (currentPages[step.status] - 1) * ROWS_PER_PAGE;
+    const paginatedData = data.slice(startIdx, startIdx + ROWS_PER_PAGE);
+
+    tbody.innerHTML = '';
+
+    if (paginatedData.length === 0) {
+        const colSpan = step.hasSelect ? 6 : 5; /* select + 4 fields + action OR 4 fields + action */
+        tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center;padding:30px;color:#7f8c8d;font-weight:600;">No requests in this step.</td></tr>`;
+    }
+
+    paginatedData.forEach(req => {
+        const tr = document.createElement('tr');
+        const requestId = req.request_id || req.id;
+        tr.setAttribute('data-id', requestId);
+
+        const initials = getRequestResidentInitials(req);
+        const fullName = getRequestResidentName(req) || 'Unknown';
+        const displayDate = formatDateForDisplay(req.date_requested || req.dateRequested);
+        const residencyBadge = getRequestResidencyBadge(req);
+        const docType = req.document_type || req.documentType || 'N/A';
+
+        let rowHtml = '';
+
+        if (step.hasSelect) {
+            rowHtml += `<td class="request-select-col"><input type="radio" name="printRequestSelect" class="request-print-select" data-id="${requestId}"></td>`;
+        }
+
+        rowHtml += `
+            <td class="name-cell">
+                <div class="profile-pic ${step.picClass}">${initials || '?'}</div>
+                <span>${fullName}</span>
+            </td>
+            <td><a href="#" class="doc-link" onclick="window.viewDocDetails(${requestId}); return false;">${docType}</a></td>
+            <td>${displayDate}</td>
+            <td>${residencyBadge}</td>
+            <td class="workflow-action-cell">${workflowActionButton(requestId, step)}</td>
+        `;
+
+        tr.innerHTML = rowHtml;
+        tbody.appendChild(tr);
+    });
+
+    if (info) info.textContent = `Page ${currentPages[step.status]} of ${totalPages}`;
+
+    if (prevBtn) {
+        prevBtn.disabled = currentPages[step.status] === 1;
+        prevBtn.onclick = () => {
+            if (currentPages[step.status] > 1) {
+                currentPages[step.status]--;
+                renderWorkflowSection(step, data);
+            }
+        };
+    }
+
+    if (nextBtn) {
+        nextBtn.disabled = currentPages[step.status] === totalPages || totalPages === 0;
+        nextBtn.onclick = () => {
+            if (currentPages[step.status] < totalPages) {
+                currentPages[step.status]++;
+                renderWorkflowSection(step, data);
+            }
+        };
     }
 }
 
@@ -113,113 +276,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return parseInt(a.request_id || a.id || 0, 10) - parseInt(b.request_id || b.id || 0, 10);
         });
 
-        const ongoingReqs = requests.filter(r => (r.request_status || r.status) === 'Ongoing');
-        const approvedReqs = requests.filter(r => (r.request_status || r.status) === 'Approved');
-        const rejectedReqs = requests.filter(r => (r.request_status || r.status) === 'Rejected');
-
-        renderTableSection('Ongoing', ongoingReqs, 'ongoingRequestsBody', 'pageInfoOngoing', 'prevOngoing', 'nextOngoing');
-        renderTableSection('Approved', approvedReqs, 'approvedRequestsBody', 'pageInfoApproved', 'prevApproved', 'nextApproved');
-        renderTableSection('Rejected', rejectedReqs, 'rejectedRequestsBody', 'pageInfoRejected', 'prevRejected', 'nextRejected');
-    };
-
-    function renderTableSection(status, data, tbodyId, infoId, prevId, nextId) {
-        const tbody = document.getElementById(tbodyId);
-        const info = document.getElementById(infoId);
-        const prevBtn = document.getElementById(prevId);
-        const nextBtn = document.getElementById(nextId);
-
-        if (!tbody) return;
-
-        const totalPages = Math.ceil(data.length / ROWS_PER_PAGE) || 1;
-
-        if (currentPages[status] > totalPages) currentPages[status] = totalPages;
-        if (currentPages[status] < 1) currentPages[status] = 1;
-
-        const startIdx = (currentPages[status] - 1) * ROWS_PER_PAGE;
-        const paginatedData = data.slice(startIdx, startIdx + ROWS_PER_PAGE);
-
-        tbody.innerHTML = '';
-
-        paginatedData.forEach(req => {
-            const tr = document.createElement('tr');
-            const requestId = req.request_id || req.id;
-            tr.setAttribute('data-id', requestId);
-
-            const initials = getRequestResidentInitials(req);
-            const fullName = getRequestResidentName(req);
-            const displayDate = formatDateForDisplay(req.date_requested || req.dateRequested);
-            const residencyBadge = getRequestResidencyBadge(req);
-
-            if (status === 'Ongoing') {
-                tr.innerHTML = `
-                    <td class="name-cell">
-                        <div class="profile-pic pic-blue">${initials || '?'}</div>
-                        <span>${fullName || 'Unknown'}</span>
-                    </td>
-                    <td><a href="#" class="doc-link" onclick="window.viewDocDetails(${requestId})">${req.document_type || req.documentType}</a></td>
-                    <td>${displayDate}</td>
-                    <td>${residencyBadge}</td>
-                    <td class="action-icons">
-                        <i class="fas fa-check-circle edit-icon" title="Approve"></i>
-                        <i class="fas fa-times-circle delete-icon" title="Reject"></i>
-                    </td>
-                `;
-            } else if (status === 'Approved') {
-                tr.innerHTML = `
-                    <td><input type="checkbox" class="request-checkbox" data-id="${requestId}"></td>
-                    <td class="name-cell">
-                        <div class="profile-pic pic-red">${initials || '?'}</div>
-                        <span>${fullName || 'Unknown'}</span>
-                    </td>
-                    <td><a href="#" class="doc-link" onclick="window.viewDocDetails(${requestId})">${req.document_type || req.documentType}</a></td>
-                    <td>${displayDate}</td>
-                    <td>${residencyBadge}</td>
-                    <td class="status-ready">READY</td>
-                    <td class="action-icons">
-                        <button class="archive-icon" onclick="window.archiveRequest('${requestId}')" title="Archive" style="background: #070e50; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.8rem;">Archive</button>
-                    </td>
-                `;
-            } else if (status === 'Rejected') {
-                tr.innerHTML = `
-                    <td><input type="checkbox" class="request-checkbox" data-id="${requestId}"></td>
-                    <td class="name-cell">
-                        <div class="profile-pic pic-purple">${initials || '?'}</div>
-                        <span>${fullName || 'Unknown'}</span>
-                    </td>
-                    <td><a href="#" class="doc-link" onclick="window.viewDocDetails(${requestId})">${req.document_type || req.documentType}</a></td>
-                    <td>${displayDate}</td>
-                    <td>${residencyBadge}</td>
-                    <td class="status-rejected">REJECTED</td>
-                    <td class="action-icons">
-                        <button class="archive-icon" onclick="window.archiveRequest('${requestId}')" title="Archive" style="background: #070e50; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.8rem;">Archive</button>
-                    </td>
-                `;
-            }
-            tbody.appendChild(tr);
+        WORKFLOW_STEPS.forEach(step => {
+            const stepData = requests.filter(r => normalizeRequestStatus(r) === step.status);
+            renderWorkflowSection(step, stepData);
         });
-
-        if (info) info.textContent = `Page ${currentPages[status]} of ${totalPages}`;
-
-        if (prevBtn) {
-            prevBtn.disabled = currentPages[status] === 1;
-            prevBtn.onclick = () => {
-                if (currentPages[status] > 1) {
-                    currentPages[status]--;
-                    renderTableSection(status, data, tbodyId, infoId, prevId, nextId);
-                }
-            };
-        }
-
-        if (nextBtn) {
-            nextBtn.disabled = currentPages[status] === totalPages || totalPages === 0;
-            nextBtn.onclick = () => {
-                if (currentPages[status] < totalPages) {
-                    currentPages[status]++;
-                    renderTableSection(status, data, tbodyId, infoId, prevId, nextId);
-                }
-            };
-        }
-    }
+    };
 
     window.viewDocDetails = function(id) {
         const req = cachedDocumentRequests.find(r => String(r.request_id || r.id) === String(id));
@@ -251,19 +312,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        if (photoEl) {
-            photoEl.src = photoData || fallbackPhoto || '';
-        }
-        if (idEl) {
-            idEl.src = idData || fallbackId || '';
-        }
+        if (photoEl) photoEl.src = photoData || fallbackPhoto || '';
+        if (idEl) idEl.src = idData || fallbackId || '';
 
         const detailValues = getRequestDetailValues(req);
         Object.keys(detailValues).forEach(field => {
             const el = document.getElementById(field);
-            if (el) {
-                el.textContent = detailValues[field];
-            }
+            if (el) el.textContent = detailValues[field];
         });
 
         const modal = document.getElementById('docDetailsModal');
@@ -278,118 +333,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('docDetailsModal').classList.remove('active');
         });
     }
-
-    const ongoingBody = document.getElementById('ongoingRequestsBody');
-    if (ongoingBody) {
-        ongoingBody.addEventListener('click', async (event) => {
-            const icon = event.target;
-            const row = icon.closest('tr');
-            if (!row) return;
-
-            const id = row.getAttribute('data-id');
-
-            if (icon.classList.contains('edit-icon')) {
-                await window.changeRequestStatus(id, 'Approved');
-                window.loadAndRenderDocumentRequests();
-            } else if (icon.classList.contains('delete-icon')) {
-                await window.changeRequestStatus(id, 'Rejected');
-                window.loadAndRenderDocumentRequests();
-            }
-        });
-    }
-
-    const deleteApprovedBtn = document.getElementById('deleteApprovedBtn');
-    const deleteRejectedBtn = document.getElementById('deleteRejectedBtn');
-    const archiveApprovedBtn = document.getElementById('archiveApprovedBtn');
-    const archiveRejectedBtn = document.getElementById('archiveRejectedBtn');
-    const selectApprovedAllBtn = document.getElementById('selectApprovedAllBtn');
-    const selectRejectedAllBtn = document.getElementById('selectRejectedAllBtn');
-
-    const toggleSectionSelection = (button, bodyId) => {
-        const checkboxes = document.querySelectorAll(`#${bodyId} .request-checkbox`);
-        const selectAll = button.dataset.selectAll === 'true';
-        checkboxes.forEach(cb => cb.checked = selectAll);
-        button.dataset.selectAll = selectAll ? 'false' : 'true';
-        button.textContent = selectAll ? 'Clear Selection' : 'Select All';
-    };
-
-    const resetSelectionButtons = () => {
-        [selectApprovedAllBtn, selectRejectedAllBtn].forEach(btn => {
-            if (btn) {
-                btn.dataset.selectAll = 'true';
-                btn.textContent = 'Select All';
-            }
-        });
-    };
-
-    const deleteSelectedRequests = async (status) => {
-        const bodyId = status === 'Approved' ? 'approvedRequestsBody' : 'rejectedRequestsBody';
-        const selectedIds = Array.from(document.querySelectorAll(`#${bodyId} .request-checkbox:checked`)).map(cb => cb.dataset.id);
-        if (!selectedIds.length) {
-            alert('Please select at least one row to delete.');
-            return;
-        }
-
-        if (!confirm(`Permanently delete ${selectedIds.length} selected ${status.toLowerCase()} request(s)?`)) return;
-
-        try {
-            const resp = await fetch('../php/delete_document_request.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ request_ids: selectedIds })
-            });
-            const result = await resp.json();
-            if (!result.success) {
-                throw new Error(result.message || 'Delete failed');
-            }
-        } catch (err) {
-            console.error('Delete request error:', err);
-            alert('Failed to delete request(s).');
-            return;
-        }
-
-        window.loadAndRenderDocumentRequests();
-        resetSelectionButtons();
-    };
-
-    const archiveSelectedRequests = async (status) => {
-        const bodyId = status === 'Approved' ? 'approvedRequestsBody' : 'rejectedRequestsBody';
-        const selectedIds = Array.from(document.querySelectorAll(`#${bodyId} .request-checkbox:checked`)).map(cb => cb.dataset.id);
-        if (!selectedIds.length) {
-            alert('Please select at least one row to archive.');
-            return;
-        }
-
-        if (!confirm(`Archive ${selectedIds.length} selected ${status.toLowerCase()} request(s)?`)) return;
-
-        try {
-            const resp = await fetch('../php/archive_document_request.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ request_ids: selectedIds })
-            });
-            const result = await resp.json();
-            if (!result.success) {
-                throw new Error(result.message || 'Archive failed');
-            }
-        } catch (err) {
-            console.error('Archive request error:', err);
-            alert('Failed to archive request(s).');
-            return;
-        }
-
-        window.loadAndRenderDocumentRequests();
-        resetSelectionButtons();
-    };
-
-    if (selectApprovedAllBtn) selectApprovedAllBtn.addEventListener('click', () => toggleSectionSelection(selectApprovedAllBtn, 'approvedRequestsBody'));
-    if (selectRejectedAllBtn) selectRejectedAllBtn.addEventListener('click', () => toggleSectionSelection(selectRejectedAllBtn, 'rejectedRequestsBody'));
-
-    if (deleteApprovedBtn) deleteApprovedBtn.addEventListener('click', () => deleteSelectedRequests('Approved'));
-    if (deleteRejectedBtn) deleteRejectedBtn.addEventListener('click', () => deleteSelectedRequests('Rejected'));
-
-    if (archiveApprovedBtn) archiveApprovedBtn.addEventListener('click', () => archiveSelectedRequests('Approved'));
-    if (archiveRejectedBtn) archiveRejectedBtn.addEventListener('click', () => archiveSelectedRequests('Rejected'));
 
     const printBtn = document.getElementById('printDropdownBtn');
     const printMenu = document.getElementById('printDropdownMenu');
@@ -408,7 +351,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-window.changeRequestStatus = async function(requestId, newStatus) {
+window.advanceRequest = async function(requestId, newStatus) {
+    const step = WORKFLOW_STEPS.find(s => s.nextStatus === newStatus);
+    const confirmMsg = step
+        ? `Move this request to "${newStatus}"?`
+        : 'Update this request?';
+
+    if (!confirm(confirmMsg)) return;
+
     try {
         const resp = await fetch('../php/update_document_request_status.php', {
             method: 'POST',
@@ -421,32 +371,20 @@ window.changeRequestStatus = async function(requestId, newStatus) {
         }
     } catch (err) {
         console.error('Status update error:', err);
-        alert('Failed to update request status.');
+        alert(err.message || 'Failed to update request status.');
         return;
     }
 
     const req = cachedDocumentRequests.find(r => String(r.request_id || r.id) === String(requestId));
-    if (!req) return;
-
-    const emailPayload = {
-        email: req.notification_email || req.residentEmailAddress,
-        name: getRequestResidentName(req),
-        docType: req.document_type || req.documentType,
-        requestId: req.request_id || req.id
-    };
-
-    if (newStatus === 'Approved') {
-        emailPayload.subject = (req.document_type || req.documentType) + ' - Approved for Pickup';
-        emailPayload.action = 'approved';
-
-        fetch('../php/send_submission_email.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(emailPayload)
-        }).then(r => r.json()).catch(err => console.error('Email send error:', err));
-    } else if (newStatus === 'Rejected') {
-        emailPayload.subject = (req.document_type || req.documentType) + ' - Request Rejected';
-        emailPayload.action = 'rejected';
+    if (req && newStatus === REQUEST_STATUS.APPROVED) {
+        const emailPayload = {
+            email: req.notification_email || req.residentEmailAddress,
+            name: getRequestResidentName(req),
+            docType: req.document_type || req.documentType,
+            requestId: req.request_id || req.id,
+            subject: (req.document_type || req.documentType) + ' - Approved for Pickup',
+            action: 'approved'
+        };
 
         fetch('../php/send_submission_email.php', {
             method: 'POST',
@@ -454,63 +392,12 @@ window.changeRequestStatus = async function(requestId, newStatus) {
             body: JSON.stringify(emailPayload)
         }).then(r => r.json()).catch(err => console.error('Email send error:', err));
     }
-};
 
-window.sendCustomEmail = function() {
-    const customSubject = prompt('Enter email subject:');
-    if (!customSubject) return;
-
-    const customMessage = prompt('Enter email message/body:');
-    if (customMessage === null) return;
-
-    const modal = document.getElementById('docDetailsModal');
-    if (!modal) return;
-
-    const emailEl = document.getElementById('residentEmailAddress');
-    const nameFirstEl = document.getElementById('residentFirstName');
-    const nameLastEl = document.getElementById('residentLastName');
-
-    if (!emailEl || !nameFirstEl || !nameLastEl) {
-        alert('Could not retrieve recipient email.');
-        return;
-    }
-
-    const email = emailEl.textContent || '';
-    const name = (nameFirstEl.textContent || '') + ' ' + (nameLastEl.textContent || '');
-
-    if (!email || email === 'N/A') {
-        alert('No valid email address found for this resident.');
-        return;
-    }
-
-    const payload = {
-        email: email,
-        name: name.trim(),
-        subject: customSubject,
-        customBody: customMessage
-    };
-
-    fetch('../php/send_submission_email.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    })
-    .then(r => r.json())
-    .then(result => {
-        if (result.success) {
-            alert('Custom email sent successfully!');
-        } else {
-            alert('Email failed: ' + (result.message || 'Unknown error'));
-        }
-    })
-    .catch(err => {
-        console.error('Error sending custom email:', err);
-        alert('Failed to send custom email');
-    });
+    window.loadAndRenderDocumentRequests();
 };
 
 window.archiveRequest = async function(id) {
-    if (!confirm('Are you sure you want to archive this request?')) return;
+    if (!confirm('Archive this request? It will move to Archives.')) return;
 
     try {
         const resp = await fetch('../php/archive_document_request.php', {
@@ -531,12 +418,12 @@ window.archiveRequest = async function(id) {
     window.loadAndRenderDocumentRequests();
 };
 
-// DOCXTEMPLATER - WORD DOC GENERATION ENGINE
 function getOrdinalSuffix(i) {
-    let j = i % 10, k = i % 100;
-    if (j == 1 && k != 11) return i + 'st';
-    if (j == 2 && k != 12) return i + 'nd';
-    if (j == 3 && k != 13) return i + 'rd';
+    const j = i % 10;
+    const k = i % 100;
+    if (j === 1 && k !== 11) return i + 'st';
+    if (j === 2 && k !== 12) return i + 'nd';
+    if (j === 3 && k !== 13) return i + 'rd';
     return i + 'th';
 }
 
@@ -548,18 +435,13 @@ window.printDocument = function(docType) {
     const printMenu = document.getElementById('printDropdownMenu');
     if (printMenu) printMenu.classList.remove('show');
 
-    const selectedCheckboxes = document.querySelectorAll('#approvedRequestsBody .request-checkbox:checked');
-    if (selectedCheckboxes.length === 0) {
-        alert('Please check the box next to a resident to generate their document.');
+    const selectedRadio = document.querySelector('#readyToPrintRequestsBody .request-print-select:checked');
+    if (!selectedRadio) {
+        alert('Please select a request row to generate the document.');
         return;
     }
 
-    if (selectedCheckboxes.length > 1) {
-        alert('Please select only ONE resident at a time for document generation.');
-        return;
-    }
-
-    const selectedId = selectedCheckboxes[0].dataset.id;
+    const selectedId = selectedRadio.dataset.id;
     const req = cachedDocumentRequests.find(r => String(r.request_id || r.id) === String(selectedId));
 
     if (!req) {

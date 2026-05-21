@@ -10,23 +10,11 @@
     <link rel="stylesheet" href="../css/home.css">
     <link rel="stylesheet" href="../css/admin-dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/admin-auth-guard.css">
 </head>
 <body class="admin-body">
 
-    <script>
-        // Prevent direct URL access - check session
-        fetch('../php/session_check.php')
-            .then(response => response.json())
-            .then(data => {
-                if (!data.logged_in) {
-                    window.location.href = '../pages/login.html';
-                }
-            })
-            .catch(error => {
-                console.error('Session check error:', error);
-                window.location.href = '../pages/login.html';
-            });
-    </script>
+    <script src="../js/admin-auth-guard.js"></script>
 
 <aside class="sidebar" id="sidebar"> <div class="menu-toggle" id="menuBtn">
         <i class="fas fa-bars"></i>

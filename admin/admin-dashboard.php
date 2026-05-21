@@ -1,30 +1,23 @@
-<?php //admin page, checks if user is logged in as admin
-session_start();
-
-// Protect restricted page - redirect if not authenticated
-if (!isset($_SESSION['admin']) || $_SESSION['admin'] !== true) {
-    session_destroy();
-    header('Location: ../pages/login.html');
-    exit;
-}
-
-// Prevent browser caching of admin pages (protect back button)
-header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0, private');
-header('Pragma: no-cache');
-header('Expires: 0');
-header('X-Frame-Options: SAMEORIGIN');
-?> 
+<?php
+require_once __DIR__ . '/../php/protect_admin.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Admin Dashboard | Barangay 663</title>
     <link rel="stylesheet" href="../css/home.css">
     <link rel="stylesheet" href="../css/admin-dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/admin-auth-guard.css">
 </head>
 <body class="admin-body">
+
+<script src="../js/admin-auth-guard.js"></script>
 
 <aside class="sidebar" id="sidebar"> 
     <div class="menu-toggle" id="menuBtn">

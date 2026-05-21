@@ -520,41 +520,80 @@ form { padding: 20px 30px; overflow-y: auto; flex-grow: 1; }
 #section-ongoing .request-table td:nth-child(5) { width: 13%; text-align: center; padding-right: 25px; } /* Actions */
 
 
-/* --- COLUMN WIDTH ALLOCATIONS (Approved & Rejected Tabs) --- */
-#section-approved .request-table th:nth-child(1),
-#section-approved .request-table td:nth-child(1),
-#section-rejected .request-table th:nth-child(1),
-#section-rejected .request-table td:nth-child(1) { width: 5%; text-align: center; } /* Checkbox */
+/* --- WORKFLOW TABS (Approved, Received) — 5 columns --- */
+#section-approved.workflow-section .request-table th:nth-child(1),
+#section-approved.workflow-section .request-table td:nth-child(1),
+#section-received.workflow-section .request-table th:nth-child(1),
+#section-received.workflow-section .request-table td:nth-child(1) { width: 26%; text-align: left; padding-left: 20px; }
 
-#section-approved .request-table th:nth-child(2),
-#section-approved .request-table td:nth-child(2),
-#section-rejected .request-table th:nth-child(2),
-#section-rejected .request-table td:nth-child(2) { width: 25%; text-align: left; } /* Name */
+#section-approved.workflow-section .request-table th:nth-child(2),
+#section-approved.workflow-section .request-table td:nth-child(2),
+#section-received.workflow-section .request-table th:nth-child(2),
+#section-received.workflow-section .request-table td:nth-child(2) { width: 24%; text-align: left; }
 
-#section-approved .request-table th:nth-child(3),
-#section-approved .request-table td:nth-child(3),
-#section-rejected .request-table th:nth-child(3),
-#section-rejected .request-table td:nth-child(3) { width: 20%; text-align: left; } /* Document Type */
+#section-approved.workflow-section .request-table th:nth-child(3),
+#section-approved.workflow-section .request-table td:nth-child(3),
+#section-received.workflow-section .request-table th:nth-child(3),
+#section-received.workflow-section .request-table td:nth-child(3) { width: 16%; text-align: center; }
 
-#section-approved .request-table th:nth-child(4),
-#section-approved .request-table td:nth-child(4),
-#section-rejected .request-table th:nth-child(4),
-#section-rejected .request-table td:nth-child(4) { width: 13%; text-align: center; } /* Date */
+#section-approved.workflow-section .request-table th:nth-child(4),
+#section-approved.workflow-section .request-table td:nth-child(4),
+#section-received.workflow-section .request-table th:nth-child(4),
+#section-received.workflow-section .request-table td:nth-child(4) { width: 16%; text-align: center; }
 
-#section-approved .request-table th:nth-child(5),
-#section-approved .request-table td:nth-child(5),
-#section-rejected .request-table th:nth-child(5),
-#section-rejected .request-table td:nth-child(5) { width: 15%; text-align: center; } /* Residency */
+#section-approved.workflow-section .request-table th:nth-child(5),
+#section-approved.workflow-section .request-table td:nth-child(5),
+#section-received.workflow-section .request-table th:nth-child(5),
+#section-received.workflow-section .request-table td:nth-child(5) { width: 18%; text-align: center; padding-right: 15px; }
 
-#section-approved .request-table th:nth-child(6),
-#section-approved .request-table td:nth-child(6),
-#section-rejected .request-table th:nth-child(6),
-#section-rejected .request-table td:nth-child(6) { width: 10%; text-align: center; } /* Status */
+#section-ready .request-table th:nth-child(1),
+#section-ready .request-table td:nth-child(1) { width: 5%; text-align: center; padding-left: 8px; }
 
-#section-approved .request-table th:nth-child(7),
-#section-approved .request-table td:nth-child(7),
-#section-rejected .request-table th:nth-child(7),
-#section-rejected .request-table td:nth-child(7) { width: 12%; text-align: center; padding-right: 15px; } /* Actions */
+#section-ready .request-table th:nth-child(2),
+#section-ready .request-table td:nth-child(2) { width: 22%; text-align: left; padding-left: 12px; }
+
+#section-ready .request-table th:nth-child(3),
+#section-ready .request-table td:nth-child(3) { width: 20%; text-align: left; }
+
+#section-ready .request-table th:nth-child(4),
+#section-ready .request-table td:nth-child(4) { width: 12%; text-align: center; }
+
+#section-ready .request-table th:nth-child(5),
+#section-ready .request-table td:nth-child(5) { width: 12%; text-align: center; }
+
+#section-ready .request-table th:nth-child(6),
+#section-ready .request-table td:nth-child(6) { width: 11%; text-align: center; }
+
+#section-ready .request-table th:nth-child(7),
+#section-ready .request-table td:nth-child(7) { width: 18%; text-align: center; padding-right: 12px; }
+
+.workflow-action-btn {
+    background: #070e50;
+    color: #fff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.workflow-action-btn:hover {
+    background: #0d1a7a;
+}
+
+.workflow-action-cell {
+    text-align: center;
+}
+
+.status-ongoing { color: #2980b9; font-weight: 700; font-size: 0.75rem; }
+.status-approved { color: #27ae60; font-weight: 700; font-size: 0.75rem; }
+.status-ready { color: #d35400; font-weight: 700; font-size: 0.75rem; }
+.status-received { color: #8e44ad; font-weight: 700; font-size: 0.75rem; }
+
+.pic-orange { background: #e67e22 !important; }
+.pic-green { background: #27ae60 !important; }
 
 
 /* --- COLUMN WIDTH ALLOCATIONS (Announcements Archive Tab) --- */

@@ -2,6 +2,8 @@
 header('Content-Type: application/json');
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
+$allowedStatuses = ['Ongoing', 'Approved', 'Ready to Print', 'Received'];
+
 try {
     require_once 'db.php';
 
@@ -10,12 +12,16 @@ try {
         throw new Exception('No data received');
     }
 
-    $requestId = (int)($data['request_id'] ?? 0);
+    $requestId = (int) ($data['request_id'] ?? 0);
     $status = trim($data['request_status'] ?? $data['status'] ?? '');
     $processedByUserId = $data['processed_by_user_id'] ?? null;
 
     if ($requestId <= 0 || $status === '') {
         throw new Exception('Invalid request update');
+    }
+
+    if (!in_array($status, $allowedStatuses, true)) {
+        throw new Exception('Invalid request status');
     }
 
     if ($processedByUserId === '') {
@@ -24,13 +30,13 @@ try {
 
     $stmt = mysqli_prepare(
         $conn,
-        "UPDATE document_requests SET request_status = ?, processed_by_user_id = ? WHERE request_id = ?"
+        'UPDATE document_requests SET request_status = ?, processed_by_user_id = ? WHERE request_id = ?'
     );
 
     mysqli_stmt_bind_param($stmt, 'sii', $status, $processedByUserId, $requestId);
     mysqli_stmt_execute($stmt);
 
-    echo json_encode(['success' => true]);
+    echo json_encode(['success' => true, 'request_status' => $status]);
 } catch (Throwable $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
@@ -42,4 +48,5 @@ try {
         mysqli_close($conn);
     }
 }
+
 ?>

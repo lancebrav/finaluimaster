@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS document_requests (
     service_type_id INT NULL,
     processed_by_user_id INT NULL,
     document_type VARCHAR(150) NOT NULL,
-    request_status ENUM('Ongoing', 'Approved', 'Rejected') DEFAULT 'Ongoing',
+    request_status ENUM('Ongoing', 'Approved', 'Ready to Print', 'Received') DEFAULT 'Ongoing',
     date_requested DATE NOT NULL,
     date_archived DATE NULL,
     is_archived TINYINT(1) NOT NULL DEFAULT 0,

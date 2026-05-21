@@ -234,8 +234,8 @@ function initializePhilSysValidation() {
         // Strip out any non-digit characters
         let digitsOnly = value.replace(/\D/g, '');
         
-        // Show warning if letters or symbols are typed
-        if (digitsOnly !== value && value.length > digitsOnly.length) {
+        // Show warning only if user enters characters other than digits or dashes
+        if (/[^0-9-]/.test(value)) {
             showNotification('⚠️ Only numbers are allowed in the PhilSys field!', 'warning');
         }
 
@@ -417,6 +417,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 finalPurpose = otherPurposeText.value;
             }
 
+            const nationalitySelect = document.getElementById('nationality');
+            const otherNationality = document.getElementById('otherNationality');
+            let finalNationality = nationalitySelect ? nationalitySelect.value : "";
+            if (finalNationality === 'Other' && otherNationality) {
+                finalNationality = otherNationality.value;
+            }
+
             // Combine Prefix and Contact Number
             const prefix = document.getElementById('contactPrefix')?.value || '';
             const number = document.getElementById('contactNumber')?.value || '';
@@ -456,7 +463,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 lastName,
                 suffix: document.getElementById('suffix')?.value || '',
                 gender: document.getElementById('gender')?.value || '',
-                nationality: document.getElementById('nationality')?.value || '',
+                nationality: finalNationality,
                 civilStatus: document.getElementById('civilStatus')?.value || '',
                 birthDate: document.getElementById('birthDate')?.value || '',
                 placeOfBirth: document.getElementById('placeOfBirth')?.value || '',
@@ -470,6 +477,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             let savedOk = false;
+            let submissionReference = '';
             fetch('../php/add_document_request.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -497,6 +505,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 .then(emailResult => {
                     if (!emailResult.success) {
                         showNotification('Submitted but email failed: ' + (emailResult.message || ''), 'warning');
+                        return;
+                    }
+                    if (emailResult.reference_code) {
+                        submissionReference = emailResult.reference_code;
                     }
                 });
             })
@@ -506,7 +518,10 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .finally(() => {
                 if (savedOk) {
-                    showNotification(docType + " Submitted Successfully!", "success");
+                    const successMsg = submissionReference
+                        ? docType + ' submitted! Reference: ' + submissionReference
+                        : docType + ' Submitted Successfully!';
+                    showNotification(successMsg, 'success');
                     this.reset();
                     if(typeof closeModal === 'function') closeModal(); 
                     if(typeof resetUploadUI === 'function') resetUploadUI();
@@ -557,6 +572,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const purposeDropdown = document.getElementById("purposeDropdown");
     const otherPurposeContainer = document.getElementById("otherPurposeContainer");
     const otherPurposeText = document.getElementById("otherPurposeText");
+    const nationalitySelect = document.getElementById("nationality");
+    const otherNationalityContainer = document.getElementById("otherNationalityContainer");
+    const otherNationality = document.getElementById("otherNationality");
 
     if (purposeDropdown && otherPurposeContainer && otherPurposeText) {
         purposeDropdown.addEventListener("change", function () {
@@ -569,6 +587,21 @@ document.addEventListener("DOMContentLoaded", function () {
                 otherPurposeText.value = ""; 
                 otherPurposeText.style.borderColor = '';
                 otherPurposeText.style.backgroundColor = '';
+            }
+        });
+    }
+
+    if (nationalitySelect && otherNationalityContainer && otherNationality) {
+        nationalitySelect.addEventListener("change", function () {
+            if (this.value === "Other") {
+                otherNationalityContainer.style.display = "flex";
+                otherNationality.setAttribute("required", "required");
+            } else {
+                otherNationalityContainer.style.display = "none";
+                otherNationality.removeAttribute("required");
+                otherNationality.value = "";
+                otherNationality.style.borderColor = '';
+                otherNationality.style.backgroundColor = '';
             }
         });
     }

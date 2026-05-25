@@ -241,7 +241,7 @@ function initializePhilSysValidation() {
 
         // Limit data capture to exactly 16 digits
         if (digitsOnly.length > 16) {
-            showNotification('❌ PhilSys Number cannot exceed 16 digits!', 'error');
+            showNotification('PhilSys Number cannot exceed 16 digits!', 'error');
             digitsOnly = digitsOnly.substring(0, 16);
         }
 
